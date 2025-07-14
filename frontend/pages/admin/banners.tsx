@@ -6,7 +6,7 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 
 
 import { Input } from '../../components/ui/input';
-import Header from '../../components/ui/Header';
+
 import Sidebar from '../../components/ui/Sidebar';
 import { Button } from '../../components/ui/button';
 import {
@@ -36,6 +36,7 @@ import { useToast } from '../../components/ui/use-toast';
 
 interface Banner {
   id: number;
+  name: string; // Added banner name
   imageUrl: string;
   linkTo: string;
   status: 'ACTIVE' | 'INACTIVE';
@@ -46,6 +47,7 @@ interface Banner {
 const dummyBanners: Banner[] = [
   {
     id: 1,
+    name: 'Pattu Sarees Collection',
     imageUrl: 'https://cdn.vijaybrothers.com/banners/pattu.jpg',
     linkTo: '/collections/pattu',
     status: 'ACTIVE',
@@ -54,6 +56,7 @@ const dummyBanners: Banner[] = [
   },
   {
     id: 2,
+    name: 'Bridal Wear Special',
     imageUrl: 'https://cdn.vijaybrothers.com/banners/bridal.jpg',
     linkTo: '/collections/bridal',
     status: 'INACTIVE',
@@ -78,7 +81,9 @@ const BannersPage = () => {
   const [banners, setBanners] = useState<Banner[]>(dummyBanners);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
-  const [imageUrl, setImageUrl] = useState('');
+  const [bannerName, setBannerName] = useState('');
+  const [imageUrl, setImageUrl] = useState(''); // This will store the URL after upload/selection
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [linkTo, setLinkTo] = useState('');
   const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
   const [searchTerm, setSearchTerm] = useState('');
@@ -113,6 +118,7 @@ const BannersPage = () => {
     if (!imageUrl || !linkTo) return alert('All fields required');
     const newBanner: Banner = {
       id: editingBanner ? editingBanner.id : Math.max(0, ...banners.map(b => b.id)) + 1,
+      name: bannerName,
       imageUrl,
       linkTo,
       status,
@@ -184,7 +190,7 @@ const BannersPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[80px]">ID</TableHead>
-                  <TableHead className="w-[160px]">Image URL</TableHead>
+                  <TableHead className="w-[200px]">Image</TableHead>
                   <TableHead className="w-[400px]">Target Page</TableHead>
                   <TableHead className="w-[140px]">Status</TableHead>
                   <TableHead className="text-right w-[140px]">Actions</TableHead>
@@ -194,7 +200,7 @@ const BannersPage = () => {
                 {filteredBanners.map(b => (
                   <TableRow key={b.id}>
                     <TableCell>{b.id}</TableCell>
-                    <TableCell>{b.imageUrl}</TableCell>
+                    <TableCell><img src={b.imageUrl} alt="Banner" className="w-24 h-auto object-cover rounded-md" /></TableCell>
                     <TableCell className="truncate max-w-[320px]">{b.linkTo}</TableCell>
                     <TableCell>
                       <span onClick={() => handleToggleStatus(b.id)} className={`cursor-pointer px-2 py-1 text-xs font-medium rounded-full ${b.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
@@ -205,6 +211,7 @@ const BannersPage = () => {
                       <div className="flex justify-end space-x-2">
                         <Button variant="ghost" size="icon" onClick={() => {
                           setEditingBanner(b);
+                          setBannerName(b.name);
                           setImageUrl(b.imageUrl);
                           setLinkTo(b.linkTo);
                           setStatus(b.status);
@@ -230,9 +237,46 @@ const BannersPage = () => {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="imageUrl" className="text-right">Image</Label>
-                  <Input id="imageUrl" value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="col-span-3" />
+                  <Label htmlFor="bannerName" className="text-right">Banner Name</Label>
+                  <Input id="bannerName" value={bannerName} onChange={e => setBannerName(e.target.value)} className="col-span-3" />
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="bannerFile" className="text-right">Image Upload</Label>
+                  <Input 
+                    id="bannerFile" 
+                    type="file" 
+                    accept="image/*"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const img = new Image();
+                          img.onload = () => {
+                            if (img.width === 1915 && img.height >= 480 && img.height <= 500) {
+                              setBannerFile(file);
+                              setImageUrl(reader.result as string);
+                              toast({ description: "Image dimensions are valid." });
+                            } else {
+                              setBannerFile(null);
+                              setImageUrl('');
+                              toast({ variant: "destructive", description: `Invalid image dimensions. Expected: 1915px width, 480-500px height. Got: ${img.width}px width, ${img.height}px height.` });
+                            }
+                          };
+                          img.src = reader.result as string;
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="col-span-3"
+                  />
+                </div>
+                {imageUrl && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Preview</Label>
+                    <img src={imageUrl} alt="Banner Preview" className="col-span-3 w-32 h-auto object-cover rounded-md" />
+                  </div>
+                )}
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="linkTo" className="text-right">Target Page</Label>
                   <Input id="linkTo" value={linkTo} onChange={e => setLinkTo(e.target.value)} className="col-span-3" />

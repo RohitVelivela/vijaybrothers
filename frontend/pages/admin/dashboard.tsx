@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '../../components/ui/Header';
+
 import Sidebar from '../../components/ui/Sidebar';
 import StatCard from '../../components/StatCard';
 import OrdersTable from '../../components/admin-components/OrdersTable';
