@@ -47,7 +47,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-2">
               {['About Us', 'Contact Us', 'Shipping Policy', 'Return Policy', 'Privacy Policy', 'Terms of Service'].map((link) => (
                 <li key={link}>
-                  <a href={link === 'About Us' ? '/aboutus' : '#'} className="text-gray-300 hover:text-orange-400 transition-colors text-base">
+                  <a href={link === 'About Us' ? '/aboutus' : link === 'Contact Us' ? '/contactus' : '#'} className="text-gray-300 hover:text-orange-400 transition-colors text-base">
                     {link}
                   </a>
                 </li>

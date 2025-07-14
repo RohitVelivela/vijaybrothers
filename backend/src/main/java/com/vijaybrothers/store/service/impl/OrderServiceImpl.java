@@ -81,11 +81,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         try {
-            com.vijaybrothers.store.dto.PaymentCreateRequest paymentRequest = new com.vijaybrothers.store.dto.PaymentCreateRequest();
-            paymentRequest.setAmount(order.getTotalAmount());
-            paymentRequest.setCurrency("INR");
-            paymentRequest.setReceipt(order.getOrderNumber());
-            return paymentService.createOrder(paymentRequest);
+            return paymentService.createOrder(savedOrder);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -54,21 +54,5 @@ public class OrderController {
         return ResponseEntity.ok(dto);
     }
 
-    @PostMapping("/initiate")
-    public ResponseEntity<PlaceOrderResponse> initiateOrder(@RequestBody OrderCreateRequest request) {
-        try {
-            PlaceOrderResponse response = orderService.placeOrder(request);
-            // The amount should be passed from the frontend or calculated in the backend
-            // For now, I'm using a dummy amount
-            com.vijaybrothers.store.dto.PaymentCreateRequest paymentRequest = new com.vijaybrothers.store.dto.PaymentCreateRequest();
-            paymentRequest.setAmount(BigDecimal.valueOf(response.getAmount()));
-            paymentRequest.setCurrency(response.getCurrency());
-            paymentRequest.setReceipt(response.getOrderId().toString());
-            PlaceOrderResponse paymentResponse = paymentService.createOrder(paymentRequest);
-            return ResponseEntity.ok(paymentResponse);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
-        }
-    }
+    
 }

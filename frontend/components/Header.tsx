@@ -85,7 +85,7 @@ const Header: React.FC = () => {
             <li><Link href="/category/catalogue-sarees" className="hover:text-gray-900 transition-colors">Catalogue Sarees</Link></li>
             <li><Link href="/category/featured" className="hover:text-gray-900 transition-colors">Featured</Link></li>
             <li><Link href="/category/latest-collections" className="hover:text-gray-900 transition-colors">Latest Collections</Link></li>
-            <li><Link href="/contact-us" className="hover:text-gray-900 transition-colors">Contact Us</Link></li>
+            <li><Link href="/contactus" className="hover:text-gray-900 transition-colors">Contact Us</Link></li>
             <li><a href="https://www.instagram.com/vijaybrothers_sarees" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">Instagram</a></li>
             <li><a href="https://www.youtube.com/@vijaybrothers/featured" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">Youtube</a></li>
             <li><Link href="/aboutus" className="hover:text-gray-900 transition-colors">About Us</Link></li>

@@ -27,33 +27,26 @@ public class PaymentService {
     private final RazorpayClient razorpayClient;
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
-    private final OrderService orderService;
+    
     private final String secret;
 
     public PaymentService(
             @Value("${razorpay.key_id}") String keyId,
             @Value("${razorpay.key_secret}") String secret,
             PaymentRepository paymentRepository,
-            OrderRepository orderRepository,
-            OrderService orderService
+            OrderRepository orderRepository
     ) throws RazorpayException {
         this.razorpayClient = new RazorpayClient(keyId, secret);
         this.secret = secret;
         this.paymentRepository = paymentRepository;
         this.orderRepository = orderRepository;
-        this.orderService = orderService;
     }
 
-    public PlaceOrderResponse createOrder(PaymentCreateRequest req) throws RazorpayException {
-        Order order = new Order();
-        order.setTotalAmount(req.getAmount());
-        order.setCustomerEmail(req.getReceipt());
-        Order savedOrder = orderService.createOrder(order);
-
+    public PlaceOrderResponse createOrder(Order order) throws RazorpayException {
         JSONObject opts = new JSONObject()
-            .put("amount", req.getAmount().longValue() * 100) // Amount in paise
-            .put("currency", req.getCurrency())
-            .put("receipt", savedOrder.getOrderNumber());
+            .put("amount", order.getTotalAmount().longValue() * 100) // Amount in paise
+            .put("currency", "INR") // Assuming INR as currency
+            .put("receipt", order.getOrderNumber());
         com.razorpay.Order razorpayOrder = razorpayClient.orders.create(opts);
         String razorpayOrderId = razorpayOrder.get("id");
 

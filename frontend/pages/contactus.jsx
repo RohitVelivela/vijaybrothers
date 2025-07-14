@@ -1,22 +1,61 @@
-import React from 'react';
-import Header from '../components/Header';
-import Footer from '../components/Footer'; // Assuming you have a Footer component
+import React, { useState } from 'react';
 
 const ContactUs = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+  });
+  const [status, setStatus] = useState('');
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus('Sending...');
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setStatus('Message sent successfully!');
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: '',
+        });
+      } else {
+        const errorData = await response.json();
+        setStatus(`Failed to send message: ${errorData.message || response.statusText}`);
+      }
+    } catch (error) {
+      setStatus(`Failed to send message: ${error.message}`);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
-      <Header /> {/* Include your Header component */}
 
       <main className="flex-grow container mx-auto px-4 py-16">
-        <h1 className="text-4xl font-extrabold text-center text-gray-800 mb-12 font-serif tracking-wide">
-          Connect with Vijay Brothers
+        <h1 className="text-2xl font-extrabold text-center text-red-800 mb-12 font-serif tracking-wide drop-shadow-lg">
+          Got a doubt?, We're right here to drape you in answers, just like the perfect saree!
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
 
           {/* Contact Information Section */}
           <div className="bg-white p-10 rounded-xl shadow-lg border border-gray-100 transform transition duration-300 hover:scale-105">
-            <h2 className="text-3xl font-bold text-gray-800 mb-8 font-serif">Reach Out to Us</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-8 font-serif">Reach Out to Us</h2>
 
             <div className="space-y-8">
               {/* Phone */}
@@ -62,8 +101,8 @@ const ContactUs = () => {
 
           {/* Contact Form Section */}
           <div className="bg-white p-10 rounded-xl shadow-lg border border-gray-100 transform transition duration-300 hover:scale-105">
-            <h2 className="text-3xl font-bold text-gray-800 mb-8 font-serif">Send Us a Message</h2>
-            <form className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-8 font-serif">Send Us a Message</h2>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="name" className="block text-gray-700 text-sm font-semibold mb-2">
                   Name
@@ -72,8 +111,11 @@ const ContactUs = () => {
                   type="text"
                   id="name"
                   name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
                   placeholder="Your Full Name"
+                  required
                 />
               </div>
               <div>
@@ -84,8 +126,11 @@ const ContactUs = () => {
                   type="email"
                   id="email"
                   name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
                   placeholder="your.email@example.com"
+                  required
                 />
               </div>
               <div>
@@ -96,8 +141,11 @@ const ContactUs = () => {
                   type="text"
                   id="subject"
                   name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
                   placeholder="Subject of your message"
+                  required
                 />
               </div>
               <div>
@@ -108,8 +156,11 @@ const ContactUs = () => {
                   id="message"
                   name="message"
                   rows="6"
+                  value={formData.message}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
                   placeholder="Your message..."
+                  required
                 ></textarea>
               </div>
               <div className="flex justify-end">
@@ -121,11 +172,11 @@ const ContactUs = () => {
                 </button>
               </div>
             </form>
+            {status && <p className="text-center mt-4 text-sm font-semibold text-gray-700">{status}</p>}
           </div>
         </div>
       </main>
 
-      <Footer /> {/* Include your Footer component */}
     </div>
   );
 };
