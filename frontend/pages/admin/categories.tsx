@@ -22,6 +22,8 @@ import { fetchCategories, createCategory, updateCategory, deleteCategory, Catego
 import Swal from 'sweetalert2';
 import 'sweetalert2/src/sweetalert2.scss';
 
+import AdminHeader from '../../components/AdminHeader';
+
 export default function CategoriesPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi'>('en');
   // ─── State ─────────────────────────────────────────────────────────────
@@ -220,13 +222,7 @@ export default function CategoriesPage() {
   // ─── Render ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white">
-      <Header
-        onMenuToggle={handleMenuToggle}
-        isSidebarOpen={isSidebarOpen}
-        adminEmail="admin@vijaybrothers.com"
-        currentLanguage={currentLanguage}
-        setCurrentLanguage={setCurrentLanguage}
-      />
+      <AdminHeader adminEmail="admin@vijaybrothers.com" />
       <Sidebar isOpen={isSidebarOpen} isCollapsed={isSidebarCollapsed} activeLink="Categories" toggleCollapse={handleMenuToggle} />
 
       <main className={`

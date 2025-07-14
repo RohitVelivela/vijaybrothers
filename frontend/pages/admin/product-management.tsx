@@ -32,6 +32,8 @@ import {
 } from '../../lib/api';
 
 
+import AdminHeader from '../../components/AdminHeader';
+
 export default function ProductsPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi'>('en');
   // ─── State ─────────────────────────────────────────────────────────────
@@ -305,13 +307,7 @@ export default function ProductsPage() {
   // ─── Render ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white">
-      <Header
-        onMenuToggle={handleMenuToggle}
-        isSidebarOpen={isSidebarOpen}
-        adminEmail="admin@vijaybrothers.com"
-        currentLanguage={currentLanguage}
-        setCurrentLanguage={setCurrentLanguage}
-      />
+      <AdminHeader adminEmail="admin@vijaybrothers.com" />
       <Sidebar isOpen={isSidebarOpen} isCollapsed={isSidebarCollapsed} activeLink="Products" toggleCollapse={handleMenuToggle} />
 
       <main className={`

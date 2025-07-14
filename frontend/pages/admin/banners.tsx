@@ -65,6 +65,8 @@ const dummyBanners: Banner[] = [
   },
 ];
 
+import AdminHeader from '../../components/AdminHeader';
+
 const BannersPage = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -110,7 +112,7 @@ const BannersPage = () => {
   const handleDeleteBanner = (id: number) => {
     if (window.confirm('Are you sure you want to delete this banner?')) {
       setBanners(prev => prev.filter(b => b.id !== id));
-      toast('Deleted', { description: 'Banner removed successfully' });
+      toast('Banner removed successfully', { description: 'Deleted' });
     }
   };
 
@@ -131,13 +133,7 @@ const BannersPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header
-        onMenuToggle={handleMenuToggle}
-        isSidebarOpen={isSidebarOpen}
-        adminEmail="admin@vijaybrothers.com"
-        currentLanguage={currentLanguage}
-        setCurrentLanguage={setCurrentLanguage}
-      />
+      <AdminHeader adminEmail="admin@vijaybrothers.com" />
       <Sidebar 
         isOpen={isSidebarOpen} 
         isCollapsed={isSidebarCollapsed} 
@@ -256,11 +252,11 @@ const BannersPage = () => {
                             if (img.width === 1915 && img.height >= 480 && img.height <= 500) {
                               setBannerFile(file);
                               setImageUrl(reader.result as string);
-                              toast({ description: "Image dimensions are valid." });
+                              toast("Image dimensions are valid.");
                             } else {
                               setBannerFile(null);
                               setImageUrl('');
-                              toast({ variant: "destructive", description: `Invalid image dimensions. Expected: 1915px width, 480-500px height. Got: ${img.width}px width, ${img.height}px height.` });
+                              toast.error(`Invalid image dimensions. Expected: 1915px width, 480-500px height. Got: ${img.width}px width, ${img.height}px height.`);
                             }
                           };
                           img.src = reader.result as string;

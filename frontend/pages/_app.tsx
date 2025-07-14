@@ -13,7 +13,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter(); // Initialize useRouter
 
   // Define paths where Header and Footer should NOT be rendered
-  const noHeaderFooterPaths = ['/admin/login', '/admin/signup','/admin/dashboard'];
+  const noHeaderFooterPaths = ['/admin/login', '/admin/signup','/admin/dashboard', '/','/admin/orders','/admin/banners','/admin/product-management','/admin/categories','admin/edit-profile'];
 
   // Check if the current path is in the noHeaderFooterPaths array
   const showHeaderFooter = !noHeaderFooterPaths.includes(router.pathname);
@@ -26,7 +26,6 @@ function MyApp({ Component, pageProps }: AppProps) {
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
         </Head>
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" />
         {showHeaderFooter && <Header />}
         <Component {...pageProps} />
         {showHeaderFooter && <Footer />}

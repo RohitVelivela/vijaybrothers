@@ -1,4 +1,11 @@
+import { getCookie } from '../context/AuthContext';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
+
+function getAuthHeaders() {
+  const token = getCookie('token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
 
 
 export interface Category {
@@ -11,7 +18,9 @@ export interface Category {
 }
 
 export async function fetchCategories(): Promise<Category[]> {
-  const res = await fetch(`${API_BASE_URL}/admin/categories`);
+  const res = await fetch(`${API_BASE_URL}/admin/categories`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) {
     throw new Error('Failed to fetch categories');
   }
@@ -21,7 +30,7 @@ export async function fetchCategories(): Promise<Category[]> {
 export async function createCategory(payload: { name: string; slug: string; description: string }): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/categories`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -33,7 +42,7 @@ export async function createCategory(payload: { name: string; slug: string; desc
 export async function updateCategory(id: number, payload: { name: string; slug: string; description: string }): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/categories/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -45,6 +54,7 @@ export async function updateCategory(id: number, payload: { name: string; slug: 
 export async function deleteCategory(id: number): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/categories/${id}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -79,7 +89,9 @@ export async function fetchProducts(page: number = 0, size: number = 10): Promis
   params.append('page', page.toString());
   params.append('size', size.toString());
 
-  const res = await fetch(`${API_BASE_URL}/admin/products?${params.toString()}`);
+  const res = await fetch(`${API_BASE_URL}/admin/products?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) {
     throw new Error('Failed to fetch products');
   }
@@ -87,7 +99,9 @@ export async function fetchProducts(page: number = 0, size: number = 10): Promis
 }
 
 export async function fetchProductById(id: number): Promise<Product> {
-    const res = await fetch(`${API_BASE_URL}/admin/products/${id}`);
+    const res = await fetch(`${API_BASE_URL}/admin/products/${id}`, {
+        headers: getAuthHeaders(),
+    });
     if (!res.ok) {
         throw new Error('Failed to fetch product');
     }
@@ -97,7 +111,7 @@ export async function fetchProductById(id: number): Promise<Product> {
 export async function createProduct(product: any): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/products`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(product),
   });
   if (!res.ok) {
@@ -109,7 +123,7 @@ export async function createProduct(product: any): Promise<void> {
 export async function updateProduct(product: Partial<Product>): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/products/${product.productId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(product),
   });
   if (!res.ok) {
@@ -121,6 +135,7 @@ export async function updateProduct(product: Partial<Product>): Promise<void> {
 export async function deleteProduct(id: number): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/products/${id}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -129,7 +144,9 @@ export async function deleteProduct(id: number): Promise<void> {
 }
 
 export async function fetchLowStockProducts(): Promise<Product[]> {
-    const res = await fetch(`${API_BASE_URL}/admin/products/low-stock`);
+    const res = await fetch(`${API_BASE_URL}/admin/products/low-stock`, {
+        headers: getAuthHeaders(),
+    });
     if (!res.ok) {
         throw new Error('Failed to fetch low stock products');
     }
@@ -186,7 +203,9 @@ export async function fetchOrders(status?: string, page: number = 0, size: numbe
   params.append('page', page.toString());
   params.append('size', size.toString());
 
-  const res = await fetch(`${API_BASE_URL}/admin/orders?${params.toString()}`);
+  const res = await fetch(`${API_BASE_URL}/admin/orders?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) {
     throw new Error('Failed to fetch orders');
   }
@@ -194,7 +213,9 @@ export async function fetchOrders(status?: string, page: number = 0, size: numbe
 }
 
 export async function fetchOrderDetail(orderId: number): Promise<OrderDetailDto> {
-  const res = await fetch(`${API_BASE_URL}/admin/orders/${orderId}`);
+  const res = await fetch(`${API_BASE_URL}/admin/orders/${orderId}`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) {
     throw new Error('Failed to fetch order details');
   }
@@ -204,7 +225,7 @@ export async function fetchOrderDetail(orderId: number): Promise<OrderDetailDto>
 export async function updateOrderStatus(orderId: number, status: string): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
   });
   if (!res.ok) {

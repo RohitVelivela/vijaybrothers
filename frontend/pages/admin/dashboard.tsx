@@ -18,6 +18,8 @@ interface Order {
 }
 
 
+import AdminHeader from '../../components/AdminHeader';
+
 const DashboardOverview = () => {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi'>('en');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -184,13 +186,7 @@ const DashboardOverview = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header
-        onMenuToggle={handleMenuToggle}
-        isSidebarOpen={isSidebarOpen}
-        currentLanguage={currentLanguage}
-        setCurrentLanguage={setCurrentLanguage}
-        adminEmail={""} // Provide appropriate adminEmail or remove if not needed
-      />
+      <AdminHeader adminEmail="admin@vijaybrothers.com" />
 
       <Sidebar
         isOpen={isSidebarOpen}

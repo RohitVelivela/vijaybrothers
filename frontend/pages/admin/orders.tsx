@@ -16,6 +16,8 @@ import Sidebar from '../../components/ui/Sidebar';
 
 
 
+import AdminHeader from '../../components/AdminHeader';
+
 const Orders = () => {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi'>('en');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -153,13 +155,7 @@ const Orders = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header
-        onMenuToggle={handleMenuToggle}
-        isSidebarOpen={isSidebarOpen}
-        adminEmail="admin@vijaybrothers.com"
-        currentLanguage={currentLanguage}
-        setCurrentLanguage={setCurrentLanguage}
-      />
+      <AdminHeader adminEmail="admin@vijaybrothers.com" />
       <Sidebar isOpen={isSidebarOpen} isCollapsed={isSidebarCollapsed} activeLink="Orders" toggleCollapse={handleMenuToggle} />
       
       
