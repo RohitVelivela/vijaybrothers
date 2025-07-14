@@ -1,0 +1,44 @@
+package com.vijaybrothers.store.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.Instant;
+
+@Entity
+@Table(name = "banners")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+public class Banner {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "banner_id")
+    private Integer bannerId;
+
+    @Column(name = "image_url", nullable = false)
+    private String imageUrl;
+
+    @Column(name = "link_to", nullable = false)
+    private String linkTo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BannerStatus status;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    public Integer getBannerId() { return bannerId; }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getLinkTo() { return linkTo; }
+    public void setLinkTo(String linkTo) { this.linkTo = linkTo; }
+    public BannerStatus getStatus() { return status; }
+    public void setStatus(BannerStatus status) { this.status = status; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+}
