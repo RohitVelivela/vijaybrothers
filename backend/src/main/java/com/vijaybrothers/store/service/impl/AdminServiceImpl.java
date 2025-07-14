@@ -8,7 +8,7 @@ import com.vijaybrothers.store.dto.auth.ProfileUpdateRequest;
 import com.vijaybrothers.store.dto.auth.ProfileUpdateResponse;
 import com.vijaybrothers.store.model.UserDetail;
 import com.vijaybrothers.store.repository.UserDetailRepository;
-import com.vijaybrothers.store.security.JwtUtil;
+import com.vijaybrothers.store.security.JwtService;
 import com.vijaybrothers.store.service.AdminService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ public class AdminServiceImpl implements AdminService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private JwtService jwtService;
 
     @Override
     public SignupResponse signup(SignupRequest request) {
@@ -49,20 +49,26 @@ public class AdminServiceImpl implements AdminService {
         user.setUserEmail(request.getEmail());
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
+        user.setRole("ADMIN");
 
         userDetailRepository.save(user);
 
         // Generate JWT token
-        String token = jwtUtil.generateToken(user.getUserName());
+        String token = jwtService.generateToken(user);
         return new SignupResponse(token, "Account created successfully");
     }
 
     @Override
     public LoginResponse login(LoginRequest request) {
-        Optional<UserDetail> user = userDetailRepository.findByUserName(request.getUsername());
-        if (user.isPresent() && passwordEncoder.matches(request.getPassword(), user.get().getPasswordHash())) {
+        Optional<UserDetail> userOptional = userDetailRepository.findByUserName(request.getUsername());
+        if (userOptional.isPresent() && passwordEncoder.matches(request.getPassword(), userOptional.get().getPasswordHash())) {
+            UserDetail user = userOptional.get();
+            if (user.getRole() == null || !user.getRole().equals("ADMIN")) {
+                user.setRole("ADMIN");
+                userDetailRepository.save(user);
+            }
             // Generate JWT token
-            String token = jwtUtil.generateToken(user.get().getUserName());
+            String token = jwtService.generateToken(user);
             return new LoginResponse(token, "Login successful");
         }
         return new LoginResponse(null, "Invalid credentials");
@@ -120,7 +126,7 @@ public class AdminServiceImpl implements AdminService {
         userDetailRepository.save(userDetail);
 
         // Generate new JWT token (if username changed, token needs to reflect new username)
-        String newToken = jwtUtil.generateToken(userDetail.getUserName());
+        String newToken = jwtService.generateToken(userDetail);
         String userImageBase64 = userDetail.getUserImage() != null ?
                                  Base64.getEncoder().encodeToString(userDetail.getUserImage()) : null;
 

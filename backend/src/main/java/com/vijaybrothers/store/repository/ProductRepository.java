@@ -17,22 +17,24 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findByNameContainingIgnoreCase(String name);
     List<Product> findByCategory_CategoryId(Integer categoryId);
     List<Product> findByStockQuantityLessThanEqual(Integer stockQuantity);
-    List<Product> findByStockQuantityLessThan(Integer quantity);
+    List<Product> findByStockQuantityLessThanAndDeletedFalse(Integer quantity);
     List<Product> findByInStock(boolean inStock);
     boolean existsByCategory_CategoryId(Integer categoryId);
     Optional<Product> findByProductCode(String productCode);
     List<Product> findAllByDeletedFalse();
+    Page<Product> findByDeletedFalse(Pageable pageable);
+    Optional<Product> findByProductIdAndDeletedFalse(Integer productId);
 
-    @Query("SELECT p FROM Product p JOIN FETCH p.category WHERE p.productId = :productId")
+    @Query("SELECT p FROM Product p JOIN FETCH p.category WHERE p.productId = :productId AND p.deleted = false")
     Optional<Product> findByIdWithCategoryAndImages(@Param("productId") Integer productId);
 
-    @Query("SELECT p FROM Product p WHERE (:categoryId IS NULL OR p.category.categoryId = :categoryId) AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR p.productCode LIKE CONCAT('%', :query, '%'))")
+    @Query("SELECT p FROM Product p WHERE (:categoryId IS NULL OR p.category.categoryId = :categoryId) AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR p.productCode LIKE CONCAT('%', :query, '%')) AND p.deleted = false")
     Page<Product> search(@Param("categoryId") Integer categoryId, @Param("query") String query, Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE (:categoryId IS NULL OR p.category.categoryId = :categoryId) " +
            "AND (:color IS NULL OR p.color = :color) " +
            "AND (:fabric IS NULL OR p.fabric = :fabric) " +
-           "AND (:inStock IS NULL OR p.inStock = :inStock)")
+           "AND (:inStock IS NULL OR p.inStock = :inStock) AND p.deleted = false")
     List<Product> filterProducts(
         @Param("categoryId") Integer categoryId,
         @Param("color") String color,

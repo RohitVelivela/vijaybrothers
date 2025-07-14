@@ -1,13 +1,15 @@
 // src/main/java/com/vijaybrothers/store/service/AdminProductService.java
 package com.vijaybrothers.store.service;
 
+import com.vijaybrothers.store.repository.CategoryRepository;
+
 import com.vijaybrothers.store.dto.ProductCreateRequest;
 import com.vijaybrothers.store.dto.ProductDto;
 import com.vijaybrothers.store.dto.ProductSummaryDto;
 import com.vijaybrothers.store.dto.ProductUpdateRequest;
 import com.vijaybrothers.store.model.Category;
 import com.vijaybrothers.store.model.Product;
-import com.vijaybrothers.store.repository.CategoryRepository;
+
 import com.vijaybrothers.store.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,7 +63,7 @@ public class AdminProductService {
      */
     @Transactional(readOnly = true)
     public List<ProductDto> lowStock() {
-        return productRepo.findByStockQuantityLessThan(lowStockThreshold)
+        return productRepo.findByStockQuantityLessThanAndDeletedFalse(lowStockThreshold)
             .stream()
             .map(ProductDto::fromEntity)
             .collect(Collectors.toList());
@@ -73,7 +75,7 @@ public class AdminProductService {
      */
     @Transactional(readOnly = true)
     public Page<ProductSummaryDto> listProducts(Pageable pageable) {
-        return productRepo.findAll(pageable).map(p -> new ProductSummaryDto(
+        return productRepo.findByDeletedFalse(pageable).map(p -> new ProductSummaryDto(
                 p.getProductId(),
                 p.getProductCode(),
                 p.getName(),
@@ -134,9 +136,10 @@ public class AdminProductService {
      */
     @Transactional
     public void deleteProduct(Integer productId) {
-        if (!productRepo.existsById(productId)) {
-            throw new IllegalArgumentException("Product not found");
-        }
-        productRepo.deleteById(productId);
+        Product product = productRepo.findById(productId)
+            .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        product.setDeleted(true);
+        product.setUpdatedAt(Instant.now());
+        productRepo.save(product);
     }
 }

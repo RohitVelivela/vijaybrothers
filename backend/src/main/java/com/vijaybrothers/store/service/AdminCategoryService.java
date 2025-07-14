@@ -1,10 +1,12 @@
 package com.vijaybrothers.store.service;
 
+import com.vijaybrothers.store.repository.CategoryRepository;
+
 import com.vijaybrothers.store.dto.CategoryCreateRequest;
 import com.vijaybrothers.store.dto.CategoryProductAssignRequest;
 import com.vijaybrothers.store.model.Category;
 import com.vijaybrothers.store.model.Product;
-import com.vijaybrothers.store.repository.CategoryRepository;
+
 import com.vijaybrothers.store.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,20 @@ public class AdminCategoryService {
         category.setName(req.name());
         category.setSlug(req.slug());
         category.setDescription(req.description());
+
+        if (req.parentId() != null) {
+            Category parentCategory = categoryRepo.findById(req.parentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Parent category not found"));
+            category.setParentCategory(parentCategory);
+        }
+
+        if (req.isActive() != null) {
+            category.setActive(req.isActive());
+        }
+        if (req.position() != null) {
+            category.setPosition(req.position());
+        }
+
         category.setCreatedAt(Instant.now());
         category.setUpdatedAt(Instant.now());
 
@@ -111,4 +127,44 @@ public class AdminCategoryService {
     public List<Category> getAllCategories() {
         return categoryRepo.findAll();
     }
-}
+
+    /**
+     * Updates an existing product category.
+     *
+     * @param id The ID of the category to update.
+     * @param req The updated category details.
+     * @throws IllegalArgumentException if the category is not found or if the slug is already taken by another category.
+     */
+    @Transactional
+    public void updateCategory(Integer id, CategoryCreateRequest req) {
+        Category category = categoryRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+
+        // Check if slug is already taken by another category
+        if (categoryRepo.existsBySlug(req.slug()) && !category.getSlug().equals(req.slug())) {
+            throw new IllegalArgumentException("A category with this slug already exists");
+        }
+
+        category.setName(req.name());
+        category.setSlug(req.slug());
+        category.setDescription(req.description());
+
+        if (req.parentId() != null) {
+            Category parentCategory = categoryRepo.findById(req.parentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Parent category not found"));
+            category.setParentCategory(parentCategory);
+        } else {
+            category.setParentCategory(null); // If parentId is null, set parent to null
+        }
+
+        if (req.isActive() != null) {
+            category.setActive(req.isActive());
+        }
+        if (req.position() != null) {
+            category.setPosition(req.position());
+        }
+
+        category.setUpdatedAt(Instant.now());
+
+        categoryRepo.save(category);
+    }

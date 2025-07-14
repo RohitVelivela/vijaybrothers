@@ -13,5 +13,11 @@ public record CategoryCreateRequest(
     @NotBlank(message = "Category slug cannot be blank")
     String slug,
 
-    String description
+    String description,
+
+    Integer parentId,
+
+    Boolean isActive,
+
+    Integer position
 ) {}

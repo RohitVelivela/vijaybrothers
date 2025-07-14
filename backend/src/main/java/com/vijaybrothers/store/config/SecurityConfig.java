@@ -23,6 +23,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
+
 @EnableMethodSecurity
 public class SecurityConfig {
 
@@ -81,6 +82,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/checkout/guest/**").permitAll()
                 .requestMatchers("/api/payments/webhook").permitAll()
 
+                .requestMatchers(HttpMethod.POST, "/api/admin/categories").hasRole("ADMIN")
+
                 // Admin product management - now public (no auth required)
                 .requestMatchers(HttpMethod.POST, "/api/admin/products").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/admin/products").hasRole("ADMIN")
@@ -88,7 +91,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/admin/products/**").hasRole("ADMIN")
 
                 // Admin category management - now public (no auth required)
-                .requestMatchers(HttpMethod.POST, "/api/admin/categories").hasRole("ADMIN")
+                
                 .requestMatchers(HttpMethod.GET, "/api/admin/categories/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/admin/categories/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/admin/categories/**").hasRole("ADMIN")

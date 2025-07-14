@@ -4,6 +4,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8
 
 function getAuthHeaders() {
   const token = getCookie('token');
+  console.log(`getAuthHeaders: Token from cookie: ${token}`); // DEBUG
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
 
@@ -13,6 +14,9 @@ export interface Category {
   name: string;
   slug: string;
   description: string;
+  parentId?: number; // Optional, for nested categories
+  isActive: boolean; // For visibility control
+  position: number; // For display order
   createdAt: string;
   updatedAt: string;
 }
@@ -27,7 +31,7 @@ export async function fetchCategories(): Promise<Category[]> {
   return await res.json();
 }
 
-export async function createCategory(payload: { name: string; slug: string; description: string }): Promise<void> {
+export async function createCategory(payload: { name: string; slug: string; description: string; parentId?: number; isActive?: boolean; position?: number }): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/categories`, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
@@ -39,7 +43,7 @@ export async function createCategory(payload: { name: string; slug: string; desc
   }
 }
 
-export async function updateCategory(id: number, payload: { name: string; slug: string; description: string }): Promise<void> {
+export async function updateCategory(id: number, payload: { name: string; slug: string; description: string; parentId?: number; isActive?: boolean; position?: number }): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/categories/${id}`, {
     method: 'PUT',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },

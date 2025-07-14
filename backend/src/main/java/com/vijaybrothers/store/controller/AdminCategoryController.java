@@ -104,4 +104,27 @@ public class AdminCategoryController {
                 .body(Map.of("error", e.getMessage()));
         }
     }
+
+    /**
+     * Updates an existing product category
+     * PUT /api/admin/categories/{id}
+     *
+     * @param id The ID of the category to update
+     * @param req The updated category details
+     * @return 200 OK with success message, or error response
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, String>> updateCategory(
+            @PathVariable Integer id,
+            @Valid @RequestBody CategoryCreateRequest req
+    ) {
+        try {
+            service.updateCategory(id, req);
+            return ResponseEntity.ok(Map.of("message", "Category updated successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", e.getMessage()));
+        }
+    }
 }

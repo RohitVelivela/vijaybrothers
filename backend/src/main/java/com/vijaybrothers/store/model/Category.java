@@ -23,9 +23,37 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Category parentCategory;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive;
+
+    @Column(nullable = false)
+    private Integer position;
+
     @Column(nullable = false)
     private Instant createdAt;
 
     @Column(nullable = false)
     private Instant updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.isActive == null) { // Check if it's explicitly set to false
+            this.isActive = true;
+        }
+        if (this.position == null) {
+            this.position = 0; // Default position
+        }
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
 }

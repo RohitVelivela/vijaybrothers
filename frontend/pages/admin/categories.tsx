@@ -43,6 +43,9 @@ export default function CategoriesPage() {
   const [newName, setNewName]             = useState<string>('');
   const [newSlug, setNewSlug]             = useState<string>('');
   const [newDescription, setNewDescription] = useState<string>('');
+  const [newParentId, setNewParentId] = useState<number | undefined>(undefined);
+  const [newIsActive, setNewIsActive] = useState<boolean>(true);
+  const [newPosition, setNewPosition] = useState<number>(0);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const loadCategories = async () => {
@@ -132,6 +135,12 @@ export default function CategoriesPage() {
 
   const handleAddCategory = () => {
     setEditingCategory(null);
+    setNewName('');
+    setNewSlug('');
+    setNewDescription('');
+    setNewParentId(undefined);
+    setNewIsActive(true);
+    setNewPosition(0);
     openModal();
   };
 
@@ -142,6 +151,9 @@ export default function CategoriesPage() {
       setNewName(categoryToEdit.name);
       setNewSlug(categoryToEdit.slug);
       setNewDescription(categoryToEdit.description);
+      setNewParentId(categoryToEdit.parentId);
+      setNewIsActive(categoryToEdit.isActive);
+      setNewPosition(categoryToEdit.position);
       setIsModalOpen(true);
     }
   };
@@ -185,6 +197,9 @@ export default function CategoriesPage() {
     setNewName('');
     setNewSlug('');
     setNewDescription('');
+    setNewParentId(undefined);
+    setNewIsActive(true);
+    setNewPosition(0);
     setEditingCategory(null);
     setIsModalOpen(true);
   };
@@ -195,7 +210,14 @@ export default function CategoriesPage() {
         alert('Name and slug are required.');
         return;
       }
-      const payload = { name: newName, slug: newSlug, description: newDescription };
+      const payload = { 
+        name: newName, 
+        slug: newSlug, 
+        description: newDescription,
+        parentId: newParentId,
+        isActive: newIsActive,
+        position: newPosition
+      };
 
       if (editingCategory) {
         await updateCategory(editingCategory.categoryId, payload);
@@ -283,6 +305,9 @@ export default function CategoriesPage() {
                   <TableHead className="cursor-pointer" onClick={() => handleSort('categoryId')}>Category ID</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>Name</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('slug')}>Slug</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('parentId')}>Parent ID</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('isActive')}>Active</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('position')}>Position</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('createdAt')}>Created Date</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -293,6 +318,9 @@ export default function CategoriesPage() {
                     <TableCell className="font-medium">{category.categoryId}</TableCell>
                     <TableCell>{category.name}</TableCell>
                     <TableCell>{category.slug}</TableCell>
+                    <TableCell>{category.parentId || '-'}</TableCell>
+                    <TableCell>{category.isActive ? 'Yes' : 'No'}</TableCell>
+                    <TableCell>{category.position}</TableCell>
                     <TableCell>{new Date(category.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -363,21 +391,74 @@ export default function CategoriesPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <Input
-                placeholder="Category Name (e.g., Banarasi Sarees)"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-              />
-              <Input
-                placeholder="Category Slug (e.g., banarasi-sarees)"
-                value={newSlug}
-                onChange={(e) => setNewSlug(e.target.value)}
-              />
-              <Input
-                placeholder="Description"
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-              />
+              <div>
+                <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                <Input
+                  id="categoryName"
+                  placeholder="e.g., Banarasi Sarees (e.g., Party Wear Sarees)"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                />
+              </div>
+              <div>
+                <label htmlFor="categorySlug" className="block text-sm font-medium text-gray-700 mb-1">Category Slug</label>
+                <Input
+                  id="categorySlug"
+                  placeholder="e.g., banarasi-sarees (unique, lowercase, no spaces)"
+                  value={newSlug}
+                  onChange={(e) => setNewSlug(e.target.value)}
+                  className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                />
+              </div>
+              <div>
+                <label htmlFor="categoryDescription" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <Input
+                  id="categoryDescription"
+                  placeholder="A brief description of the category (optional)"
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                />
+              </div>
+              <div>
+                <label htmlFor="parentCategory" className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
+                <select
+                  id="parentCategory"
+                  value={newParentId === undefined ? '' : newParentId}
+                  onChange={(e) => setNewParentId(e.target.value === '' ? undefined : Number(e.target.value))}
+                  className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-800"
+                >
+                  <option value="">-- Select Parent Category (Leave blank for main category) --</option>
+                  {categories.filter(cat => cat.categoryId !== editingCategory?.categoryId).map(cat => (
+                    <option key={cat.categoryId} value={cat.categoryId}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  checked={newIsActive}
+                  onChange={(e) => setNewIsActive(e.target.checked)}
+                  className="form-checkbox h-5 w-5 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500"
+                />
+                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Is Active (Visible on frontend)</label>
+              </div>
+              <div>
+                <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">Display Order (Position)</label>
+                <Input
+                  id="position"
+                  type="number"
+                  placeholder="e.g., 0 (lower number appears first in list)"
+                  value={newPosition}
+                  onChange={(e) => setNewPosition(Number(e.target.value))}
+                  className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                />
+                <p className="text-xs text-gray-500 mt-1">Defines the order of categories under the same parent. Lower numbers appear higher.</p>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
