@@ -39,6 +39,9 @@ public class Category {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Category> subCategories;
+
     @PrePersist
     protected void onCreate() {
         if (this.isActive == null) { // Check if it's explicitly set to false

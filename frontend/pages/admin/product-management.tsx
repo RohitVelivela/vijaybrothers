@@ -425,68 +425,105 @@ export default function ProductsPage() {
                 <DialogHeader>
                   <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
                   <DialogDescription>
-                    {editingProduct ? 'Edit the details for this product.' : 'Fill in the details for the new product.'}
+                    {editingProduct ? 'Edit the details for this product.' : 'Fill in the details for the new product. All fields are required unless specified.'}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                  <Input
-                    placeholder="Product Name"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                  />
-                  <Input
-                    placeholder="Product SKU"
-                    value={newProductCode}
-                    onChange={(e) => setNewProductCode(e.target.value)}
-                  />
-                  <Input
-                    placeholder="Price"
-                    type="number"
-                    value={newPrice}
-                    onChange={(e) => setNewPrice(Number(e.target.value))}
-                  />
-                  <Input
-                    placeholder="Stock Quantity"
-                    type="number"
-                    value={newStockQuantity}
-                    onChange={(e) => setNewStockQuantity(Number(e.target.value))}
-                  />
-                  <Input
-                    placeholder="Description"
-                    value={newDescription}
-                    onChange={(e) => setNewDescription(e.target.value)}
-                  />
-                  <Input
-                    placeholder="YouTube Link"
-                    value={newYoutubeLink}
-                    onChange={(e) => setNewYoutubeLink(e.target.value)}
-                  />
-                  <div className="flex items-center space-x-2">
+                  <div>
+                    <label htmlFor="productName" className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                     <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="w-full"
+                      id="productName"
+                      placeholder="e.g., Banarasi Silk Saree"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
                     />
-                    {newMainImageUrl && (
-                      <img src={newMainImageUrl} alt="Main Product" className="w-16 h-16 object-cover rounded-md" />
-                    )}
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
-                        {newCategoryId ? categories.find(c => c.categoryId === newCategoryId)?.name : 'Select Category'}
-                        <ChevronDown className="ml-2 h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-full">
-                      {categories.map(category => (
-                        <DropdownMenuItem key={category.categoryId} onClick={() => setNewCategoryId(category.categoryId)}>
-                          {category.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div>
+                    <label htmlFor="productCode" className="block text-sm font-medium text-gray-700 mb-1">Product SKU</label>
+                    <Input
+                      id="productCode"
+                      placeholder="e.g., VB-BS-001 (unique identifier)"
+                      value={newProductCode}
+                      onChange={(e) => setNewProductCode(e.target.value)}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="productPrice" className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                    <Input
+                      id="productPrice"
+                      placeholder="e.g., 1200.00"
+                      type="number"
+                      value={newPrice}
+                      onChange={(e) => setNewPrice(Number(e.target.value))}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="stockQuantity" className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                    <Input
+                      id="stockQuantity"
+                      placeholder="e.g., 50 (number of items in stock)"
+                      type="number"
+                      value={newStockQuantity}
+                      onChange={(e) => setNewStockQuantity(Number(e.target.value))}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="productDescription" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <Input
+                      id="productDescription"
+                      placeholder="Detailed description of the product (optional)"
+                      value={newDescription}
+                      onChange={(e) => setNewDescription(e.target.value)}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="youtubeLink" className="block text-sm font-medium text-gray-700 mb-1">YouTube Link</label>
+                    <Input
+                      id="youtubeLink"
+                      placeholder="Link to product video (optional)"
+                      value={newYoutubeLink}
+                      onChange={(e) => setNewYoutubeLink(e.target.value)}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="mainImage" className="block text-sm font-medium text-gray-700 mb-1">Main Image</label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id="mainImage"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                      />
+                      {newMainImageUrl && (
+                        <img src={newMainImageUrl} alt="Main Product" className="w-16 h-16 object-cover rounded-md" />
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="productCategory" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800">
+                          {newCategoryId ? categories.find(c => c.categoryId === newCategoryId)?.name : 'Select Category'}
+                          <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-full">
+                        {categories.map(category => (
+                          <DropdownMenuItem key={category.categoryId} onClick={() => setNewCategoryId(category.categoryId)}>
+                            {category.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>

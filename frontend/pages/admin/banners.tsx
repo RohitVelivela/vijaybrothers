@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '../../components/ui/dialog';
 import { Label } from '../../components/ui/label';
 import {
@@ -227,17 +228,20 @@ const BannersPage = () => {
           </div>
 
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent>
               <DialogHeader>
-                <DialogTitle>{editingBanner ? 'Edit Banner' : 'New Banner'}</DialogTitle>
+                <DialogTitle>{editingBanner ? 'Edit Banner' : 'Add New Banner'}</DialogTitle>
+                <DialogDescription>
+                  {editingBanner ? 'Edit the details for this banner.' : 'Fill in the details for the new banner.'}
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="bannerName" className="text-right">Banner Name</Label>
-                  <Input id="bannerName" value={bannerName} onChange={e => setBannerName(e.target.value)} className="col-span-3" />
+                <div>
+                  <Label htmlFor="bannerName" className="block text-sm font-medium text-gray-700 mb-1">Banner Name</Label>
+                  <Input id="bannerName" value={bannerName} onChange={e => setBannerName(e.target.value)} placeholder="e.g., Summer Sale Banner" className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800" />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="bannerFile" className="text-right">Image Upload</Label>
+                <div>
+                  <Label htmlFor="bannerFile" className="block text-sm font-medium text-gray-700 mb-1">Image Upload</Label>
                   <Input 
                     id="bannerFile" 
                     type="file" 
@@ -264,24 +268,24 @@ const BannersPage = () => {
                         reader.readAsDataURL(file);
                       }
                     }}
-                    className="col-span-3"
+                    className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
                   />
                 </div>
                 {imageUrl && (
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">Preview</Label>
-                    <img src={imageUrl} alt="Banner Preview" className="col-span-3 w-32 h-auto object-cover rounded-md" />
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700 mb-1">Preview</Label>
+                    <img src={imageUrl} alt="Banner Preview" className="w-32 h-auto object-cover rounded-md" />
                   </div>
                 )}
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="linkTo" className="text-right">Target Page</Label>
-                  <Input id="linkTo" value={linkTo} onChange={e => setLinkTo(e.target.value)} className="col-span-3" />
+                <div>
+                  <Label htmlFor="linkTo" className="block text-sm font-medium text-gray-700 mb-1">Target Page Link</Label>
+                  <Input id="linkTo" value={linkTo} onChange={e => setLinkTo(e.target.value)} placeholder="e.g., /collections/new-arrivals" className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800" />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="status" className="text-right">Status</Label>
+                <div>
+                  <Label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Status</Label>
                   <Select value={status} onValueChange={(value) => setStatus(value as 'ACTIVE' | 'INACTIVE')}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Status" />
+                    <SelectTrigger className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-800">
+                      <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ACTIVE">Active</SelectItem>
