@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(name = "categories")
@@ -27,8 +28,8 @@ public class Category {
     @JoinColumn(name = "parent_id")
     private Category parentCategory;
 
-    @Column(name = "is_active", nullable = false)
-    private boolean isActive;
+    @Column(name = "is_active", nullable = true)
+    private Boolean isActive;
 
     @Column(nullable = false)
     private Integer position;

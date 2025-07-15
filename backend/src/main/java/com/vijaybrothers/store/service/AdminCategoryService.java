@@ -49,7 +49,7 @@ public class AdminCategoryService {
         }
 
         if (req.isActive() != null) {
-            category.setActive(req.isActive());
+            category.setIsActive(req.isActive());
         }
         if (req.position() != null) {
             category.setPosition(req.position());
@@ -158,7 +158,7 @@ public class AdminCategoryService {
         }
 
         if (req.isActive() != null) {
-            category.setActive(req.isActive());
+            category.setIsActive(req.isActive());
         }
         if (req.position() != null) {
             category.setPosition(req.position());
@@ -168,3 +168,4 @@ public class AdminCategoryService {
 
         categoryRepo.save(category);
     }
+}

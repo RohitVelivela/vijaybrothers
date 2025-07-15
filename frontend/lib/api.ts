@@ -73,6 +73,7 @@ export interface Product {
   slug: string;
   description: string;
   price: number;
+  categoryId?: number; // Added categoryId directly
   category?: Category;
   images: any[];
   galleryImages: any[];

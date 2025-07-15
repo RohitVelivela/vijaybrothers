@@ -58,12 +58,12 @@ const ProductDetailsPage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white p-6 rounded-lg shadow-lg grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product Image Gallery */}
-          <div>
-            <div className="relative mb-4">
+          <div className="flex justify-center items-center">
+            <div className="relative mb-4 w-full lg:w-2/3">
               <img
                 src={product.image}
                 alt={product.title}
-                className="w-full h-auto rounded-lg shadow-md"
+                className="w-full h-auto rounded-lg shadow-lg"
               />
               {product.badge && (
                 <span className={`absolute top-3 left-3 ${product.badgeColor} text-white px-3 py-1 rounded-full text-sm font-semibold`}>
@@ -95,6 +95,15 @@ const ProductDetailsPage: React.FC = () => {
             <h2 className="text-sm text-gray-500 mb-1">SKU: RKIG{product.id}</h2>
             <h1 className="text-3xl font-bold text-gray-900 mb-3">{product.title}</h1>
             <p className="text-2xl font-semibold text-gray-800 mb-4">₹{product.price}</p>
+
+            {/* Stock Information */}
+            <div className="mb-4">
+              {product.inStock ? (
+                <p className="text-green-600 font-semibold">In Stock ({product.stockQuantity} available)</p>
+              ) : (
+                <p className="text-red-600 font-semibold">Out of Stock</p>
+              )}
+            </div>
 
             {/* Quantity Selector */}
             <div className="flex items-center mb-6">

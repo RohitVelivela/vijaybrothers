@@ -25,7 +25,7 @@ public record CategoryPublicDto(
                 .position(category.getPosition())
                 .subCategories(category.getSubCategories() != null ?
                         category.getSubCategories().stream()
-                                .filter(Category::isActive)
+                                .filter(Category::getIsActive)
                                 .sorted((c1, c2) -> c1.getPosition().compareTo(c2.getPosition()))
                                 .map(CategoryPublicDto::fromEntity)
                                 .collect(Collectors.toList()) : List.of())

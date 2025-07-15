@@ -69,6 +69,7 @@ export default function ProductsPage() {
     setLoading(true);
     try {
       const data: Page<Product> = await fetchProducts(currentPage, 10); // Fetch 10 products per page
+      console.log('Fetched products data:', data.content); // Log fetched data
       setProducts(prevProducts => [...prevProducts, ...data.content]);
       setHasMore(data.number < data.totalPages - 1);
       setCurrentPage(prevPage => prevPage + 1);
@@ -272,6 +273,7 @@ export default function ProductsPage() {
       };
 
       console.log('Payload being sent to backend:', productData);
+      console.log('newStockQuantity before API call:', newStockQuantity);
 
       if (editingProduct) {
         // Update existing product
@@ -384,12 +386,14 @@ export default function ProductsPage() {
                     <TableCell>{product.productCode}</TableCell>
                     <TableCell>{product.price}</TableCell>
                     <TableCell>
-                        {product.stockQuantity}
-                        {product.stockQuantity < 10 && (
+                        {product.stockQuantity ?? 0}
+                        {(product.stockQuantity ?? 0) < 10 && (
                             <span className="ml-2 bg-red-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Low Stock</span>
                         )}
                     </TableCell>
-                    <TableCell>{product.category?.name || 'N/A'}</TableCell>
+                    <TableCell>
+                      {product.category?.name || categories.find(cat => cat.categoryId === product.categoryId)?.name || 'N/A'}
+                    </TableCell>
                     <TableCell>
                       {product.mainImageUrl ? (
                         <img src={product.mainImageUrl} alt={product.name} className="w-12 h-12 object-cover rounded-md" />

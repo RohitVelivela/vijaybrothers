@@ -128,7 +128,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDto> lowStock() {
-        return productRepository.findByStockQuantityLessThan(lowStockThreshold).stream()
+        return productRepository.findByStockQuantityLessThanAndDeletedFalse(lowStockThreshold).stream()
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
