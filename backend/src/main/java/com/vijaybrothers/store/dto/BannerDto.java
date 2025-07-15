@@ -4,7 +4,7 @@ import java.time.Instant;
 
 public record BannerDto(
     Integer id,
-    String imageUrl,
+    String image,
     String linkTo,
     String status,
     Instant createdAt,

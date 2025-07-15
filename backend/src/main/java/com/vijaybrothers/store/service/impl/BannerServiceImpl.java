@@ -25,7 +25,7 @@ public class BannerServiceImpl implements BannerService {
     @Override
     public BannerDto createBanner(BannerCreateRequest req) {
         Banner banner = new Banner();
-        banner.setImageUrl(req.imageUrl());
+        banner.setImage(req.image());
         banner.setLinkTo(req.linkTo());
         banner.setCreatedAt(Instant.now());
         banner.setUpdatedAt(Instant.now());
@@ -38,7 +38,7 @@ public class BannerServiceImpl implements BannerService {
         Banner banner = repository.findById(id.intValue())
                 .orElseThrow(() -> new ResourceNotFoundException("Banner not found with id " + id));
 
-        banner.setImageUrl(dto.getImageUrl());
+        banner.setImage(dto.getImage());
         banner.setLinkTo(dto.getLinkTo());
         banner.setStatus(dto.getStatus());
         banner.setUpdatedAt(Instant.now());
@@ -70,7 +70,7 @@ public class BannerServiceImpl implements BannerService {
     private BannerDto mapToDto(Banner banner) {
         return new BannerDto(
             banner.getBannerId(),
-            banner.getImageUrl(),
+            banner.getImage(),
             banner.getLinkTo(),
             banner.getStatus().name(),
             banner.getCreatedAt(),

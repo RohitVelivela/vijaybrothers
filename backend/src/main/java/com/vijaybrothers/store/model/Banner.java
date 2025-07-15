@@ -14,8 +14,8 @@ public class Banner {
     @Column(name = "banner_id")
     private Integer bannerId;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @Column(name = "image", nullable = false)
+    private String image;
 
     @Column(name = "link_to", nullable = false)
     private String linkTo;
@@ -31,8 +31,8 @@ public class Banner {
     private Instant updatedAt;
 
     public Integer getBannerId() { return bannerId; }
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
     public String getLinkTo() { return linkTo; }
     public void setLinkTo(String linkTo) { this.linkTo = linkTo; }
     public BannerStatus getStatus() { return status; }

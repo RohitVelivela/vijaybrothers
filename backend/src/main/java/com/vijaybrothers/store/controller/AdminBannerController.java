@@ -1,61 +1,44 @@
 package com.vijaybrothers.store.controller;
 
-import com.vijaybrothers.store.dto.*;
+import com.vijaybrothers.store.dto.BannerCreateRequest;
+import com.vijaybrothers.store.dto.BannerDto;
+import com.vijaybrothers.store.dto.BannerUpdateDto;
 import com.vijaybrothers.store.service.BannerService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/banners")
 @RequiredArgsConstructor
 public class AdminBannerController {
 
-    private final BannerService svc;
+    private final BannerService bannerService;
 
-    /**
-     * POST /api/admin/banners
-     * — Admin only: add a new banner
-     */
     @PostMapping
-    public ResponseEntity<BannerDto> create(
-        @Valid @RequestBody BannerCreateRequest req
-    ) {
-        BannerDto dto = svc.createBanner(req);
-        return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(dto);
+    public ResponseEntity<BannerDto> createBanner(@RequestBody BannerCreateRequest bannerRequest) {
+        BannerDto banner = bannerService.createBanner(bannerRequest);
+        return new ResponseEntity<>(banner, HttpStatus.CREATED);
     }
 
-    /**
-     * PUT /api/admin/banners/{id}
-     * — Admin only: update a banner by ID
-     */
     @PutMapping("/{id}")
-    public ResponseEntity<BannerDto> update(
-            @PathVariable Long id,
-            @Valid @RequestBody BannerUpdateDto dto
-    ) {
-        BannerDto updated = svc.updateBanner(id, dto);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<BannerDto> updateBanner(@PathVariable Long id, @RequestBody BannerUpdateDto bannerRequest) {
+        BannerDto banner = bannerService.updateBanner(id, bannerRequest);
+        return new ResponseEntity<>(banner, HttpStatus.OK);
     }
 
-    /**
-     * DELETE /api/admin/banners/{id}
-     * — Admin only: delete a banner by ID
-     */
+    @GetMapping
+    public ResponseEntity<List<BannerDto>> getAllBanners() {
+        List<BannerDto> banners = bannerService.getAllBanners();
+        return new ResponseEntity<>(banners, HttpStatus.OK);
+    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String,String>> delete(@PathVariable Integer id) {
-        try {
-            svc.deleteBanner(id);
-            return ResponseEntity.ok(Map.of("message","Banner deleted successfully"));
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", ex.getMessage()));
-        }
+    public ResponseEntity<Void> deleteBanner(@PathVariable Integer id) {
+        bannerService.deleteBanner(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

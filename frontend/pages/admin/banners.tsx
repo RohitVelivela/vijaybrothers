@@ -149,10 +149,8 @@ const BannersPage = () => {
         toast.success("Banner updated successfully.");
       } else {
         await createBanner({
-          name: bannerName,
           image: imageUrl,
-          linkTo,
-          status,
+          linkTo: linkTo,
         });
         toast.success("Banner created successfully.");
       }

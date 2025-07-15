@@ -7,7 +7,7 @@ import com.vijaybrothers.store.model.BannerStatus;
 public class BannerUpdateDto {
 
     @NotBlank
-    private String imageUrl;
+    private String image;
 
     @NotBlank
     private String linkTo;
@@ -15,8 +15,8 @@ public class BannerUpdateDto {
     @NotNull
     private BannerStatus status;
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
 
     public String getLinkTo() { return linkTo; }
     public void setLinkTo(String linkTo) { this.linkTo = linkTo; }
@@ -24,3 +24,4 @@ public class BannerUpdateDto {
     public BannerStatus getStatus() { return status; }
     public void setStatus(BannerStatus status) { this.status = status; }
 }
+

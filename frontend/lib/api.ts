@@ -2,10 +2,14 @@ import { getCookie } from '../context/AuthContext';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
 
-function getAuthHeaders() {
+function getAuthHeaders(): Record<string, string> {
   const token = getCookie('token');
   console.log(`getAuthHeaders: Token from cookie: ${token}`); // DEBUG
-  return token ? { 'Authorization': `Bearer ${token}` } : {};
+  if (token) {
+    return { 'Authorization': `Bearer ${token}` };
+  } else {
+    return {};
+  }
 }
 
 
@@ -233,7 +237,7 @@ export async function fetchBanners(): Promise<Banner[]> {
   return await res.json();
 }
 
-export async function createBanner(banner: Omit<Banner, 'bannerId' | 'createdAt' | 'updatedAt'>): Promise<void> {
+export async function createBanner(banner: { image: string; linkTo: string }): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/banners`, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
@@ -241,7 +245,7 @@ export async function createBanner(banner: Omit<Banner, 'bannerId' | 'createdAt'
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to create banner');
+        throw new Error(errorData.error || 'Failed to create banner');
   }
 }
 
