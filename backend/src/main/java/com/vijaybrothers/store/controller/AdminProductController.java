@@ -40,8 +40,11 @@ public class AdminProductController {
     }
 
     @GetMapping
-    public Page<ProductSummaryDto> listAll(Pageable pageable) {
-        return svc.listProducts(pageable);
+    public Page<ProductSummaryDto> listAll(
+        Pageable pageable,
+        @RequestParam(name = "includeDeleted", defaultValue = "false") boolean includeDeleted
+    ) {
+        return svc.listProducts(pageable, includeDeleted);
     }
 
     @PutMapping("/{productId}")
@@ -61,5 +64,14 @@ public class AdminProductController {
         svc.deleteProduct(productId);
         return ResponseEntity
             .ok(Map.of("message", "Product is deleted successfully"));
+    }
+
+    @PutMapping("/{productId}/restore")
+    public ResponseEntity<Map<String, String>> restore(
+        @PathVariable Integer productId
+    ) {
+        svc.restoreProduct(productId);
+        return ResponseEntity
+            .ok(Map.of("message", "Product is restored successfully"));
     }
 }

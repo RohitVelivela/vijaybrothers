@@ -25,6 +25,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  restoreProduct,
   fetchCategories,
   Product,
   Category,
@@ -42,10 +43,13 @@ export default function ProductsPage() {
   const [filterCategory, setFilterCategory] = useState('All');
   const [sortColumn, setSortColumn] = useState<keyof Product>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [showDeleted, setShowDeleted] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = useState('');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0); // 0-indexed for backend
@@ -61,25 +65,32 @@ export default function ProductsPage() {
   const [newStockQuantity, setNewStockQuantity] = useState(0);
   const [newYoutubeLink, setNewYoutubeLink] = useState('');
   const [newMainImageUrl, setNewMainImageUrl] = useState('');
+  const [newColor, setNewColor] = useState(''); // New state for color
+  const [newFabric, setNewFabric] = useState(''); // New state for fabric
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategoryId, setNewCategoryId] = useState<number | undefined>(undefined);
 
-  const loadProducts = useCallback(async () => {
-    if (loading || !hasMore) return;
+  const loadProducts = useCallback(async (reset = false) => {
+    if (loading || (!hasMore && !reset)) return;
     setLoading(true);
+    if (reset) {
+      setProducts([]);
+      setCurrentPage(0);
+      setHasMore(true);
+    }
     try {
-      const data: Page<Product> = await fetchProducts(currentPage, 10); // Fetch 10 products per page
+      const data: Page<Product> = await fetchProducts(reset ? 0 : currentPage, 10, showDeleted); // Fetch 10 products per page
       console.log('Fetched products data:', data.content); // Log fetched data
-      setProducts(prevProducts => [...prevProducts, ...data.content]);
+      setProducts(prevProducts => reset ? data.content : [...prevProducts, ...data.content]);
       setHasMore(data.number < data.totalPages - 1);
-      setCurrentPage(prevPage => prevPage + 1);
+      setCurrentPage(prevPage => reset ? 1 : prevPage + 1);
     } catch (err) {
       console.error(err);
       setHasMore(false); // Stop trying to load more on error
     } finally {
       setLoading(false);
     }
-  }, [currentPage, loading, hasMore]);
+  }, [currentPage, loading, hasMore, showDeleted]);
 
   const lastProductElementRef = useCallback((node: HTMLDivElement) => {
     if (loading) return;
@@ -102,10 +113,9 @@ export default function ProductsPage() {
   };
 
   useEffect(() => {
-    loadProducts();
+    loadProducts(true);
     loadCategories();
-  }, []);
-
+  }, [showDeleted]);
 
   const handleMenuToggle = () => {
     if (window.innerWidth >= 1024) {
@@ -144,12 +154,7 @@ export default function ProductsPage() {
 
       return 0;
     });
-  }, [products, searchTerm, filterCategory, sortColumn, sortDirection]);
-
-  useEffect(() => {
-    loadProducts();
-    loadCategories();
-  }, []);
+  }, [products, searchTerm, filterCategory, sortColumn, sortDirection, showDeleted]);
 
   const handleSort = (column: keyof Product) => {
     if (sortColumn === column) {
@@ -187,6 +192,8 @@ export default function ProductsPage() {
         setNewDescription(productToEdit.description || '');
         setNewYoutubeLink(productToEdit.youtubeLink || '');
         setNewMainImageUrl(productToEdit.mainImageUrl || '');
+        setNewColor(productToEdit.color || ''); // Populate newColor
+        setNewFabric(productToEdit.fabric || ''); // Populate newFabric
         setIsModalOpen(true);
         console.log('Form fields populated.');
     };
@@ -204,18 +211,17 @@ export default function ProductsPage() {
 
     if (result.isConfirmed) {
       try {
+        // Optimistically update the UI
+        setProducts(products.map(p => p.productId === id ? { ...p, deleted: true } : p));
         await deleteProduct(id);
-        // After deletion, reload products from scratch to ensure correct pagination
-        setProducts([]);
-        setCurrentPage(0);
-        setHasMore(true);
-        loadProducts();
         Swal.fire(
           'Deleted!',
-          'Your product has been deleted.',
+          'Your product has been marked as deleted.',
           'success'
         );
       } catch (err) {
+        // Revert the change if the API call fails
+        setProducts(products.map(p => p.productId === id ? { ...p, deleted: false } : p));
         console.error(err);
         Swal.fire(
           'Error!',
@@ -223,6 +229,28 @@ export default function ProductsPage() {
           'error'
         );
       }
+    }
+  };
+
+  const handleRestoreProduct = async (id: number) => {
+    try {
+      // Optimistically update the UI
+      setProducts(products.map(p => p.productId === id ? { ...p, deleted: false } : p));
+      await restoreProduct(id);
+      Swal.fire(
+        'Restored!',
+        'Your product has been restored.',
+        'success'
+      );
+    } catch (err) {
+      // Revert the change if the API call fails
+      setProducts(products.map(p => p.productId === id ? { ...p, deleted: true } : p));
+      console.error(err);
+      Swal.fire(
+        'Error!',
+        `Failed to restore product: ${(err as Error).message}`,
+        'error'
+      );
     }
   };
 
@@ -250,6 +278,8 @@ export default function ProductsPage() {
     setNewDescription('');
     setNewYoutubeLink('');
     setNewMainImageUrl('');
+    setNewColor(''); // Clear color
+    setNewFabric(''); // Clear fabric
     setEditingProduct(null);
     setIsModalOpen(true);
   };
@@ -270,6 +300,8 @@ export default function ProductsPage() {
         inStock: newStockQuantity > 0,
         youtubeLink: newYoutubeLink,
         mainImageUrl: newMainImageUrl,
+        color: newColor, // Added color
+        fabric: newFabric, // Added fabric
       };
 
       console.log('Payload being sent to backend:', productData);
@@ -313,7 +345,7 @@ export default function ProductsPage() {
       <Sidebar isOpen={isSidebarOpen} isCollapsed={isSidebarCollapsed} activeLink="Products" toggleCollapse={handleMenuToggle} />
 
       <main className={`
-        pt-16 transition-all duration-300 ease-smooth
+        pt-9 transition-all duration-300 ease-smooth
         ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'}
       `}>
         <div className="p-6 space-y-6">
@@ -360,6 +392,21 @@ export default function ProductsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            <div className="flex items-center space-x-2">
+              <label htmlFor="show-deleted" className="text-sm font-medium text-gray-900">Show Deleted</label>
+              <button
+                id="show-deleted"
+                role="switch"
+                aria-checked={showDeleted}
+                onClick={() => setShowDeleted(!showDeleted)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 ${showDeleted ? 'bg-yellow-500' : 'bg-gray-200'}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showDeleted ? 'translate-x-6' : 'translate-x-1'}`}
+                />
+              </button>
+            </div>
+
           </div>
 
           {/* Products Table */}
@@ -375,6 +422,7 @@ export default function ProductsPage() {
                   <TableHead className="cursor-pointer" onClick={() => handleSort('category')}>Category</TableHead>
                   <TableHead>Main Image</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('createdAt')}>Created Date</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('deleted')}>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -394,22 +442,45 @@ export default function ProductsPage() {
                     <TableCell>
                       {product.category?.name || categories.find(cat => cat.categoryId === product.categoryId)?.name || 'N/A'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="align-top">
                       {product.mainImageUrl ? (
-                        <img src={product.mainImageUrl} alt={product.name} className="w-12 h-12 object-cover rounded-md" />
+                        <div
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setCurrentImageUrl(product.mainImageUrl);
+                            setIsImageModalOpen(true);
+                          }}
+                        >
+                          <img src={product.mainImageUrl} alt={product.name} className="w-24 h-24 object-cover rounded-md" />
+                        </div>
                       ) : (
                         'N/A'
                       )}
                     </TableCell>
                     <TableCell>{new Date(product.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
+                      {product.deleted ? (
+                        <span className="bg-red-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Deleted</span>
+                      ) : (
+                        <span className="bg-green-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Active</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="icon" onClick={() => handleEditProduct(product.productId)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="icon" onClick={() => handleDeleteProduct(product.productId)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
+                        {product.deleted ? (
+                          <Button variant="outline" size="icon" onClick={() => handleRestoreProduct(product.productId)}>
+                            <Trash2 className="h-4 w-4 text-green-500" />
+                          </Button>
+                        ) : (
+                          <>
+                            <Button variant="outline" size="icon" onClick={() => handleEditProduct(product.productId)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="icon" onClick={() => handleDeleteProduct(product.productId)}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -496,6 +567,26 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div>
+                    <label htmlFor="productColor" className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                    <Input
+                      id="productColor"
+                      placeholder="e.g., Red, Blue, Multi"
+                      value={newColor}
+                      onChange={(e) => setNewColor(e.target.value)}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="productFabric" className="block text-sm font-medium text-gray-700 mb-1">Fabric</label>
+                    <Input
+                      id="productFabric"
+                      placeholder="e.g., Silk, Cotton, Georgette"
+                      value={newFabric}
+                      onChange={(e) => setNewFabric(e.target.value)}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                    />
+                  </div>
+                  <div>
                     <label htmlFor="mainImage" className="block text-sm font-medium text-gray-700 mb-1">Main Image</label>
                     <div className="flex items-center space-x-2">
                       <Input
@@ -534,6 +625,20 @@ export default function ProductsPage() {
                   <Button onClick={handleSaveProduct}>{editingProduct ? 'Update Product' : 'Save Product'}</Button>
                 </DialogFooter>
               </DialogContent>
+          </Dialog>
+
+          <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+            <DialogContent className="sm:max-w-[800px]">
+              <DialogHeader>
+                <DialogTitle>Product Image</DialogTitle>
+              </DialogHeader>
+              <div className="flex justify-center items-center">
+                <img src={currentImageUrl} alt="Product" className="max-w-full h-auto" />
+              </div>
+              <DialogFooter>
+                <Button onClick={() => setIsImageModalOpen(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
           </Dialog>
         </div>
       </main>

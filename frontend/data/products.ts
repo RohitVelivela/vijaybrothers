@@ -12,6 +12,7 @@ export interface Product {
   rating: number;
   reviews: number;
   inStock: boolean;
+  deleted?: boolean;
   description?: {
     blouse: string;
     length: string;
@@ -40,6 +41,7 @@ export const topHandpickedSarees: Product[] = [
     rating: 4.8,
     reviews: 124,
     inStock: true,
+    deleted: true,
     description: {
       blouse: "Attached",
       length: "6.3m with blouse: 0.8m",

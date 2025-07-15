@@ -81,18 +81,20 @@ export interface Product {
   inStock: boolean;
   youtubeLink: string;
   mainImageUrl: string;
-  color: string;
-  fabric: string;
+  color?: string; // Added color
+  fabric?: string; // Added fabric
+  deleted: boolean; // Added deleted field
   createdAt: string;
   createdBy: string;
   updatedAt: string;
   updatedBy: string;
 }
 
-export async function fetchProducts(page: number = 0, size: number = 10): Promise<Page<Product>> {
+export async function fetchProducts(page: number = 0, size: number = 10, includeDeleted: boolean = false): Promise<Page<Product>> {
   const params = new URLSearchParams();
   params.append('page', page.toString());
   params.append('size', size.toString());
+  params.append('includeDeleted', includeDeleted.toString());
 
   const res = await fetch(`${API_BASE_URL}/admin/products?${params.toString()}`, {
     headers: getAuthHeaders(),
@@ -148,6 +150,17 @@ export async function deleteProduct(id: number): Promise<void> {
   }
 }
 
+export async function restoreProduct(id: number): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/admin/products/${id}/restore`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to restore product');
+  }
+}
+
 export async function fetchLowStockProducts(): Promise<Product[]> {
     const res = await fetch(`${API_BASE_URL}/admin/products/low-stock`, {
         headers: getAuthHeaders(),
@@ -198,6 +211,61 @@ export interface Page<T> {
   first: boolean;
   last: boolean;
   empty: boolean;
+}
+
+export interface Banner {
+  bannerId: number;
+  name: string;
+  image: string;
+  linkTo: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function fetchBanners(): Promise<Banner[]> {
+  const res = await fetch(`${API_BASE_URL}/admin/banners`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch banners');
+  }
+  return await res.json();
+}
+
+export async function createBanner(banner: Omit<Banner, 'bannerId' | 'createdAt' | 'updatedAt'>): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/admin/banners`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(banner),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to create banner');
+  }
+}
+
+export async function updateBanner(banner: Partial<Banner>): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/admin/banners/${banner.bannerId}`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(banner),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to update banner');
+  }
+}
+
+export async function deleteBanner(bannerId: number): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/admin/banners/${bannerId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to delete banner');
+  }
 }
 
 export async function fetchOrders(status?: string, page: number = 0, size: number = 10): Promise<Page<OrderListItem>> {

@@ -1,9 +1,9 @@
 // ✅ Updated Banners Page: Matches Product Page layout exactly
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-
+import Swal from 'sweetalert2';
 
 import { Input } from '../../components/ui/input';
 
@@ -34,69 +34,34 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { useToast } from '../../components/ui/use-toast';
-
-interface Banner {
-  id: number;
-  name: string; // Added banner name
-  imageUrl: string;
-  linkTo: string;
-  status: 'ACTIVE' | 'INACTIVE';
-  createdAt: string;
-  updatedAt: string;
-}
-
-const dummyBanners: Banner[] = [
-  {
-    id: 1,
-    name: 'Pattu Sarees Collection',
-    imageUrl: 'https://cdn.vijaybrothers.com/banners/pattu.jpg',
-    linkTo: '/collections/pattu',
-    status: 'ACTIVE',
-    createdAt: '2025-07-05T10:00:00Z',
-    updatedAt: '2025-07-05T12:00:00Z',
-  },
-  {
-    id: 2,
-    name: 'Bridal Wear Special',
-    imageUrl: 'https://cdn.vijaybrothers.com/banners/bridal.jpg',
-    linkTo: '/collections/bridal',
-    status: 'INACTIVE',
-    createdAt: '2025-06-29T08:00:00Z',
-    updatedAt: '2025-07-01T09:00:00Z',
-  },
-];
-
+import { fetchBanners, createBanner, updateBanner, deleteBanner, Banner } from '../../lib/api';
 import AdminHeader from '../../components/AdminHeader';
 
 const BannersPage = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi'>('en'); // Add state for currentLanguage
-
-  const handleMenuToggle = () => {
-    if (window.innerWidth >= 1024) {
-      setIsSidebarCollapsed(prevState => !prevState);
-    } else {
-      setIsSidebarOpen(prevState => !prevState);
-    }
-  };
+  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi'>('en');
   const { toast } = useToast();
-  const [banners, setBanners] = useState<Banner[]>(dummyBanners);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [bannerName, setBannerName] = useState('');
-  const [imageUrl, setImageUrl] = useState(''); // This will store the URL after upload/selection
+  const [imageUrl, setImageUrl] = useState('');
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [linkTo, setLinkTo] = useState('');
   const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
 
+  const handleMenuToggle = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   const filteredBanners = useMemo(() => {
     let data = banners;
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      data = data.filter(b => b.imageUrl.toLowerCase().includes(term) || b.linkTo.toLowerCase().includes(term));
+      data = data.filter(b => b.image.toLowerCase().includes(term) || b.linkTo.toLowerCase().includes(term));
     }
     if (filterStatus !== 'ALL') {
       data = data.filter(b => b.status === filterStatus);
@@ -104,32 +69,99 @@ const BannersPage = () => {
     return data;
   }, [banners, searchTerm, filterStatus]);
 
-  const handleToggleStatus = (id: number) => {
-    setBanners(prev =>
-      prev.map(b => b.id === id ? { ...b, status: b.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' } : b)
-    );
-  };
-
-  const handleDeleteBanner = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this banner?')) {
-      setBanners(prev => prev.filter(b => b.id !== id));
-      toast('Banner removed successfully', { description: 'Deleted' });
+  const loadBanners = async () => {
+    try {
+      const data = await fetchBanners();
+      setBanners(data);
+    } catch (error) {
+      console.error("Failed to fetch banners:", error);
+      toast.error("Failed to load banners.");
     }
   };
 
-  const handleSaveBanner = () => {
-    if (!imageUrl || !linkTo) return alert('All fields required');
-    const newBanner: Banner = {
-      id: editingBanner ? editingBanner.id : Math.max(0, ...banners.map(b => b.id)) + 1,
-      name: bannerName,
-      imageUrl,
-      linkTo,
-      status,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setBanners(prev => editingBanner ? prev.map(b => (b.id === newBanner.id ? newBanner : b)) : [...prev, newBanner]);
-    setIsModalOpen(false);
+  useEffect(() => {
+    loadBanners();
+  }, []);
+
+  const handleToggleStatus = async (id: number) => {
+    const bannerToUpdate = banners.find(b => b.bannerId === id);
+    if (!bannerToUpdate) return;
+
+    const newStatus = bannerToUpdate.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    try {
+      await updateBanner({ bannerId: id, status: newStatus });
+      setBanners(prev =>
+        prev.map(b => b.bannerId === id ? { ...b, status: newStatus } : b)
+      );
+      toast.success("Banner status updated.");
+    } catch (error) {
+      console.error("Failed to update banner status:", error);
+      toast.error("Failed to update banner status.");
+    }
+  };
+
+  const handleDeleteBanner = async (id: number) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await deleteBanner(id);
+        setBanners(prev => prev.filter(b => b.bannerId !== id));
+        Swal.fire(
+          'Deleted!',
+          'Your banner has been deleted.',
+          'success'
+        );
+      } catch (error) {
+        console.error("Failed to delete banner:", error);
+        Swal.fire(
+          'Error!',
+          `Failed to delete banner: ${(error as Error).message}`,
+          'error'
+        );
+      }
+    }
+  };
+
+  const handleSaveBanner = async () => {
+    if (!bannerName || !imageUrl || !linkTo) {
+      toast.error("All fields are required.");
+      return;
+    }
+
+    try {
+      if (editingBanner) {
+        await updateBanner({
+          bannerId: editingBanner.bannerId,
+          name: bannerName,
+          image: imageUrl,
+          linkTo,
+          status,
+        });
+        toast.success("Banner updated successfully.");
+      } else {
+        await createBanner({
+          name: bannerName,
+          image: imageUrl,
+          linkTo,
+          status,
+        });
+        toast.success("Banner created successfully.");
+      }
+      setIsModalOpen(false);
+      loadBanners(); // Reload banners after save
+    } catch (error) {
+      console.error("Failed to save banner:", error);
+      toast.error(`Failed to save banner: ${(error as Error).message}`);
+    }
   };
 
   return (
@@ -151,7 +183,7 @@ const BannersPage = () => {
               <h1 className="text-3xl font-serif font-bold text-gray-800">Banners</h1>
               <p className="text-gray-600 mt-1">Manage your banners, add new banners, and update existing ones.</p>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 flex items-center" onClick={() => {
+            <Button onClick={() => {
               setEditingBanner(null);
               setImageUrl('');
               setLinkTo('');
@@ -195,12 +227,12 @@ const BannersPage = () => {
               </TableHeader>
               <TableBody>
                 {filteredBanners.map(b => (
-                  <TableRow key={b.id}>
-                    <TableCell>{b.id}</TableCell>
-                    <TableCell><img src={b.imageUrl} alt="Banner" className="w-24 h-auto object-cover rounded-md" /></TableCell>
+                  <TableRow key={b.bannerId}>
+                    <TableCell>{b.bannerId}</TableCell>
+                    <TableCell><img src={b.image} alt="Banner" className="w-24 h-auto object-cover rounded-md" /></TableCell>
                     <TableCell className="truncate max-w-[320px]">{b.linkTo}</TableCell>
                     <TableCell>
-                      <span onClick={() => handleToggleStatus(b.id)} className={`cursor-pointer px-2 py-1 text-xs font-medium rounded-full ${b.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
+                      <span onClick={() => handleToggleStatus(b.bannerId)} className={`cursor-pointer px-2 py-1 text-xs font-medium rounded-full ${b.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
                         {b.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                       </span>
                     </TableCell>
@@ -209,14 +241,14 @@ const BannersPage = () => {
                         <Button variant="ghost" size="icon" onClick={() => {
                           setEditingBanner(b);
                           setBannerName(b.name);
-                          setImageUrl(b.imageUrl);
+                          setImageUrl(b.image);
                           setLinkTo(b.linkTo);
                           setStatus(b.status);
                           setIsModalOpen(true);
                         }}>
                           <Edit className="h-4 w-4 text-blue-600" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteBanner(b.id)}>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteBanner(b.bannerId)}>
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
@@ -256,7 +288,7 @@ const BannersPage = () => {
                             if (img.width === 1915 && img.height >= 480 && img.height <= 500) {
                               setBannerFile(file);
                               setImageUrl(reader.result as string);
-                              toast("Image dimensions are valid.");
+                              toast.success("Image dimensions are valid.");
                             } else {
                               setBannerFile(null);
                               setImageUrl('');

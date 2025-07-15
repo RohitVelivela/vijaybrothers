@@ -74,16 +74,28 @@ public class AdminProductService {
      * Called by GET /api/admin/products
      */
     @Transactional(readOnly = true)
-    public Page<ProductSummaryDto> listProducts(Pageable pageable) {
-        return productRepo.findByDeletedFalse(pageable).map(p -> new ProductSummaryDto(
+    public Page<ProductSummaryDto> listProducts(Pageable pageable, boolean includeDeleted) {
+        Page<Product> productsPage;
+        if (includeDeleted) {
+            productsPage = productRepo.findAll(pageable);
+        } else {
+            productsPage = productRepo.findByDeletedFalse(pageable);
+        }
+        return productsPage.map(p -> {
+            System.out.println("Product ID: " + p.getProductId() + ", Stock Quantity: " + p.getStockQuantity());
+            return new ProductSummaryDto(
                 p.getProductId(),
                 p.getProductCode(),
                 p.getName(),
                 p.getMainImageUrl(),
                 p.getPrice(),
                 p.getInStock(),
-                p.getCategory() != null ? p.getCategory().getCategoryId() : null
-            ));
+                p.getStockQuantity(),
+                p.getCategory() != null ? p.getCategory().getCategoryId() : null,
+                p.isDeleted(),
+                p.getCreatedAt().toString()
+            );
+        });
     }
 
     /**
@@ -139,6 +151,19 @@ public class AdminProductService {
         Product product = productRepo.findById(productId)
             .orElseThrow(() -> new IllegalArgumentException("Product not found"));
         product.setDeleted(true);
+        product.setUpdatedAt(Instant.now());
+        productRepo.save(product);
+    }
+
+    /**
+     * PUT /api/admin/products/{productId}/restore
+     * Restore the product with the given ID.
+     */
+    @Transactional
+    public void restoreProduct(Integer productId) {
+        Product product = productRepo.findById(productId)
+            .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        product.setDeleted(false);
         product.setUpdatedAt(Instant.now());
         productRepo.save(product);
     }

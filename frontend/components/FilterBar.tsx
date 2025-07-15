@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
 import { Filter, ChevronDown } from 'lucide-react';
 
-const FilterBar: React.FC = () => {
+interface FilterBarProps {
+  onShowDeletedChange: (showDeleted: boolean) => void;
+}
+
+const FilterBar: React.FC<FilterBarProps> = ({ onShowDeletedChange }) => {
   const [activeFilter, setActiveFilter] = useState('all');
+  const [showDeleted, setShowDeleted] = useState(false);
+
+  const handleShowDeletedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setShowDeleted(isChecked);
+    onShowDeletedChange(isChecked);
+  };
 
   const filters = [
     { id: 'all', label: 'All Sarees', count: 500 },
@@ -60,6 +71,19 @@ const FilterBar: React.FC = () => {
               <Filter className="w-4 h-4" />
               <span className="text-sm">More Filters</span>
             </button>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="show-deleted"
+                checked={showDeleted}
+                onChange={handleShowDeletedChange}
+                className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+              />
+              <label htmlFor="show-deleted" className="ml-2 block text-sm text-gray-900">
+                Show Deleted
+              </label>
+            </div>
           </div>
         </div>
       </div>

@@ -9,5 +9,8 @@ public record ProductSummaryDto(
     String mainImageUrl,
     BigDecimal price,
     Boolean inStock,
-    Integer categoryId
+    Integer stockQuantity,
+    Integer categoryId,
+    boolean deleted,
+    String createdAt
 ) {}
