@@ -7,6 +7,9 @@ import com.vijaybrothers.store.model.BannerStatus;
 public class BannerUpdateDto {
 
     @NotBlank
+    private String name;
+
+    @NotBlank
     private String image;
 
     @NotBlank
@@ -14,6 +17,9 @@ public class BannerUpdateDto {
 
     @NotNull
     private BannerStatus status;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }

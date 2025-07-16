@@ -84,14 +84,14 @@ const BannersPage = () => {
   }, []);
 
   const handleToggleStatus = async (id: number) => {
-    const bannerToUpdate = banners.find(b => b.bannerId === id);
+    const bannerToUpdate = banners.find(b => b.id === id);
     if (!bannerToUpdate) return;
 
     const newStatus = bannerToUpdate.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
-      await updateBanner({ bannerId: id, status: newStatus });
+      await updateBanner({ id: id, status: newStatus });
       setBanners(prev =>
-        prev.map(b => b.bannerId === id ? { ...b, status: newStatus } : b)
+        prev.map(b => b.id === id ? { ...b, status: newStatus } : b)
       );
       toast.success("Banner status updated.");
     } catch (error) {
@@ -100,7 +100,17 @@ const BannersPage = () => {
     }
   };
 
-  const handleDeleteBanner = async (id: number) => {
+  const handleDeleteBanner = async (id: number | undefined) => {
+    if (typeof id === 'undefined' || id === null) {
+      console.error("Attempted to delete banner with undefined or null ID.");
+      Swal.fire(
+        'Error!',
+        'Cannot delete banner: ID is missing.',
+        'error'
+      );
+      return;
+    }
+
     const result = await Swal.fire({
       title: 'Are you sure?',
       text: "You won't be able to revert this!",
@@ -114,7 +124,7 @@ const BannersPage = () => {
     if (result.isConfirmed) {
       try {
         await deleteBanner(id);
-        setBanners(prev => prev.filter(b => b.bannerId !== id));
+        setBanners(prev => prev.filter(b => b.id !== id));
         Swal.fire(
           'Deleted!',
           'Your banner has been deleted.',
@@ -140,7 +150,7 @@ const BannersPage = () => {
     try {
       if (editingBanner) {
         await updateBanner({
-          bannerId: editingBanner.bannerId,
+          id: editingBanner.id,
           name: bannerName,
           image: imageUrl,
           linkTo,
@@ -149,6 +159,7 @@ const BannersPage = () => {
         toast.success("Banner updated successfully.");
       } else {
         await createBanner({
+          name: bannerName,
           image: imageUrl,
           linkTo: linkTo,
         });
@@ -225,12 +236,12 @@ const BannersPage = () => {
               </TableHeader>
               <TableBody>
                 {filteredBanners.map(b => (
-                  <TableRow key={b.bannerId}>
-                    <TableCell>{b.bannerId}</TableCell>
-                    <TableCell><img src={b.image} alt="Banner" className="w-24 h-auto object-cover rounded-md" /></TableCell>
+                  <TableRow key={b.id}>
+                    <TableCell>{b.id}</TableCell>
+                    <TableCell className="text-left"><img src={b.image} alt="Banner" className="w-48 h-20 object-cover rounded-md" /></TableCell>
                     <TableCell className="truncate max-w-[320px]">{b.linkTo}</TableCell>
                     <TableCell>
-                      <span onClick={() => handleToggleStatus(b.bannerId)} className={`cursor-pointer px-2 py-1 text-xs font-medium rounded-full ${b.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
+                      <span onClick={() => handleToggleStatus(b.id)} className={`cursor-pointer px-2 py-1 text-xs font-medium rounded-full ${b.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
                         {b.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                       </span>
                     </TableCell>
@@ -246,7 +257,7 @@ const BannersPage = () => {
                         }}>
                           <Edit className="h-4 w-4 text-blue-600" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteBanner(b.bannerId)}>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteBanner(b.id)}>
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
@@ -258,7 +269,7 @@ const BannersPage = () => {
           </div>
 
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[calc(100vh-10rem)] overflow-y-auto mt-20">
               <DialogHeader>
                 <DialogTitle>{editingBanner ? 'Edit Banner' : 'Add New Banner'}</DialogTitle>
                 <DialogDescription>
@@ -302,9 +313,9 @@ const BannersPage = () => {
                   />
                 </div>
                 {imageUrl && (
-                  <div>
+                  <div className="text-center">
                     <Label className="block text-sm font-medium text-gray-700 mb-1">Preview</Label>
-                    <img src={imageUrl} alt="Banner Preview" className="w-32 h-auto object-cover rounded-md" />
+                    <img src={imageUrl} alt="Banner Preview" className="w-full h-auto max-h-96 object-contain mx-auto rounded-md" />
                   </div>
                 )}
                 <div>

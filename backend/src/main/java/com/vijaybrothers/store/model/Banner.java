@@ -14,6 +14,9 @@ public class Banner {
     @Column(name = "banner_id")
     private Integer bannerId;
 
+    @Column(name = "name", nullable = false)
+    private String name;
+
     @Column(name = "image", nullable = false)
     private String image;
 
@@ -31,6 +34,8 @@ public class Banner {
     private Instant updatedAt;
 
     public Integer getBannerId() { return bannerId; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
     public String getLinkTo() { return linkTo; }

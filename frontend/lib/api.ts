@@ -218,7 +218,7 @@ export interface Page<T> {
 }
 
 export interface Banner {
-  bannerId: number;
+  id: number;
   name: string;
   image: string;
   linkTo: string;
@@ -237,7 +237,7 @@ export async function fetchBanners(): Promise<Banner[]> {
   return await res.json();
 }
 
-export async function createBanner(banner: { image: string; linkTo: string }): Promise<void> {
+export async function createBanner(banner: { name: string; image: string; linkTo: string }): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/banners`, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
@@ -250,7 +250,7 @@ export async function createBanner(banner: { image: string; linkTo: string }): P
 }
 
 export async function updateBanner(banner: Partial<Banner>): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/admin/banners/${banner.bannerId}`, {
+  const res = await fetch(`${API_BASE_URL}/admin/banners/${banner.id}`, {
     method: 'PUT',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(banner),
@@ -261,8 +261,8 @@ export async function updateBanner(banner: Partial<Banner>): Promise<void> {
   }
 }
 
-export async function deleteBanner(bannerId: number): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/admin/banners/${bannerId}`, {
+export async function deleteBanner(id: number): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/admin/banners/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
