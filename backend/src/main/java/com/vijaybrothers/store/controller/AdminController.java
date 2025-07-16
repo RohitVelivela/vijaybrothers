@@ -7,6 +7,7 @@ import com.vijaybrothers.store.dto.auth.ProfileUpdateRequest;
 import com.vijaybrothers.store.dto.auth.ProfileUpdateResponse;
 import com.vijaybrothers.store.dto.auth.SignupRequest;
 import com.vijaybrothers.store.dto.auth.SignupResponse;
+import com.vijaybrothers.store.model.Admin;
 import com.vijaybrothers.store.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -77,6 +78,20 @@ public class AdminController {
     }
 
     @Operation(
+        summary = "Get admin profile",
+        security = { @SecurityRequirement(name = "bearer-jwt") },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Profile fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Admin not found")
+        }
+    )
+    @GetMapping("/profile")
+    public ResponseEntity<Admin> getAdminProfile(@AuthenticationPrincipal Admin currentAdmin) {
+        return ResponseEntity.ok(currentAdmin);
+    }
+
+    @Operation(
         summary = "Update admin profile",
         security = { @SecurityRequirement(name = "bearer-jwt") },
         responses = {
@@ -89,9 +104,9 @@ public class AdminController {
     @PutMapping("/account")
     public ResponseEntity<ProfileUpdateResponse> updateAccountProfile(
             @Valid @RequestBody ProfileUpdateRequest request,
-            @AuthenticationPrincipal UserDetails currentAdmin
+            @AuthenticationPrincipal Admin currentAdmin
     ) {
-        ProfileUpdateResponse resp = adminService.updateProfile(currentAdmin.getUsername(), request);
+        ProfileUpdateResponse resp = adminService.updateProfile(currentAdmin.getUserName(), request);
         return ResponseEntity.ok(resp);
     }
 }

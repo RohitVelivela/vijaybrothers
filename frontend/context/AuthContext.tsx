@@ -10,27 +10,76 @@ export const getCookie = (name: string) => {
     while (c.charAt(0) === ' ') c = c.substring(1, c.length);
     if (c.indexOf(nameEQ) === 0) {
       const cookieValue = c.substring(nameEQ.length, c.length);
-      console.log(`getCookie: Found cookie '${name}' with value: ${cookieValue}`); // DEBUG
       return cookieValue;
     }
   }
-  console.log(`getCookie: Cookie '${name}' not found.`); // DEBUG
   return null;
 };
 
+interface User {
+  name: string;
+  email: string;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
+  user: User | null;
+  loading: boolean; // Add loading state
   login: (token: string) => void;
   logout: () => void;
+  setUser: (user: User | null) => void; // Add setUser to context
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true); // Initialize loading to true
+
+  useEffect(() => {
+    const token = getCookie('token');
+    if (token) {
+      setIsAuthenticated(true);
+      fetchUserProfile(token);
+    } else {
+      setLoading(false); // No token, so not loading auth status
+    }
+  }, []);
+
+  const fetchUserProfile = async (token: string) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/admin/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setUser({
+          name: userData.userName,
+          email: userData.email,
+          profileImageUrl: userData.profileImageUrl, // Include profileImageUrl
+        });
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile', error);
+      setIsAuthenticated(false);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = (token: string) => {
     document.cookie = `token=${token}; path=/; max-age=3600`; // Store token in cookie
+    setIsAuthenticated(true);
+    fetchUserProfile(token);
   };
 
   const logout = async () => {
@@ -46,24 +95,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       } catch (error) {
         console.error('Error during logout API call:', error);
-        // Even if API call fails, proceed with client-side logout
       }
     }
     document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; // Clear the token cookie
-    setIsAuthenticated(false); // Update state after logout
-    router.push('/admin/login'); // Redirect to admin login page after logout
+    setIsAuthenticated(false);
+    setUser(null);
+    router.push('/admin/login');
   };
 
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false); // Initialize to false
-
-  useEffect(() => {
-    // This code runs only on the client-side
-    const token = getCookie('token');
-    setIsAuthenticated(!!token);
-  }, []); // Empty dependency array means this runs once on mount
-
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, loading, login, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );
