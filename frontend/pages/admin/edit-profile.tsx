@@ -1,89 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import AdminHeader from '../../components/AdminHeader';
-import Sidebar from '../../components/ui/Sidebar';
+import Image from 'next/image';
+import { useToast } from '../../components/ui/use-toast';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Label } from '../../components/ui/label';
-import { useToast } from '../../components/ui/use-toast';
-
-interface AdminProfile {
-  id: number;
-  email: string;
-  name: string;
-  // Add other profile fields as needed
-}
+import AdminHeader from '../../components/AdminHeader';
+import Sidebar from '../../components/ui/Sidebar';
+import { Camera } from 'lucide-react';
 
 const EditProfilePage: React.FC = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<AdminProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [name, setName] = useState('Vijay Admin');
+  const [email, setEmail] = useState('admin@vijaybrothers.com');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [profileImage, setProfileImage] = useState<string | null>('/images/logo.png');
 
-  // Dummy admin email for AdminHeader
-  const adminEmail = "admin@vijaybrothers.com";
-
-  useEffect(() => {
-    // Simulate fetching admin profile data from backend
-    const fetchAdminProfile = async () => {
-      setLoading(true);
-      try {
-        // In a real application, you would make an API call here:
-        // const response = await fetch('/api/admin/profile');
-        // const data = await response.json();
-        // setProfile(data);
-
-        // Using dummy data for now
-        setProfile({
-          id: 1,
-          email: adminEmail,
-          name: "Vijay Admin",
-        });
-      } catch (error) {
-        console.error("Failed to fetch admin profile:", error);
-        toast.error("Failed to load profile data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAdminProfile();
-  }, [toast]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (profile) {
-      setProfile({
-        ...profile,
-        [e.target.id]: e.target.value,
-      });
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setProfileImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(e.target.files[0]);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile) return;
-
-    try {
-      // Simulate updating admin profile data on backend
-      // In a real application, you would make an API call here:
-      // const response = await fetch('/api/admin/profile', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(profile),
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error('Failed to update profile');
-      // }
-
-      toast("Profile updated successfully!");
-      // Optionally redirect or refresh data
-    } catch (error) {
-      console.error("Failed to update admin profile:", error);
-      toast.error("Failed to update profile.");
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: 'Error',
+        description: 'New password and confirm password do not match.',
+        variant: 'destructive',
+      });
+      return;
     }
+    // Handle profile update logic here
+    toast({
+      title: 'Success',
+      description: 'Profile updated successfully!',
+    });
   };
 
   const handleMenuToggle = () => {
@@ -95,58 +57,65 @@ const EditProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      
+    <div className="min-h-screen bg-gray-50 flex">
       <Sidebar
         isOpen={isSidebarOpen}
         isCollapsed={isSidebarCollapsed}
-        activeLink="/admin/dashboard" // Or a specific link for profile if exists
+        activeLink="/admin/edit-profile"
         toggleCollapse={handleMenuToggle}
       />
-
-      <main className={`
-        pt-16 transition-all duration-300 ease-smooth
-        ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'}
-      `}>
-        <div className="p-6 space-y-8">
-          <h1 className="text-3xl font-serif font-bold text-gray-800 mb-6">Edit Profile</h1>
-
-          {loading ? (
-            <p>Loading profile...</p>
-          ) : profile ? (
-            <div className="bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={profile.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={profile.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                {/* Add more fields as needed, e.g., password change, etc. */}
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                  Save Changes
-                </Button>
-              </form>
+      <div className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+        <AdminHeader adminEmail={email} />
+        <main className="p-6">
+          <div className="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto">
+            <div class="flex items-center justify-between">
+              <Image src="/VB logo white back.png" alt="Vijay Brothers Logo" width={150} height={150} />
             </div>
-          ) : (
-            <p>Profile data not found.</p>
-          )}
-        </div>
-      </main>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="md:col-span-2">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Edit Profile</h2>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <Label htmlFor="name">Username</Label>
+                    <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="currentPassword">Old Password</Label>
+                    <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                  </div>
+                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                    Save Changes
+                  </Button>
+                </form>
+              </div>
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="relative w-40 h-40 rounded-full overflow-hidden shadow-lg">
+                  <Image src={profileImage || '/images/default-avatar.png'} alt="Profile" layout="fill" objectFit="cover" />
+                  <label htmlFor="profileImage" className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white cursor-pointer opacity-0 hover:opacity-100 transition-opacity">
+                    <Camera size={32} />
+                  </label>
+                  <Input id="profileImage" type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
+                </div>
+                <Button variant="outline" onClick={() => document.getElementById('profileImage')?.click()}>
+                  Change Picture
+                </Button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

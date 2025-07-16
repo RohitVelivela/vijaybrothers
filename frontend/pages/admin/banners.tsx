@@ -93,7 +93,7 @@ const BannersPage = () => {
 
     const newStatus = bannerToUpdate.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
-      await updateBanner({ id: id, status: newStatus });
+      await updateBanner({ ...bannerToUpdate, status: newStatus });
       setBanners(prev =>
         prev.map(b => b.id === id ? { ...b, status: newStatus } : b)
       );
