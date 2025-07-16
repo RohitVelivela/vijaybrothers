@@ -2,13 +2,12 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Swal from 'sweetalert2';
 
-import { Input } from '../../components/ui/input';
-
-import Sidebar from '../../components/ui/Sidebar';
-import { Button } from '../../components/ui/button';
+import { Input } from '@/components/ui/input';
+import Sidebar from '@/components/ui/Sidebar';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -16,7 +15,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -24,18 +23,23 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '../../components/ui/dialog';
-import { Label } from '../../components/ui/label';
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../components/ui/select';
-import { useToast } from '../../components/ui/use-toast';
-import { fetchBanners, createBanner, updateBanner, deleteBanner, Banner } from '../../lib/api';
-import AdminHeader from '../../components/AdminHeader';
+} from '@/components/ui/select';
+import { useToast } from '@/components/ui/use-toast';
+import { fetchBanners, createBanner, updateBanner, deleteBanner, Banner } from '@/lib/api';
+import AdminHeader from '@/components/AdminHeader';
+import { Switch } from '@/components/ui/switch';
+
+const Plus = dynamic(() => import('lucide-react').then(mod => mod.Plus));
+const Edit = dynamic(() => import('lucide-react').then(mod => mod.Edit));
+const Trash2 = dynamic(() => import('lucide-react').then(mod => mod.Trash2));
 
 const BannersPage = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -154,7 +158,6 @@ const BannersPage = () => {
           name: bannerName,
           image: imageUrl,
           linkTo,
-          status,
         });
         toast.success("Banner updated successfully.");
       } else {
@@ -192,7 +195,7 @@ const BannersPage = () => {
               <h1 className="text-3xl font-serif font-bold text-gray-800">Banners</h1>
               <p className="text-gray-600 mt-1">Manage your banners, add new banners, and update existing ones.</p>
             </div>
-            <Button onClick={() => {
+            <Button variant="default" size="default" onClick={() => {
               setEditingBanner(null);
               setImageUrl('');
               setLinkTo('');
@@ -241,9 +244,11 @@ const BannersPage = () => {
                     <TableCell className="text-left"><img src={b.image} alt="Banner" className="w-48 h-20 object-cover rounded-md" /></TableCell>
                     <TableCell className="truncate max-w-[320px]">{b.linkTo}</TableCell>
                     <TableCell>
-                      <span onClick={() => handleToggleStatus(b.id)} className={`cursor-pointer px-2 py-1 text-xs font-medium rounded-full ${b.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
-                        {b.status === 'ACTIVE' ? 'Active' : 'Inactive'}
-                      </span>
+                      <Switch
+                        checked={b.status === 'ACTIVE'}
+                        onCheckedChange={() => handleToggleStatus(b.id)}
+                        aria-label={`Toggle status for banner ${b.name}`}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
@@ -322,18 +327,7 @@ const BannersPage = () => {
                   <Label htmlFor="linkTo" className="block text-sm font-medium text-gray-700 mb-1">Target Page Link</Label>
                   <Input id="linkTo" value={linkTo} onChange={e => setLinkTo(e.target.value)} placeholder="e.g., /collections/new-arrivals" className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800" />
                 </div>
-                <div>
-                  <Label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Status</Label>
-                  <Select value={status} onValueChange={(value) => setStatus(value as 'ACTIVE' | 'INACTIVE')}>
-                    <SelectTrigger className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-800">
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">Active</SelectItem>
-                      <SelectItem value="INACTIVE">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>

@@ -1,7 +1,5 @@
 import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router'; // Import useRouter
-import Head from 'next/head'; // Import Head
-import Script from 'next/script';
 import './admin/globals.css'; // Global styles from the original project
 import Header from '../components/Header'; // Import the Header component
 import Footer from '../components/Footer'; // Import the Footer component
@@ -21,11 +19,6 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <AuthProvider>
       <CartProvider>
-        <Head>
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
-        </Head>
         {showHeaderFooter && <Header />}
         <Component {...pageProps} />
         {showHeaderFooter && <Footer />}
