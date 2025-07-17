@@ -5,11 +5,10 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.Instant;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "categories")
-@Getter
-@Setter
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +25,7 @@ public class Category {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
+    @JsonIgnore
     private Category parentCategory;
 
     @Column(name = "is_active", nullable = true)
@@ -43,7 +43,32 @@ public class Category {
     private Instant updatedAt;
 
     @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Category> subCategories;
+
+    // Getters
+    public Integer getCategoryId() { return categoryId; }
+    public String getName() { return name; }
+    public String getSlug() { return slug; }
+    public String getDescription() { return description; }
+    public Category getParentCategory() { return parentCategory; }
+    public Boolean getIsActive() { return isActive; }
+    public Integer getPosition() { return position; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public List<Category> getSubCategories() { return subCategories; }
+
+    // Setters
+    public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
+    public void setName(String name) { this.name = name; }
+    public void setSlug(String slug) { this.slug = slug; }
+    public void setDescription(String description) { this.description = description; }
+    public void setParentCategory(Category parentCategory) { this.parentCategory = parentCategory; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+    public void setPosition(Integer position) { this.position = position; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+    public void setSubCategories(List<Category> subCategories) { this.subCategories = subCategories; }
 
     @PrePersist
     protected void onCreate() {
@@ -62,6 +87,4 @@ public class Category {
     protected void onUpdate() {
         this.updatedAt = Instant.now();
     }
-
-    
 }

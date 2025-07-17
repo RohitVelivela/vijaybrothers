@@ -31,7 +31,7 @@ public class AdminProductController {
 
     @PostMapping
     public ResponseEntity<Map<String, String>> create(
-        @Valid @RequestBody ProductCreateRequest req
+        @Valid @ModelAttribute ProductCreateRequest req
     ) {
         svc.createProduct(req);
         return ResponseEntity
@@ -50,7 +50,7 @@ public class AdminProductController {
     @PutMapping("/{productId}")
     public ResponseEntity<Map<String, String>> update(
         @PathVariable Integer productId,
-        @Valid @RequestBody ProductUpdateRequest req
+        @Valid @ModelAttribute ProductUpdateRequest req
     ) {
         svc.updateProduct(productId, req); // Pass both productId and req
         return ResponseEntity

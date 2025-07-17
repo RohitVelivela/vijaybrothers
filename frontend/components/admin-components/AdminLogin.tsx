@@ -95,7 +95,7 @@ const AdminLogin: React.FC = () => {
       <div className="relative z-25 w-full max-w-sm px-6 -translate-y-15">
         <div className="flex justify-center mb-6">
           <img
-            src="/images/logo.png"
+            src="/images/default-avatar.png"
             alt="Vijay Brothers Logo"
             className="w-32 h-32 object-contain rounded-lg shadow-lg bg-white"
           />

@@ -4,6 +4,7 @@ import com.vijaybrothers.store.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -21,11 +22,15 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findByInStock(boolean inStock);
     boolean existsByCategory_CategoryId(Integer categoryId);
     Optional<Product> findByProductCode(String productCode);
+    @EntityGraph(attributePaths = "images")
     List<Product> findAllByDeletedFalse();
+    @EntityGraph(attributePaths = "images")
     Page<Product> findByDeletedFalse(Pageable pageable);
+    @EntityGraph(attributePaths = "images")
+    Page<Product> findAll(Pageable pageable);
     Optional<Product> findByProductIdAndDeletedFalse(Integer productId);
 
-    @Query("SELECT p FROM Product p JOIN FETCH p.category WHERE p.productId = :productId AND p.deleted = false")
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.images WHERE p.productId = :productId AND p.deleted = false")
     Optional<Product> findByIdWithCategoryAndImages(@Param("productId") Integer productId);
 
     @Query("SELECT p FROM Product p WHERE (:categoryId IS NULL OR p.category.categoryId = :categoryId) AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR p.productCode LIKE CONCAT('%', :query, '%')) AND p.deleted = false")

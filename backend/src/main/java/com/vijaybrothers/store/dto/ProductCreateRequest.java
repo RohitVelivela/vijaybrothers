@@ -5,6 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -33,6 +39,5 @@ public class ProductCreateRequest {
 
     private String youtubeLink;
 
-    @NotBlank
-    private String mainImageUrl;
+    private List<MultipartFile> images;
 }

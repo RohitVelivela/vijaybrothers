@@ -8,12 +8,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "carts")
-@NoArgsConstructor @AllArgsConstructor @Builder
 public class Cart {
-
-    public Integer getCartId() { return cartId; }
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,4 +20,14 @@ public class Cart {
 
     @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY)
     private List<CartItem> items;
+
+    // Getters
+    public Integer getCartId() { return cartId; }
+    public Instant getCreatedAt() { return createdAt; }
+    public List<CartItem> getItems() { return items; }
+
+    // Setters
+    public void setCartId(Integer cartId) { this.cartId = cartId; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public void setItems(List<CartItem> items) { this.items = items; }
 }

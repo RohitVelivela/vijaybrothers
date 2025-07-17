@@ -32,11 +32,9 @@ public class ProductQueryService {
             .orElseThrow(() -> new NoSuchElementException("Product not found"));
 
         // map images
-        List<ProductDetail.ImageInfo> images = p.getGalleryImages().stream()
+        List<ProductDetail.ImageInfo> images = p.getImages().stream()
             .map(img -> new ProductDetail.ImageInfo(
-                img.getImageId(),
-                img.getImageUrl(),
-                img.getUploadedAt()
+                img.getImageUrl()
             ))
             .toList();
 
@@ -59,7 +57,6 @@ public class ProductQueryService {
             p.getStockQuantity(),
             p.getInStock(),
             p.getYoutubeLink(),
-            p.getMainImageUrl(),
             p.getCreatedAt(),
             p.getUpdatedAt(),
             p.getCreatedBy(),

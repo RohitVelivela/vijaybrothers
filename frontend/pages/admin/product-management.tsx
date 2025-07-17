@@ -1,4 +1,3 @@
-
 'use client';
 
 
@@ -7,7 +6,12 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { ChevronDown, Search, PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { ChevronDown, Search, PlusCircle, Edit, Trash2, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 import {
   Dialog,
   DialogContent,
@@ -50,6 +54,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState('');
+  const [currentImageUrls, setCurrentImageUrls] = useState<string[]>([]);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0); // 0-indexed for backend
@@ -64,7 +69,8 @@ export default function ProductsPage() {
   const [newPrice, setNewPrice] = useState(0);
   const [newStockQuantity, setNewStockQuantity] = useState(0);
   const [newYoutubeLink, setNewYoutubeLink] = useState('');
-  const [newMainImageUrl, setNewMainImageUrl] = useState('');
+  const [newImages, setNewImages] = useState<(File | { id: number; imageUrl: string; isMain: boolean })[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
   const [newColor, setNewColor] = useState(''); // New state for color
   const [newFabric, setNewFabric] = useState(''); // New state for fabric
   const [categories, setCategories] = useState<Category[]>([]);
@@ -180,18 +186,19 @@ export default function ProductsPage() {
       return;
     }
     setEditingProduct(productToEdit);
-        setNewName(productToEdit.name);
-        setNewProductCode(productToEdit.productCode);
-        setNewPrice(productToEdit.price);
-        setNewStockQuantity(productToEdit.stockQuantity);
-        setNewCategoryId(productToEdit.category?.categoryId || undefined);
-        setNewDescription(productToEdit.description || '');
-        setNewYoutubeLink(productToEdit.youtubeLink || '');
-        setNewMainImageUrl(productToEdit.mainImageUrl || '');
-        setNewColor(productToEdit.color || ''); // Populate newColor
-        setNewFabric(productToEdit.fabric || ''); // Populate newFabric
-        setIsModalOpen(true);
-    };
+    setNewName(productToEdit.name);
+    setNewProductCode(productToEdit.productCode);
+    setNewPrice(productToEdit.price);
+    setNewStockQuantity(productToEdit.stockQuantity);
+    setNewCategoryId(productToEdit.category?.categoryId || undefined);
+    setNewDescription(productToEdit.description || '');
+    setNewYoutubeLink(productToEdit.youtubeLink || '');
+    setNewImages(productToEdit.images || []); // Populate newImages with existing image URLs
+    setDeletedImageIds([]); // Clear deleted image IDs when opening for edit
+    setNewColor(productToEdit.color || ''); // Populate newColor
+    setNewFabric(productToEdit.fabric || ''); // Populate newFabric
+    setIsModalOpen(true);
+  };
 
   const handleDeleteProduct = async (id: number) => {
     const result = await Swal.fire({
@@ -249,14 +256,24 @@ export default function ProductsPage() {
     setSearchTerm(e.target.value);
   };
 
+  const handleRemoveImage = (index: number, isExisting: boolean, imageId?: number) => {
+    setNewImages(prevImages => {
+      const updatedImages = prevImages.filter((_, i) => i !== index);
+      if (isExisting && imageId) {
+        setDeletedImageIds(prev => [...prev, imageId]);
+      }
+      // If the removed image was the main image, and there are other images, set the first one as main
+      if (prevImages[index] && (prevImages[index] as any).isMain && updatedImages.length > 0) {
+        updatedImages[0] = { ...updatedImages[0] as any, isMain: true };
+      }
+      return updatedImages;
+    });
+  };
+
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewMainImageUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files) {
+      setNewImages(prevImages => [...prevImages, ...Array.from(files)]);
     }
   };
 
@@ -268,7 +285,8 @@ export default function ProductsPage() {
     setNewCategoryId(undefined);
     setNewDescription('');
     setNewYoutubeLink('');
-    setNewMainImageUrl('');
+    setNewImages([]); // Clear images
+    setDeletedImageIds([]); // Clear deleted image IDs
     setNewColor(''); // Clear color
     setNewFabric(''); // Clear fabric
     setEditingProduct(null);
@@ -281,27 +299,48 @@ export default function ProductsPage() {
         Swal.fire('Error!', 'Name, SKU, and Category are required.', 'error');
         return;
       }
-      const productData = {
-        productCode: newProductCode,
-        name: newName,
-        description: newDescription,
-        price: newPrice,
-        categoryId: newCategoryId,
-        stockQuantity: newStockQuantity,
-        inStock: newStockQuantity > 0,
-        youtubeLink: newYoutubeLink,
-        mainImageUrl: newMainImageUrl,
-        color: newColor, // Added color
-        fabric: newFabric, // Added fabric
-      };
+      const formData = new FormData();
+      formData.append('productCode', newProductCode);
+      formData.append('name', newName);
+      formData.append('description', newDescription);
+      formData.append('price', newPrice.toString());
+      formData.append('categoryId', (newCategoryId as number).toString());
+      formData.append('stockQuantity', newStockQuantity.toString());
+      formData.append('inStock', (newStockQuantity > 0).toString());
+      formData.append('youtubeLink', newYoutubeLink);
+      formData.append('color', newColor);
+      formData.append('fabric', newFabric);
+
+      let mainImageIdToSend: number | undefined = undefined;
+
+      newImages.forEach((image, index) => {
+        if (image instanceof File) {
+          formData.append(`images`, image);
+          // For new images, the first one uploaded will be considered main if no existing main image
+          // The backend handles the isMain logic for new images based on order and existing main image presence.
+        } else {
+          // This is an existing image
+          // We only need to track which one is the main image if it's an existing one
+          if (image.isMain) {
+            mainImageIdToSend = image.id;
+          }
+        }
+      });
+
+      if (mainImageIdToSend !== undefined) {
+        formData.append('mainImageId', mainImageIdToSend.toString());
+      }
 
       if (editingProduct) {
+        deletedImageIds.forEach(id => {
+          formData.append(`deletedImageIds`, id.toString());
+        });
         // Update existing product
-        await updateProduct({ ...productData, productId: editingProduct.productId });
+        await updateProduct(editingProduct.productId, formData);
         Swal.fire('Updated!', 'Product has been updated.', 'success');
       } else {
         // Create new product
-        await createProduct(productData);
+        await createProduct(formData);
         Swal.fire('Created!', 'New product has been created.', 'success');
       }
 
@@ -359,18 +398,18 @@ export default function ProductsPage() {
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className="pl-10 pr-4 py-2 border rounded-md w-full focus:ring-yellow-500 focus:border-yellow-500"
+                className="pl-10 pr-4 py-2 border rounded-md focus:ring-yellow-500 focus:border-yellow-500"
               />
             </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full md:w-auto justify-between md:justify-start">
+                <Button variant="outline" className="w-full md:w-1/4 justify-between px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800">
                   Category: {filterCategory}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="w-full">
                 {uniqueCategoryNames.map(name => (
                   <DropdownMenuItem key={name} onClick={() => setFilterCategory(name)}>
                     {name}
@@ -386,10 +425,10 @@ export default function ProductsPage() {
                 role="switch"
                 aria-checked={showDeleted}
                 onClick={() => setShowDeleted(!showDeleted)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 ${showDeleted ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 ${showDeleted ? 'bg-yellow-500' : 'bg-gray-200'}`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showDeleted ? 'translate-x-6' : 'translate-x-1'}`}
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${showDeleted ? 'translate-x-7' : 'translate-x-1'}`}
                 />
               </button>
             </div>
@@ -430,16 +469,21 @@ export default function ProductsPage() {
                       {product.category?.name || categories.find(cat => cat.categoryId === product.categoryId)?.name || 'N/A'}
                     </TableCell>
                     <TableCell className="align-top">
-                      {product.mainImageUrl ? (
-                        <div
-                          className="cursor-pointer"
-                          onClick={() => {
-                            setCurrentImageUrl(product.mainImageUrl);
-                            setIsImageModalOpen(true);
-                          }}
-                        >
-                          <img src={product.mainImageUrl} alt={product.name} className="w-24 h-24 object-cover rounded-md" />
-                        </div>
+                      {product.images && product.images.length > 0 ? (
+                        (() => {
+                          const mainImage = product.images.find(img => img.isMain) || product.images[0];
+                          return (
+                            <div
+                              className="cursor-pointer"
+                              onClick={() => {
+                                setCurrentImageUrls(product.images.map(img => img.imageUrl));
+                                setIsImageModalOpen(true);
+                              }}
+                            >
+                              <img src={mainImage.imageUrl} alt={product.name} className="w-24 h-24 object-cover rounded-md" />
+                            </div>
+                          );
+                        })()
                       ) : (
                         'N/A'
                       )}
@@ -456,7 +500,7 @@ export default function ProductsPage() {
                       <div className="flex items-center space-x-2">
                         {product.deleted ? (
                           <Button variant="outline" size="icon" onClick={() => handleRestoreProduct(product.productId)}>
-                            <Trash2 className="h-4 w-4 text-green-500" />
+                            <RotateCcw className="h-4 w-4 text-green-500" />
                           </Button>
                         ) : (
                           <>
@@ -574,18 +618,32 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="mainImage" className="block text-sm font-medium text-gray-700 mb-1">Main Image</label>
-                    <div className="flex items-center space-x-2">
-                      <Input
-                        id="mainImage"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
-                      />
-                      {newMainImageUrl && (
-                        <img src={newMainImageUrl} alt="Main Product" className="w-16 h-16 object-cover rounded-md" />
-                      )}
+                    <label htmlFor="productImages" className="block text-sm font-medium text-gray-700 mb-1">Product Images</label>
+                    <Input
+                      id="productImages"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                    />
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {newImages.map((image, index) => (
+                        <div key={index} className="relative w-24 h-24 group">
+                          <img
+                            src={typeof image === 'object' && 'id' in image ? image.imageUrl : URL.createObjectURL(image as File)}
+                            alt={`Product Image ${index + 1}`}
+                            className="w-full h-full object-cover rounded-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index, typeof image === 'object' && 'id' in image, typeof image === 'object' && 'id' in image ? (image as { id: number; imageUrl: string }).id : undefined)}
+                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            X
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                   <div>
@@ -617,10 +675,23 @@ export default function ProductsPage() {
           <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
             <DialogContent className="sm:max-w-[800px]">
               <DialogHeader>
-                <DialogTitle>Product Image</DialogTitle>
+                <DialogTitle>Product Images</DialogTitle>
               </DialogHeader>
-              <div className="flex justify-center items-center">
-                <img src={currentImageUrl} alt="Product" className="max-w-full h-auto" />
+              <div className="relative">
+                <Swiper
+                  modules={[Navigation, Pagination]}
+                  spaceBetween={10}
+                  slidesPerView={1}
+                  navigation
+                  pagination={{ clickable: true }}
+                  className="mySwiper"
+                >
+                  {currentImageUrls.map((imageUrl, index) => (
+                    <SwiperSlide key={index}>
+                      <img src={imageUrl} alt={`Product Image ${index + 1}`} className="max-w-full h-auto object-contain" />
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
               </div>
               <DialogFooter>
                 <Button onClick={() => setIsImageModalOpen(false)}>Close</Button>

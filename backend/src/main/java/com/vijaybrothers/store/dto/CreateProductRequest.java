@@ -14,7 +14,7 @@ public class CreateProductRequest {
     private Integer stockQuantity;
     private Boolean isInStock;
     private String youtubeLink;
-    private String mainImageUrl;
+    
     private String color;
     private String fabric;
 
@@ -28,7 +28,7 @@ public class CreateProductRequest {
         product.setStockQuantity(stockQuantity);
         product.setInStock(isInStock);
         product.setYoutubeLink(youtubeLink);
-        product.setMainImageUrl(mainImageUrl);
+        
         product.setColor(color);
         product.setFabric(fabric);
         return product;

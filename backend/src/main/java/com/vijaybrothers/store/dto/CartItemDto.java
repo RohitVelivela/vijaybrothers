@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.time.Instant;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Builder
 public class CartItemDto {
     private Integer cartItemId;
     private Integer productId;
@@ -22,9 +22,18 @@ public class CartItemDto {
             .addedAt(ci.getAddedAt())
             .build();
     }
+
+    // Getters
     public Integer getCartItemId() { return cartItemId; }
     public Integer getProductId() { return productId; }
     public String getProductName() { return productName; }
     public Integer getQuantity() { return quantity; }
     public Instant getAddedAt() { return addedAt; }
+
+    // Setters
+    public void setCartItemId(Integer cartItemId) { this.cartItemId = cartItemId; }
+    public void setProductId(Integer productId) { this.productId = productId; }
+    public void setProductName(String productName) { this.productName = productName; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public void setAddedAt(Instant addedAt) { this.addedAt = addedAt; }
 }

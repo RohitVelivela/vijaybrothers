@@ -1,34 +1,31 @@
 package com.vijaybrothers.store.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.*;
-
-import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "product_images")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductImage {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer imageId;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false)
     private String imageUrl;
 
-    @Column(nullable = false)
-    private Integer displayOrder;
-
-    @Column(nullable = false)
-    private Instant uploadedAt;
+    private boolean isMain;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id")
+    @JsonBackReference
     private Product product;
-
-    @PrePersist
-    protected void onCreate() {
-        if (uploadedAt == null) {
-            uploadedAt = Instant.now();
-        }
-    }
 }

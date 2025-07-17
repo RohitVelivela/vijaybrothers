@@ -2,6 +2,7 @@ package com.vijaybrothers.store.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -10,30 +11,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "products")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Product {
-
-    public List<ProductImage> getGalleryImages() { return galleryImages; }
-    public Category getCategory() { return category; }
-    public Integer getProductId() { return productId; }
-    public String getProductCode() { return productCode; }
-    public String getName() { return name; }
-    public String getDescription() { return description; }
-    public BigDecimal getPrice() { return price; }
-    public Integer getStockQuantity() { return stockQuantity; }
-    public Boolean getInStock() { return inStock; }
-    public String getYoutubeLink() { return youtubeLink; }
-    public String getMainImageUrl() { return mainImageUrl; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
-    public String getCreatedBy() { return createdBy; }
-    public String getUpdatedBy() { return updatedBy; }
-    public String getColor() { return color; }
-    public String getFabric() { return fabric; }
 
 
     // ─── Primary key ───
@@ -58,15 +36,11 @@ public class Product {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
+    @JsonIgnore
     private Category category;
 
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
-    private List<ProductImage> images;
-
-    @Builder.Default
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("displayOrder ASC")
-    private List<ProductImage> galleryImages = new ArrayList<>();
+    private List<ProductImage> images = new ArrayList<>();
 
     @Column(name = "stock_quantity")
     private Integer stockQuantity;
@@ -76,9 +50,6 @@ public class Product {
 
     @Column(name = "youtube_link")
     private String youtubeLink;
-
-    @Column(name = "main_image_url")
-    private String mainImageUrl;
 
     // ─── Product attributes ───
     private String color;
@@ -98,7 +69,46 @@ public class Product {
     @Column(name = "updated_by")
     private String updatedBy;
 
-    @Builder.Default
     @Column(nullable = false)
     private boolean deleted = false;
+
+    // Getters
+    public Integer getProductId() { return productId; }
+    public String getProductCode() { return productCode; }
+    public String getName() { return name; }
+    public String getSlug() { return slug; }
+    public String getDescription() { return description; }
+    public BigDecimal getPrice() { return price; }
+    public Category getCategory() { return category; }
+    public List<ProductImage> getImages() { return images; }
+    public Integer getStockQuantity() { return stockQuantity; }
+    public Boolean getInStock() { return inStock; }
+    public String getYoutubeLink() { return youtubeLink; }
+    public String getColor() { return color; }
+    public String getFabric() { return fabric; }
+    public Instant getCreatedAt() { return createdAt; }
+    public String getCreatedBy() { return createdBy; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public String getUpdatedBy() { return updatedBy; }
+    public boolean isDeleted() { return deleted; }
+
+    // Setters
+    public void setProductId(Integer productId) { this.productId = productId; }
+    public void setProductCode(String productCode) { this.productCode = productCode; }
+    public void setName(String name) { this.name = name; }
+    public void setSlug(String slug) { this.slug = slug; }
+    public void setDescription(String description) { this.description = description; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+    public void setCategory(Category category) { this.category = category; }
+    public void setImages(List<ProductImage> images) { this.images = images; }
+    public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
+    public void setInStock(Boolean inStock) { this.inStock = inStock; }
+    public void setYoutubeLink(String youtubeLink) { this.youtubeLink = youtubeLink; }
+    public void setColor(String color) { this.color = color; }
+    public void setFabric(String fabric) { this.fabric = fabric; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+    public void setUpdatedBy(String updatedBy) { this.updatedBy = updatedBy; }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
 }

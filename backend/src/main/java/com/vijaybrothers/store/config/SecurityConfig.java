@@ -114,7 +114,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/checkout/guest/**").permitAll()
                 .requestMatchers("/api/payments/webhook").permitAll()
 
-                .requestMatchers(HttpMethod.POST, "/api/admin/categories").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/admin/categories").permitAll()
 
                 // Admin product management - now public (no auth required)
                 .requestMatchers(HttpMethod.POST, "/api/admin/products").hasRole("ADMIN")
@@ -124,9 +124,9 @@ public class SecurityConfig {
 
                 // Admin category management - now public (no auth required)
                 
-                .requestMatchers(HttpMethod.GET, "/api/admin/categories/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/admin/categories/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/admin/categories/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/admin/categories/**").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/admin/categories/**").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/api/admin/categories/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/admin/categories/*/products").authenticated()
 
                 // Admin order management (still protected)

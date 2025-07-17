@@ -6,7 +6,7 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "contact_messages")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ContactMessage {
 
     @Id

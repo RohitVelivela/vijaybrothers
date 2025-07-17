@@ -4,6 +4,8 @@ import com.vijaybrothers.store.model.Product;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,10 +24,12 @@ public class ProductDetailDto {
     private Integer stockQuantity;
     private Boolean inStock;
     private String youtubeLink;
-    private String mainImageUrl;
+    
     private String color;
     private String fabric;
     private List<String> imageUrls;
+
+    
 
     public static ProductDetailDto fromEntity(Product product) {
         ProductDetailDto dto = new ProductDetailDto();
@@ -36,19 +40,12 @@ public class ProductDetailDto {
         dto.setStockQuantity(product.getStockQuantity());
         dto.setInStock(product.getInStock());
         dto.setYoutubeLink(product.getYoutubeLink());
-        dto.setMainImageUrl(product.getMainImageUrl());
         dto.setColor(product.getColor());
         dto.setFabric(product.getFabric());
         if (product.getCategory() != null) {
             dto.setCategoryId(product.getCategory().getCategoryId());
             dto.setCategoryName(product.getCategory().getName());
         }
-        dto.setStockQuantity(product.getStockQuantity());
-        dto.setInStock(product.getInStock());
-        dto.setYoutubeLink(product.getYoutubeLink());
-        dto.setMainImageUrl(product.getMainImageUrl());
-        dto.setColor(product.getColor());
-        dto.setFabric(product.getFabric());
         if (product.getImages() != null) {
             dto.setImageUrls(product.getImages().stream()
                 .map(img -> img.getImageUrl())

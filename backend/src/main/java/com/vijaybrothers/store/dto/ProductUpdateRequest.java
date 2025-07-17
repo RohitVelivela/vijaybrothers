@@ -5,6 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -22,5 +28,7 @@ public class ProductUpdateRequest {
     private Integer stockQuantity;
     private Boolean inStock;
     private String youtubeLink;
-    private String mainImageUrl;
+    private List<MultipartFile> images;
+    private List<Long> deletedImageIds;
+    private Long mainImageId;
 }

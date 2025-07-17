@@ -13,13 +13,12 @@ public record ProductDetail(
     Integer          stockQuantity,
     Boolean          inStock,
     String           youtubeLink,
-    String           mainImageUrl,
     Instant          createdAt,
     Instant          updatedAt,
     String           createdBy,
     String           updatedBy,
     CategoryInfo     category,
-    List<ImageInfo>  galleryImages
+    List<ImageInfo>  images
 ) {
   public record CategoryInfo(
       Integer categoryId,
@@ -30,8 +29,6 @@ public record ProductDetail(
   ) {}
 
   public record ImageInfo(
-      Integer imageId,
-      String  imageUrl,
-      Instant uploadedAt
+      String  imageUrl
   ) {}
 }

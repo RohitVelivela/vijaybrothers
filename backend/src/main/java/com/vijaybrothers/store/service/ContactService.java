@@ -20,12 +20,13 @@ public class ContactService {
      */
     @Transactional
     public void submitForm(ContactFormRequest req) {
-        ContactMessage cm = new ContactMessage();
-        cm.setName(     req.name());
-        cm.setEmail(    req.email());
-        cm.setPhone(    req.phone());
-        cm.setMessage(  req.message());
-        cm.setCreatedAt(Instant.now());
+        ContactMessage cm = ContactMessage.builder()
+                .name(req.name())
+                .email(req.email())
+                .phone(req.phone())
+                .message(req.message())
+                .createdAt(Instant.now())
+                .build();
         repo.save(cm);
     }
 }

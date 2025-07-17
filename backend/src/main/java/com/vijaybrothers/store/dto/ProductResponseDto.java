@@ -15,7 +15,7 @@ public class ProductResponseDto {
     private Integer stockQuantity;
     private Boolean isInStock;
     private String youtubeLink;
-    private String mainImageUrl;
+    
     private String color;
     private String fabric;
 
@@ -30,7 +30,6 @@ public class ProductResponseDto {
         dto.setStockQuantity(product.getStockQuantity());
         dto.setIsInStock(product.getInStock());
         dto.setYoutubeLink(product.getYoutubeLink());
-        dto.setMainImageUrl(product.getMainImageUrl());
         dto.setColor(product.getColor());
         dto.setFabric(product.getFabric());
         return dto;

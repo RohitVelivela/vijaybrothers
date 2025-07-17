@@ -93,7 +93,7 @@ public class CartService {
                 ci.getCartItemId(),
                 ci.getProduct().getProductId(),
                 ci.getProduct().getName(),
-                ci.getProduct().getMainImageUrl(),
+                ci.getProduct().getImages().isEmpty() ? null : ci.getProduct().getImages().get(0).getImageUrl(),
                 ci.getProduct().getPrice(),
                 ci.getQuantity(),
                 lineTotal

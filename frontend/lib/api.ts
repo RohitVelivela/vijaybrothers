@@ -70,6 +70,12 @@ export async function deleteCategory(id: number): Promise<void> {
   }
 }
 
+export interface ProductImage {
+  id: number;
+  imageUrl: string;
+  isMain: boolean;
+}
+
 export interface Product {
   productId: number;
   productCode: string;
@@ -79,12 +85,10 @@ export interface Product {
   price: number;
   categoryId?: number; // Added categoryId directly
   category?: Category;
-  images: any[];
-  galleryImages: any[];
+  images: ProductImage[];
   stockQuantity: number;
   inStock: boolean;
   youtubeLink: string;
-  
   color?: string; // Added color
   fabric?: string; // Added fabric
   deleted: boolean; // Added deleted field
@@ -119,11 +123,11 @@ export async function fetchProductById(id: number): Promise<Product> {
     return await res.json();
 }
 
-export async function createProduct(product: any): Promise<void> {
+export async function createProduct(productData: FormData): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/products`, {
     method: 'POST',
-    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify(product),
+    headers: { ...getAuthHeaders() },
+    body: productData,
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -131,11 +135,11 @@ export async function createProduct(product: any): Promise<void> {
   }
 }
 
-export async function updateProduct(product: Partial<Product>): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/admin/products/${product.productId}`, {
+export async function updateProduct(productId: number, productData: FormData): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/admin/products/${productId}`, {
     method: 'PUT',
-    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify(product),
+    headers: { ...getAuthHeaders() },
+    body: productData,
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -223,6 +227,7 @@ export interface Banner {
   image: string;
   linkTo: string;
   status: 'ACTIVE' | 'INACTIVE';
+  isDefault: boolean; // New field
   createdAt: string;
   updatedAt: string;
 }
@@ -237,7 +242,7 @@ export async function fetchBanners(): Promise<Banner[]> {
   return await res.json();
 }
 
-export async function createBanner(banner: { name: string; image: string; linkTo: string }): Promise<void> {
+export async function createBanner(banner: { name: string; image: string; linkTo: string; status?: 'ACTIVE' | 'INACTIVE'; isDefault?: boolean }): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/banners`, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },

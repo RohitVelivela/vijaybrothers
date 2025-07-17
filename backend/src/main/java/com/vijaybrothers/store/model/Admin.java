@@ -44,7 +44,7 @@ public class Admin implements UserDetails {
         this.createdAt = now;
         this.updatedAt = now;
         if (this.role == null) {
-            this.role = "ADMIN";
+            this.role = "ROLE_ADMIN";
         }
     }
 
@@ -77,7 +77,7 @@ public class Admin implements UserDetails {
     // UserDetails methods
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(this.role));
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + this.role));
     }
 
     @Override

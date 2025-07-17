@@ -2,8 +2,8 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import Swal from 'sweetalert2';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
 import Sidebar from '@/components/ui/Sidebar';
@@ -37,9 +37,6 @@ import { fetchBanners, createBanner, updateBanner, deleteBanner, Banner } from '
 import AdminHeader from '@/components/AdminHeader';
 import { Switch } from '@/components/ui/switch';
 
-const Plus = dynamic(() => import('lucide-react').then(mod => mod.Plus));
-const Edit = dynamic(() => import('lucide-react').then(mod => mod.Edit));
-const Trash2 = dynamic(() => import('lucide-react').then(mod => mod.Trash2));
 
 const BannersPage = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -54,6 +51,7 @@ const BannersPage = () => {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [linkTo, setLinkTo] = useState('');
   const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
+  const [isDefault, setIsDefault] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
 
@@ -77,6 +75,38 @@ const BannersPage = () => {
     try {
       const data = await fetchBanners();
       setBanners(data);
+      const activeBanners = data.filter(b => b.status === 'ACTIVE');
+      const defaultBannerExists = data.some(b => b.isDefault);
+
+      if (activeBanners.length === 0 && data.length > 0) {
+        // If no active banners, activate the one marked as default, or the first one if no default
+        const bannerToActivate = data.find(b => b.isDefault) || data.sort((a, b) => a.id - b.id)[0];
+        if (bannerToActivate) {
+          await updateBanner({ ...bannerToActivate, status: 'ACTIVE' });
+          setBanners(prev => prev.map(b => b.id === bannerToActivate.id ? { ...b, status: 'ACTIVE' } : b));
+          toast.info("No active banners found. We've automatically activated a banner to ensure visibility. Please ensure at least one banner remains active.");
+        }
+      } else if (activeBanners.length > 1 && defaultBannerExists) {
+        // If multiple active banners and a default exists, deactivate non-default active ones
+        for (const banner of activeBanners) {
+          if (!banner.isDefault) {
+            await updateBanner({ ...banner, status: 'INACTIVE' });
+          }
+        }
+        setBanners(prev => prev.map(b => {
+          if (activeBanners.some(ab => ab.id === b.id) && !b.isDefault) {
+            return { ...b, status: 'INACTIVE' };
+          }
+          return b;
+        }));
+        toast.info("Multiple active banners found; non-default ones have been deactivated.");
+      } else if (activeBanners.length === 1 && !defaultBannerExists) {
+        // If only one active banner and no default, make it default
+        const activeBanner = activeBanners[0];
+        await updateBanner({ ...activeBanner, isDefault: true });
+        setBanners(prev => prev.map(b => b.id === activeBanner.id ? { ...b, isDefault: true } : b));
+        toast.info("The only active banner has been set as default.");
+      }
     } catch (error) {
       
       toast.error("Failed to load banners.");
@@ -92,6 +122,19 @@ const BannersPage = () => {
     if (!bannerToUpdate) return;
 
     const newStatus = bannerToUpdate.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+
+    if (newStatus === 'INACTIVE') {
+      if (bannerToUpdate.isDefault) {
+        toast.error("Cannot deactivate the default banner. Please set another banner as default first.");
+        return;
+      }
+      const activeCount = banners.filter(b => b.status === 'ACTIVE' && b.id !== id).length;
+      if (activeCount === 0) {
+        toast.error("Cannot deactivate the last active banner. At least one banner must be active.");
+        return;
+      }
+    }
+
     try {
       await updateBanner({ ...bannerToUpdate, status: newStatus });
       setBanners(prev =>
@@ -99,7 +142,6 @@ const BannersPage = () => {
       );
       toast.success("Banner status updated.");
     } catch (error) {
-      
       toast.error("Failed to update banner status.");
     }
   };
@@ -112,6 +154,20 @@ const BannersPage = () => {
         'Cannot delete banner: ID is missing.',
         'error'
       );
+      return;
+    }
+
+    const bannerToDelete = banners.find(b => b.id === id);
+    if (bannerToDelete?.status === 'ACTIVE') {
+      const activeCount = banners.filter(b => b.status === 'ACTIVE' && b.id !== id).length;
+      if (activeCount === 0) {
+        toast.error("Cannot delete the last active banner. At least one banner must be active.");
+        return;
+      }
+    }
+
+    if (bannerToDelete?.isDefault) {
+      toast.error("Cannot delete the default banner. Please set another banner as default first.");
       return;
     }
 
@@ -158,6 +214,8 @@ const BannersPage = () => {
           name: bannerName,
           image: imageUrl,
           linkTo,
+          status: isDefault ? 'ACTIVE' : status, // If default, force active
+          isDefault: isDefault,
         });
         toast.success("Banner updated successfully.");
       } else {
@@ -165,8 +223,18 @@ const BannersPage = () => {
           name: bannerName,
           image: imageUrl,
           linkTo: linkTo,
+          status: isDefault ? 'ACTIVE' : status, // If default, force active
+          isDefault: isDefault,
         });
         toast.success("Banner created successfully.");
+      }
+
+      if (isDefault) {
+        // Deactivate all other banners and set their isDefault to false
+        const otherBanners = banners.filter(b => b.id !== editingBanner?.id);
+        for (const banner of otherBanners) {
+          await updateBanner({ ...banner, status: 'INACTIVE', isDefault: false });
+        }
       }
       setIsModalOpen(false);
       loadBanners(); // Reload banners after save
@@ -252,7 +320,7 @@ const BannersPage = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="icon" onClick={() => {
+                        <Button variant="outline" size="icon" onClick={() => {
                           setEditingBanner(b);
                           setBannerName(b.name);
                           setImageUrl(b.image);
@@ -262,7 +330,7 @@ const BannersPage = () => {
                         }}>
                           <Edit className="h-4 w-4 text-blue-600" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteBanner(b.id)}>
+                        <Button variant="outline" size="icon" onClick={() => handleDeleteBanner(b.id)}>
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
@@ -326,6 +394,14 @@ const BannersPage = () => {
                 <div>
                   <Label htmlFor="linkTo" className="block text-sm font-medium text-gray-700 mb-1">Target Page Link</Label>
                   <Input id="linkTo" value={linkTo} onChange={e => setLinkTo(e.target.value)} placeholder="e.g., /collections/new-arrivals" className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isDefault"
+                    checked={isDefault}
+                    onCheckedChange={setIsDefault}
+                  />
+                  <Label htmlFor="isDefault">Set as Default Banner</Label>
                 </div>
                 
               </div>

@@ -1,9 +1,9 @@
 package com.vijaybrothers.store.controller;
 
 
+import com.vijaybrothers.store.dto.AdminProfileUpdateDTO;
 import com.vijaybrothers.store.dto.auth.LoginRequest;
 import com.vijaybrothers.store.dto.auth.LoginResponse;
-import com.vijaybrothers.store.dto.auth.ProfileUpdateRequest;
 import com.vijaybrothers.store.dto.auth.ProfileUpdateResponse;
 import com.vijaybrothers.store.dto.auth.SignupRequest;
 import com.vijaybrothers.store.dto.auth.SignupResponse;
@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -91,22 +92,25 @@ public class AdminController {
         return ResponseEntity.ok(currentAdmin);
     }
 
+    
     @Operation(
-        summary = "Update admin profile",
+        summary = "Update admin user details by ID",
         security = { @SecurityRequirement(name = "bearer-jwt") },
         responses = {
-            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
+            @ApiResponse(responseCode = "200", description = "User updated successfully"),
             @ApiResponse(responseCode = "401", description = "Not authenticated"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
             @ApiResponse(responseCode = "400", description = "Invalid input")
         }
     )
-    @PutMapping("/account")
-    public ResponseEntity<ProfileUpdateResponse> updateAccountProfile(
-            @Valid @RequestBody ProfileUpdateRequest request,
-            @AuthenticationPrincipal Admin currentAdmin
+    @PutMapping(value = "/users/{userId}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<ProfileUpdateResponse> updateAdminUser(
+            @PathVariable Long userId,
+            @ModelAttribute AdminProfileUpdateDTO request
     ) {
-        ProfileUpdateResponse resp = adminService.updateProfile(currentAdmin.getUserName(), request);
+        ProfileUpdateResponse resp = adminService.updateUser(userId, request);
         return ResponseEntity.ok(resp);
     }
+
 }

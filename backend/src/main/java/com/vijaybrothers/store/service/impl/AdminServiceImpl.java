@@ -1,20 +1,23 @@
 package com.vijaybrothers.store.service.impl;
 
+import com.vijaybrothers.store.dto.AdminProfileUpdateDTO;
 import com.vijaybrothers.store.dto.auth.LoginRequest;
 import com.vijaybrothers.store.dto.auth.LoginResponse;
 import com.vijaybrothers.store.dto.auth.SignupRequest;
 import com.vijaybrothers.store.dto.auth.SignupResponse;
-import com.vijaybrothers.store.dto.auth.ProfileUpdateRequest;
 import com.vijaybrothers.store.dto.auth.ProfileUpdateResponse;
 import com.vijaybrothers.store.model.Admin;
 import com.vijaybrothers.store.repository.AdminRepository;
 import com.vijaybrothers.store.security.JwtService;
 import com.vijaybrothers.store.service.AdminService;
+import com.vijaybrothers.store.service.StorageService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Optional;
@@ -31,15 +34,18 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private StorageService storageService;
+
     @Override
     public SignupResponse signup(SignupRequest request) {
         // Check if username exists
         if (adminRepository.existsByUserName(request.getUsername())) {
-            return new SignupResponse(null, "Username already taken");
+            return SignupResponse.builder().message("Username already taken").build();
         }
         // Check if email exists
         if (adminRepository.findByEmail(request.getEmail()).isPresent()) {
-            return new SignupResponse(null, "Email already registered");
+            return SignupResponse.builder().message("Email already registered").build();
         }
 
         // Create new admin
@@ -55,7 +61,7 @@ public class AdminServiceImpl implements AdminService {
 
         // Generate JWT token
         String token = jwtService.generateToken(admin);
-        return new SignupResponse(token, "Account created successfully");
+        return SignupResponse.builder().token(token).message("Account created successfully").build();
     }
 
     @Override
@@ -65,61 +71,69 @@ public class AdminServiceImpl implements AdminService {
             Admin admin = adminOptional.get();
             // Generate JWT token
             String token = jwtService.generateToken(admin);
-            return new LoginResponse(token, "Login successful");
+            return LoginResponse.builder().token(token).message("Login successful").build();
         }
-        return new LoginResponse(null, "Invalid credentials");
+        return LoginResponse.builder().message("Invalid credentials").build();
     }
 
     @Override
-    public ProfileUpdateResponse updateProfile(String currentUserName, ProfileUpdateRequest request) {
-        Optional<Admin> adminOptional = adminRepository.findByUserName(currentUserName);
+    public ProfileUpdateResponse updateUser(Long userId, AdminProfileUpdateDTO request) {
+        try {
+            Optional<Admin> adminOptional = adminRepository.findById(userId);
 
-        if (adminOptional.isEmpty()) {
-            return new ProfileUpdateResponse(null, "Admin not found", null);
-        }
-
-        Admin admin = adminOptional.get();
-
-        // Update user_name if provided
-        if (request.getUser_name() != null && !request.getUser_name().isEmpty()) {
-            // Check if new username is already taken by another admin
-            if (!request.getUser_name().equals(admin.getUserName()) && adminRepository.existsByUserName(request.getUser_name())) {
-                return new ProfileUpdateResponse(null, "Username already taken", null);
+            if (adminOptional.isEmpty()) {
+                return ProfileUpdateResponse.builder().message("User not found").build();
             }
-            admin.setUserName(request.getUser_name());
-        }
 
-        // Update user_email if provided
-        if (request.getUser_email() != null && !request.getUser_email().isEmpty()) {
-            // Check if new email is already registered by another admin
-            if (!request.getUser_email().equals(admin.getEmail()) && adminRepository.existsByEmail(request.getUser_email())) {
-                return new ProfileUpdateResponse(null, "Email already registered", null);
+            Admin admin = adminOptional.get();
+
+            // Update user_name if provided
+            if (request.getUserName() != null && !request.getUserName().isEmpty()) {
+                // Check if new username is already taken by another admin
+                if (!request.getUserName().equals(admin.getUserName()) && adminRepository.existsByUserName(request.getUserName())) {
+                    return ProfileUpdateResponse.builder().message("Username already taken").build();
+                }
+                admin.setUserName(request.getUserName());
             }
-            admin.setEmail(request.getUser_email());
-        }
 
-        // Update profile_image_url if provided
-        if (request.getUser_image() != null) {
-            admin.setProfileImageUrl(request.getUser_image());
-        }
-
-        // Handle password change
-        if (Boolean.TRUE.equals(request.getIs_password_changed())) {
-            if (request.getOld_password() == null || request.getNew_password() == null || request.getNew_password().isEmpty()) {
-                return new ProfileUpdateResponse(null, "Old and new passwords are required for password change", null);
+            // Update user_email if provided
+            if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+                // Check if new email is already registered by another admin
+                if (!request.getEmail().equals(admin.getEmail()) && adminRepository.existsByEmail(request.getEmail())) {
+                    return ProfileUpdateResponse.builder().message("Email already registered").build();
+                }
+                admin.setEmail(request.getEmail());
             }
-            if (!passwordEncoder.matches(request.getOld_password(), admin.getPassword())) {
-                return new ProfileUpdateResponse(null, "Invalid old password", null);
+
+            // Handle profile image
+            if (request.isRemoveProfileImage()) {
+                admin.setProfileImageUrl(null);
+            } else if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
+                String imageUrl = storageService.store(request.getProfileImage());
+                admin.setProfileImageUrl(imageUrl);
             }
-            admin.setPassword(passwordEncoder.encode(request.getNew_password()));
+
+            // Handle password change
+            if (request.getOldPassword() != null && !request.getOldPassword().isEmpty() &&
+                request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
+                if (!passwordEncoder.matches(request.getOldPassword(), admin.getPassword())) {
+                    return ProfileUpdateResponse.builder().message("Invalid old password").build();
+                }
+                admin.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            }
+
+            admin.setUpdatedAt(Instant.now());
+            adminRepository.save(admin);
+
+            // Generate new JWT token (if username changed, token needs to reflect new username)
+            String newToken = jwtService.generateToken(admin);
+
+            return ProfileUpdateResponse.builder().token(newToken).message("Profile updated successfully").user_image(admin.getProfileImageUrl()).build();
+        } catch (Exception e) {
+            // Log the exception for debugging purposes
+            System.err.println("Error updating admin profile: " + e.getMessage());
+            e.printStackTrace();
+            return ProfileUpdateResponse.builder().message("An unexpected error occurred during profile update.").build();
         }
-
-        admin.setUpdatedAt(Instant.now());
-        adminRepository.save(admin);
-
-        // Generate new JWT token (if username changed, token needs to reflect new username)
-        String newToken = jwtService.generateToken(admin);
-
-        return new ProfileUpdateResponse(newToken, "Profile updated successfully", admin.getProfileImageUrl());
     }
 }

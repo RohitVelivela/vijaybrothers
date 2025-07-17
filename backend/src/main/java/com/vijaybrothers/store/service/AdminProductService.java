@@ -2,19 +2,23 @@
 package com.vijaybrothers.store.service;
 
 import com.vijaybrothers.store.repository.CategoryRepository;
+import com.vijaybrothers.store.repository.ProductImageRepository;
 
 import com.vijaybrothers.store.dto.ProductCreateRequest;
 import com.vijaybrothers.store.dto.ProductDto;
 import com.vijaybrothers.store.dto.ProductSummaryDto;
 import com.vijaybrothers.store.dto.ProductUpdateRequest;
+import com.vijaybrothers.store.dto.ProductImageDto;
 import com.vijaybrothers.store.model.Category;
 import com.vijaybrothers.store.model.Product;
+import com.vijaybrothers.store.model.ProductImage;
 
 import com.vijaybrothers.store.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
@@ -27,6 +31,8 @@ import org.springframework.data.domain.Pageable;
 public class AdminProductService {
     private final ProductRepository productRepo;
     private final CategoryRepository categoryRepo;
+    private final StorageService storageService;
+    private final ProductImageRepository productImageRepo;
 
     /** Low-stock cutoff from properties (default 5) */
     @Value("${app.lowStockThreshold:5}")
@@ -50,11 +56,25 @@ public class AdminProductService {
         p.setStockQuantity(req.getStockQuantity());
         p.setInStock(req.getInStock());
         p.setYoutubeLink(req.getYoutubeLink());
-        p.setMainImageUrl(req.getMainImageUrl());
         p.setCreatedAt(Instant.now());
         p.setUpdatedAt(Instant.now());
 
         productRepo.save(p);
+
+        // Handle images
+        if (req.getImages() != null && !req.getImages().isEmpty()) {
+            for (int i = 0; i < req.getImages().size(); i++) {
+                MultipartFile file = req.getImages().get(i);
+                String imageUrl = storageService.store(file);
+                ProductImage productImage = ProductImage.builder()
+                    .imageUrl(imageUrl)
+                    .product(p)
+                    .isMain(i == 0) // First image is main
+                    .build();
+                productImageRepo.save(productImage);
+                p.getImages().add(productImage);
+            }
+        }
     }
 
     /**
@@ -87,7 +107,9 @@ public class AdminProductService {
                 p.getProductId(),
                 p.getProductCode(),
                 p.getName(),
-                p.getMainImageUrl(),
+                p.getImages().stream()
+                    .map(img -> new ProductImageDto(img.getId().intValue(), img.getImageUrl(), img.isMain()))
+                    .collect(Collectors.toList()),
                 p.getPrice(),
                 p.getInStock(),
                 p.getStockQuantity(),
@@ -134,9 +156,44 @@ public class AdminProductService {
         if (req.getYoutubeLink() != null) {
             p.setYoutubeLink(req.getYoutubeLink());
         }
-        if (req.getMainImageUrl() != null) {
-            p.setMainImageUrl(req.getMainImageUrl());
+
+        // Handle images update
+        if (req.getDeletedImageIds() != null && !req.getDeletedImageIds().isEmpty()) {
+            req.getDeletedImageIds().forEach(id -> productImageRepo.deleteById(id));
+            // Remove deleted images from the product's image list
+            p.getImages().removeIf(img -> req.getDeletedImageIds().contains(img.getId()));
         }
+
+        // Handle images update
+        if (req.getDeletedImageIds() != null && !req.getDeletedImageIds().isEmpty()) {
+            req.getDeletedImageIds().forEach(id -> productImageRepo.deleteById(id));
+            // Remove deleted images from the product's image list
+            p.getImages().removeIf(img -> req.getDeletedImageIds().contains(img.getId()));
+        }
+
+        // Update isMain for existing images
+        if (req.getMainImageId() != null) {
+            p.getImages().forEach(img -> {
+                img.setMain(img.getId().equals(req.getMainImageId()));
+                productImageRepo.save(img);
+            });
+        }
+
+        if (req.getImages() != null && !req.getImages().isEmpty()) {
+            boolean hasMainImage = p.getImages().stream().anyMatch(ProductImage::isMain);
+            for (int i = 0; i < req.getImages().size(); i++) {
+                MultipartFile file = req.getImages().get(i);
+                String imageUrl = storageService.store(file);
+                ProductImage productImage = ProductImage.builder()
+                    .imageUrl(imageUrl)
+                    .product(p)
+                    .isMain(!hasMainImage && i == 0) // Set as main if no existing main image and it's the first new image
+                    .build();
+                productImageRepo.save(productImage);
+                p.getImages().add(productImage);
+            }
+        }
+
         p.setUpdatedAt(Instant.now());
 
         productRepo.save(p);
