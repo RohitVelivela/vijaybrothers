@@ -6,8 +6,14 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "static_pages")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor @AllArgsConstructor
 public class StaticPage {
+
+    public String getPageSlug() { return pageSlug; }
+    public String getTitle() { return title; }
+    public String getContent() { return content; }
+    public Instant getUpdatedAt() { return updatedAt; }
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

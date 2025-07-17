@@ -78,7 +78,7 @@ const BannersPage = () => {
       const data = await fetchBanners();
       setBanners(data);
     } catch (error) {
-      console.error("Failed to fetch banners:", error);
+      
       toast.error("Failed to load banners.");
     }
   };
@@ -99,14 +99,14 @@ const BannersPage = () => {
       );
       toast.success("Banner status updated.");
     } catch (error) {
-      console.error("Failed to update banner status:", error);
+      
       toast.error("Failed to update banner status.");
     }
   };
 
   const handleDeleteBanner = async (id: number | undefined) => {
     if (typeof id === 'undefined' || id === null) {
-      console.error("Attempted to delete banner with undefined or null ID.");
+      
       Swal.fire(
         'Error!',
         'Cannot delete banner: ID is missing.',
@@ -135,7 +135,7 @@ const BannersPage = () => {
           'success'
         );
       } catch (error) {
-        console.error("Failed to delete banner:", error);
+        
         Swal.fire(
           'Error!',
           `Failed to delete banner: ${(error as Error).message}`,
@@ -171,14 +171,14 @@ const BannersPage = () => {
       setIsModalOpen(false);
       loadBanners(); // Reload banners after save
     } catch (error) {
-      console.error("Failed to save banner:", error);
+      
       toast.error(`Failed to save banner: ${(error as Error).message}`);
     }
   };
 
   return (
     <div className="min-h-screen bg-white">
-      <AdminHeader adminEmail="admin@vijaybrothers.com" />
+      <AdminHeader />
       <Sidebar 
         isOpen={isSidebarOpen} 
         isCollapsed={isSidebarCollapsed} 

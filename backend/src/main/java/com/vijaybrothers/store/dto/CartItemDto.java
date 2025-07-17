@@ -22,4 +22,9 @@ public class CartItemDto {
             .addedAt(ci.getAddedAt())
             .build();
     }
+    public Integer getCartItemId() { return cartItemId; }
+    public Integer getProductId() { return productId; }
+    public String getProductName() { return productName; }
+    public Integer getQuantity() { return quantity; }
+    public Instant getAddedAt() { return addedAt; }
 }

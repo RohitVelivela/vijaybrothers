@@ -49,7 +49,7 @@ const AdminLogin: React.FC = () => {
         setError(response.data.message || 'Login failed. Please check your credentials.');
       }
     } catch (err: unknown) {
-      console.error('Login error:', err);
+      
 
       if (
         typeof err === 'object' &&
@@ -58,7 +58,7 @@ const AdminLogin: React.FC = () => {
         typeof (err as any).response === 'object'
       ) {
         const axiosErr = err as { response?: { data?: any } };
-        console.error('Backend Response:', axiosErr.response?.data);
+        
 
         const message =
           axiosErr.response?.data?.message ||

@@ -4,7 +4,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8
 
 function getAuthHeaders(): Record<string, string> {
   const token = getCookie('token');
-  console.log(`getAuthHeaders: Token from cookie: ${token}`); // DEBUG
+  
   if (token) {
     return { 'Authorization': `Bearer ${token}` };
   } else {
@@ -84,7 +84,7 @@ export interface Product {
   stockQuantity: number;
   inStock: boolean;
   youtubeLink: string;
-  mainImageUrl: string;
+  
   color?: string; // Added color
   fabric?: string; // Added fabric
   deleted: boolean; // Added deleted field

@@ -53,7 +53,7 @@ const DashboardOverview = () => {
       setHasMore(data.number < data.totalPages - 1);
       setCurrentPage(prevPage => prevPage + 1);
     } catch (err) {
-      console.error('Failed to fetch orders:', err);
+      
       setHasMore(false); // Stop trying to load more on error
     } finally {
       setLoading(false);

@@ -16,9 +16,24 @@ export const getCookie = (name: string) => {
   return null;
 };
 
+export function setCookie(name: string, value: string, days: number) {
+  let expires = "";
+  if (days) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+export function eraseCookie(name: string) {
+  document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
+
 interface User {
   name: string;
   email: string;
+  profileImageUrl?: string;
 }
 
 interface AuthContextType {
@@ -68,7 +83,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(null);
       }
     } catch (error) {
-      console.error('Failed to fetch user profile', error);
+      
       setIsAuthenticated(false);
       setUser(null);
     } finally {
@@ -94,7 +109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           },
         });
       } catch (error) {
-        console.error('Error during logout API call:', error);
+        
       }
     }
     document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; // Clear the token cookie

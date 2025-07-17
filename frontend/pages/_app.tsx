@@ -4,7 +4,7 @@ import './admin/globals.css'; // Global styles from the original project
 import Header from '../components/Header'; // Import the Header component
 import Footer from '../components/Footer'; // Import the Footer component
 
-import { AuthProvider } from '../context/AuthContext'; // Adjust path as needed
+import { AuthProvider } from '../context/AuthContext.tsx'; // Adjust path as needed
 import { CartProvider } from '../context/CartContext'; // Import CartProvider
 
 import { Toaster } from '../components/ui/toaster';

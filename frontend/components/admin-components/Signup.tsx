@@ -40,7 +40,7 @@ const Signup: React.FC = () => {
         setError('Signup failed. Please try again.');
       }
     } catch (err: unknown) {
-      console.error('Signup error:', err);
+      
 
       if (
         typeof err === 'object' &&
@@ -49,7 +49,7 @@ const Signup: React.FC = () => {
         typeof (err as any).response === 'object'
       ) {
         const axiosErr = err as { response?: { data?: any } };
-        console.error('Backend Response:', axiosErr.response?.data); // Debug log
+        
 
         const backendMessage =
           axiosErr.response?.data?.message ||

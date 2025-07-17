@@ -33,6 +33,12 @@ public class ProductDetailDto {
         dto.setName(product.getName());
         dto.setDescription(product.getDescription());
         dto.setPrice(product.getPrice());
+        dto.setStockQuantity(product.getStockQuantity());
+        dto.setInStock(product.getInStock());
+        dto.setYoutubeLink(product.getYoutubeLink());
+        dto.setMainImageUrl(product.getMainImageUrl());
+        dto.setColor(product.getColor());
+        dto.setFabric(product.getFabric());
         if (product.getCategory() != null) {
             dto.setCategoryId(product.getCategory().getCategoryId());
             dto.setCategoryName(product.getCategory().getName());

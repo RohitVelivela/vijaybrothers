@@ -47,6 +47,7 @@ public class AdminServiceImpl implements AdminService {
         admin.setUserName(request.getUsername());
         admin.setPassword(passwordEncoder.encode(request.getPassword()));
         admin.setEmail(request.getEmail());
+        admin.setRole("ADMIN"); // Set default role
         admin.setCreatedAt(Instant.now());
         admin.setUpdatedAt(Instant.now());
 

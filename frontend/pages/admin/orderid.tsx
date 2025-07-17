@@ -38,7 +38,7 @@ const OrderDetailPage = () => {
       setOrderDetail(data);
       setError(null);
     } catch (err) {
-      console.error('Failed to fetch order details:', err);
+      
       setError(`Failed to load order details: ${(err as Error).message}`);
       Swal.fire('Error', `Failed to load order details: ${(err as Error).message}`, 'error');
     } finally {

@@ -80,12 +80,11 @@ export default function ProductsPage() {
     }
     try {
       const data: Page<Product> = await fetchProducts(reset ? 0 : currentPage, 10, showDeleted); // Fetch 10 products per page
-      console.log('Fetched products data:', data.content); // Log fetched data
+      
       setProducts(prevProducts => reset ? data.content : [...prevProducts, ...data.content]);
       setHasMore(data.number < data.totalPages - 1);
       setCurrentPage(prevPage => reset ? 1 : prevPage + 1);
     } catch (err) {
-      console.error(err);
       setHasMore(false); // Stop trying to load more on error
     } finally {
       setLoading(false);
@@ -108,7 +107,7 @@ export default function ProductsPage() {
       const data = await fetchCategories();
       setCategories(data);
     } catch (err) {
-      console.error(err);
+      setCategories([]);
     }
   };
 
@@ -176,14 +175,11 @@ export default function ProductsPage() {
   };
 
   const handleEditProduct = (id: number) => {
-    console.log('Edit icon clicked for product ID:', id);
     const productToEdit = products.find(prod => prod.productId === id);
     if (!productToEdit) {
-      console.error('Product not found for editing:', id);
       return;
     }
-    console.log('Product to edit:', productToEdit);
-        setEditingProduct(productToEdit);
+    setEditingProduct(productToEdit);
         setNewName(productToEdit.name);
         setNewProductCode(productToEdit.productCode);
         setNewPrice(productToEdit.price);
@@ -195,7 +191,6 @@ export default function ProductsPage() {
         setNewColor(productToEdit.color || ''); // Populate newColor
         setNewFabric(productToEdit.fabric || ''); // Populate newFabric
         setIsModalOpen(true);
-        console.log('Form fields populated.');
     };
 
   const handleDeleteProduct = async (id: number) => {
@@ -220,9 +215,7 @@ export default function ProductsPage() {
           'success'
         );
       } catch (err) {
-        // Revert the change if the API call fails
         setProducts(products.map(p => p.productId === id ? { ...p, deleted: false } : p));
-        console.error(err);
         Swal.fire(
           'Error!',
           `Failed to delete product: ${(err as Error).message}`,
@@ -243,9 +236,7 @@ export default function ProductsPage() {
         'success'
       );
     } catch (err) {
-      // Revert the change if the API call fails
       setProducts(products.map(p => p.productId === id ? { ...p, deleted: true } : p));
-      console.error(err);
       Swal.fire(
         'Error!',
         `Failed to restore product: ${(err as Error).message}`,
@@ -304,9 +295,6 @@ export default function ProductsPage() {
         fabric: newFabric, // Added fabric
       };
 
-      console.log('Payload being sent to backend:', productData);
-      console.log('newStockQuantity before API call:', newStockQuantity);
-
       if (editingProduct) {
         // Update existing product
         await updateProduct({ ...productData, productId: editingProduct.productId });
@@ -324,7 +312,6 @@ export default function ProductsPage() {
       setHasMore(true);
       loadProducts();
     } catch (err) {
-      console.error(err);
       Swal.fire('Error!', (err as Error).message, 'error');
     }
   };
@@ -341,7 +328,7 @@ export default function ProductsPage() {
   // ─── Render ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white">
-      <AdminHeader adminEmail="admin@vijaybrothers.com" />
+      <AdminHeader />
       <Sidebar isOpen={isSidebarOpen} isCollapsed={isSidebarCollapsed} activeLink="Products" toggleCollapse={handleMenuToggle} />
 
       <main className={`

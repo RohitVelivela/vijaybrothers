@@ -15,7 +15,7 @@ const ProductDetailsPage: React.FC = () => {
   const handleBuyNow = () => {
     // In a real application, you would add the product to a cart state
     // and then navigate to the cart page.
-    console.log(`Buying now: ${product.title}`);
+    
     router.push('/cart');
   };
 

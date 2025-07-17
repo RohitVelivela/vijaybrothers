@@ -17,6 +17,25 @@ import java.util.List;
 @Builder
 public class Product {
 
+    public List<ProductImage> getGalleryImages() { return galleryImages; }
+    public Category getCategory() { return category; }
+    public Integer getProductId() { return productId; }
+    public String getProductCode() { return productCode; }
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+    public BigDecimal getPrice() { return price; }
+    public Integer getStockQuantity() { return stockQuantity; }
+    public Boolean getInStock() { return inStock; }
+    public String getYoutubeLink() { return youtubeLink; }
+    public String getMainImageUrl() { return mainImageUrl; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public String getCreatedBy() { return createdBy; }
+    public String getUpdatedBy() { return updatedBy; }
+    public String getColor() { return color; }
+    public String getFabric() { return fabric; }
+
+
     // ─── Primary key ───
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

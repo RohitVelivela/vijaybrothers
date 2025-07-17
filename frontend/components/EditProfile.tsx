@@ -66,10 +66,10 @@ const EditProfile: React.FC = () => {
         throw new Error('Failed to update profile');
       }
       const data = await response.json();
-      console.log('Profile updated:', data);
+      
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      
     }
   };
 

@@ -53,10 +53,8 @@ const EditProfile: React.FC = () => {
             user_image: data.user_image || '',
           }));
         } else {
-          console.error('Failed to fetch profile data');
         }
       } catch (error) {
-        console.error('Error fetching profile data:', error);
       }
     };
 

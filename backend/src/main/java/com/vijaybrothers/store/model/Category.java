@@ -34,6 +34,8 @@ public class Category {
     @Column(nullable = false)
     private Integer position;
 
+    
+
     @Column(nullable = false)
     private Instant createdAt;
 
@@ -60,4 +62,6 @@ public class Category {
     protected void onUpdate() {
         this.updatedAt = Instant.now();
     }
+
+    
 }

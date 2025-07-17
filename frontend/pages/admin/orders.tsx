@@ -50,7 +50,7 @@ const Orders = () => {
       const data = await fetchOrders(filterStatus === 'All' ? undefined : filterStatus.toUpperCase(), currentPage, pageSize);
       setOrdersPage(data);
     } catch (err) {
-      console.error('Failed to fetch orders:', err);
+      
       Swal.fire('Error', 'Failed to load orders. Please check your network connection and backend server.', 'error');
     }
   }, [filterStatus, currentPage, pageSize]);

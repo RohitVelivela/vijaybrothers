@@ -10,7 +10,7 @@ import { Camera } from 'lucide-react';
 import { useAuth, getCookie } from '@/context/AuthContext';
 import imageCompression from 'browser-image-compression';
 
-const EditProfilePage: React.FC = () => {
+const EditProfilePage = () => {
   const router = useRouter();
   const { toast } = useToast();
   const { user, logout, setUser } = useAuth();
@@ -19,9 +19,9 @@ const EditProfilePage: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
 
   // Populate form fields when user data is available
@@ -38,112 +38,92 @@ const EditProfilePage: React.FC = () => {
   }, [user]);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const imageFile = e.target.files[0];
+    if (!e.target.files || e.target.files.length === 0) {
+      setProfileImage(null);
+      setProfileImagePreview(user?.profileImageUrl || '/images/default-avatar.png'); // Revert to current or default
+      return;
+    }
 
-      console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
+    const imageFile = e.target.files[0];
 
-      const options = {
-        maxSizeMB: 0.5, // (max file size in MB)
-        maxWidthOrHeight: 1024, // (max width or height in pixels)
-        useWebWorker: true,
+    const options = {
+      maxSizeMB: 0.5, // (max file size in MB)
+      maxWidthOrHeight: 1024, // (max width or height in pixels)
+      useWebWorker: true,
+    };
+
+    try {
+      const compressedFile = await imageCompression(imageFile, options);
+      setProfileImage(compressedFile); // Store the File object
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setProfileImagePreview(event.target?.result as string); // Store base64 for preview
       };
-
-      try {
-        const compressedFile = await imageCompression(imageFile, options);
-        console.log(`compressedFile size ${compressedFile.size / 1024 / 1024} MB`);
-
-        setProfileImage(compressedFile); // Store the File object
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          setProfileImagePreview(event.target?.result as string); // Store base64 for preview
-        };
-        reader.readAsDataURL(compressedFile);
-      } catch (error) {
-        console.error("Error compressing image:", error);
-        toast({
-          title: 'Error',
-          description: 'Failed to compress image.',
-          variant: 'destructive',
-        });
-      }
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      toast('Failed to compress image.', {
+        variant: 'destructive',
+      });
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Save Changes button clicked - handleSubmit entered");
 
     const isPasswordChanged = newPassword.length > 0 || currentPassword.length > 0 || confirmPassword.length > 0;
 
     if (isPasswordChanged && newPassword !== confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'New password and confirm password do not match.',
+      toast('New password and confirm password do not match.', {
         variant: 'destructive',
       });
       return;
     }
 
-    const requestBody: any = {
-      user_name: name,
-      user_email: email,
-      is_password_changed: isPasswordChanged,
-    };
+    const formData = new FormData();
+    formData.append('user_name', name);
+    formData.append('user_email', email);
+    formData.append('is_password_changed', `${isPasswordChanged}`);
 
     if (isPasswordChanged) {
-      requestBody.old_password = currentPassword;
-      requestBody.new_password = newPassword;
+      formData.append('old_password', currentPassword);
+      formData.append('new_password', newPassword);
     }
 
-    if (profileImagePreview && profileImagePreview.startsWith('data:image')) { // Only send if it's a new base64 image
-      requestBody.user_image = profileImagePreview.split(',')[1]; // Extract base64 part
-    } else if (profileImagePreview === '/images/default-avatar.png' && user?.profileImageUrl) {
-      requestBody.user_image = null; // Explicitly send null to clear image
-    } else if (user?.profileImageUrl && !profileImagePreview) {
-      // If there was an image, but now profileImagePreview is null (e.g., user cleared it)
-      requestBody.user_image = null;
+    // Image handling for FormData
+    if (profileImage) { // Case 1: New image selected (profileImage is a File object)
+      formData.append('user_image', profileImage);
+    } else if (user?.profileImageUrl && (profileImagePreview === null || profileImagePreview === '/images/default-avatar.png')) {
+      // Case 2: Image explicitly cleared (user had an image, but now preview is null or default)
+      formData.append('clear_image', 'true');
     }
-
-    console.log("Request Body:", requestBody);
+    // Case 3: Image not changed - do nothing, backend retains existing image
 
     try {
       const token = getCookie('token');
-      console.log("Auth Token:", token ? "Token found" : "No token found");
 
       if (!token) {
-        toast({
-          title: 'Error',
-          description: 'Authentication token not found. Please log in again.',
+        toast('Authentication token not found. Please log in again.', {
           variant: 'destructive',
         });
         router.push('/admin/login');
         return;
       }
 
-      console.log("Attempting PUT request...");
       const response = await fetch('http://localhost:8080/api/admin/account', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(requestBody),
+        body: formData,
       });
-      console.log("PUT request completed. Response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("API Error Response:", errorData);
         throw new Error(errorData.message || 'Failed to update profile');
       }
 
       const responseData = await response.json();
-      console.log("API Success Response:", responseData);
-      toast({
-        title: 'Success',
-        description: responseData.message || 'Profile updated successfully!',
-      });
+      toast(responseData.message || 'Profile updated successfully!');
 
       // Update AuthContext user state with new profile image URL
       if (user && responseData.user_image !== undefined) {
@@ -154,10 +134,7 @@ const EditProfilePage: React.FC = () => {
       }
 
     } catch (error: any) {
-      console.error("Error during PUT request or response handling:", error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update profile.',
+      toast(error.message || 'Failed to update profile.', {
         variant: 'destructive',
       });
     }

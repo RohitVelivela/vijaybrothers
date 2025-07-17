@@ -51,9 +51,9 @@ export default function CategoriesPage() {
   const loadCategories = async () => {
     try {
       const data = await fetchCategories();
+      console.log("Fetched categories data:", data); // Add this line for debugging
       setCategories(data);
     } catch (err) {
-      console.error(err);
       setCategories([]); // Set to empty array on error
     }
   };
@@ -179,7 +179,6 @@ export default function CategoriesPage() {
           'success'
         );
       } catch (err) {
-        console.error(err);
         Swal.fire(
           'Error!',
           (err as Error).message,
@@ -227,7 +226,6 @@ export default function CategoriesPage() {
       setIsModalOpen(false);
       loadCategories();
     } catch (err) {
-      console.error(err);
       alert((err as Error).message);
     }
   };
@@ -244,7 +242,7 @@ export default function CategoriesPage() {
   // ─── Render ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white">
-      <AdminHeader adminEmail="admin@vijaybrothers.com" />
+      <AdminHeader />
       <Sidebar isOpen={isSidebarOpen} isCollapsed={isSidebarCollapsed} activeLink="Categories" toggleCollapse={handleMenuToggle} />
 
       <main className={`
@@ -421,6 +419,7 @@ export default function CategoriesPage() {
                   className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
                 />
               </div>
+              </div>
               <div>
                 <label htmlFor="parentCategory" className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
                 <select
@@ -459,13 +458,12 @@ export default function CategoriesPage() {
                 />
                 <p className="text-xs text-gray-500 mt-1">Defines the order of categories under the same parent. Lower numbers appear higher.</p>
               </div>
-            </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
               <Button onClick={saveCategory}>{editingCategory ? 'Update Category' : 'Save Category'}</Button>
             </DialogFooter>
           </DialogContent>
-      </Dialog>
+        </Dialog>
     </div>
   );
 }

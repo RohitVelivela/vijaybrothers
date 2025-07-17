@@ -27,4 +27,13 @@ public record ProductListItem(
             p.getFabric()
         );
     }
+    public Integer getProductId() { return productId; }
+    public String getProductCode() { return productCode; }
+    public String getName() { return name; }
+    public BigDecimal getPrice() { return price; }
+    public Boolean getInStock() { return inStock; }
+    public String getYoutubeLink() { return youtubeLink; }
+    public String getCategoryName() { return categoryName; }
+    public String getColor() { return color; }
+    public String getFabric() { return fabric; }
 }

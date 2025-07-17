@@ -17,14 +17,14 @@ public class UpdateProductRequest {
     private String fabric;
 
     public void updateEntity(Product product) {
-        product.setName(name);
-        product.setDescription(description);
-        product.setPrice(price);
-        product.setStockQuantity(stockQuantity);
-        product.setInStock(isInStock);
-        product.setYoutubeLink(youtubeLink);
-        product.setMainImageUrl(mainImageUrl);
-        product.setColor(color);
-        product.setFabric(fabric);
+        product.setName(this.name);
+        product.setDescription(this.description);
+        product.setPrice(this.price);
+        product.setStockQuantity(this.stockQuantity);
+        product.setInStock(this.isInStock);
+        product.setYoutubeLink(this.youtubeLink);
+        product.setMainImageUrl(this.mainImageUrl);
+        product.setColor(this.color);
+        product.setFabric(this.fabric);
     }
 }
