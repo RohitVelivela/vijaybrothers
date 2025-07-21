@@ -1,8 +1,14 @@
 export interface Category {
-  id: string;
+  categoryId: number;
   name: string;
   slug: string;
   description: string;
+  parentId?: number;
+  isActive: boolean;
+  position: number;
+  displayOrder: number;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
+  categoryImage?: string;
+  parentName?: string;
 }

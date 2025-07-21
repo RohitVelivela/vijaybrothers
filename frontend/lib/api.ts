@@ -18,6 +18,7 @@ export interface Category {
   name: string;
   slug: string;
   description: string;
+  categoryImage?: string; // New field for image URL
   parentId?: number; // Optional, for nested categories
   parentName?: string; // Optional, for parent category name
   isActive: boolean; // For visibility control
@@ -28,18 +29,47 @@ export interface Category {
 }
 
 export async function fetchCategories(): Promise<Category[]> {
-  const res = await fetch(`${API_BASE_URL}/categories`);
+  const res = await fetch(`${API_BASE_URL}/admin/categories`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) {
     throw new Error('Failed to fetch categories');
   }
   return await res.json();
 }
 
-export async function createCategory(payload: { name: string; slug: string; description: string; parentId?: number; isActive?: boolean; position?: number }): Promise<void> {
+export async function fetchPublicCategories(): Promise<Category[]> {
+  const res = await fetch(`${API_BASE_URL}/public/categories/hierarchy`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch public categories');
+  }
+  return await res.json();
+}
+
+export async function fetchPublicBanners(): Promise<Banner[]> {
+  const url = `${API_BASE_URL}/banners`;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: new Headers({
+      'Content-Type': 'application/json',
+    }),
+    credentials: 'omit',
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch public banners');
+  }
+
+  return await res.json();
+}
+
+
+export async function createCategory(formData: FormData): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/categories`, {
     method: 'POST',
-    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: { ...getAuthHeaders() }, // No Content-Type header for FormData
+    body: formData,
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -47,11 +77,11 @@ export async function createCategory(payload: { name: string; slug: string; desc
   }
 }
 
-export async function updateCategory(id: number, payload: { name: string; slug: string; description: string; parentId?: number; isActive?: boolean; position?: number }): Promise<void> {
+export async function updateCategory(id: number, payload: FormData): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/categories/${id}`, {
     method: 'PUT',
-    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: { ...getAuthHeaders() }, // No Content-Type header for FormData
+    body: payload,
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -227,9 +257,10 @@ export interface Banner {
   image: string;
   linkTo: string;
   status: 'ACTIVE' | 'INACTIVE';
-  isDefault: boolean; // New field
+  isActive: boolean; // New field
   createdAt: string;
   updatedAt: string;
+  description?: string;
 }
 
 export async function fetchBanners(): Promise<Banner[]> {

@@ -23,6 +23,9 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "category_image", columnDefinition = "TEXT")
+    private String categoryImage;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     @JsonIgnore
@@ -33,6 +36,9 @@ public class Category {
 
     @Column(nullable = false)
     private Integer position;
+
+    @Column(nullable = false)
+    private Integer displayOrder;
 
     
 
@@ -54,9 +60,11 @@ public class Category {
     public Category getParentCategory() { return parentCategory; }
     public Boolean getIsActive() { return isActive; }
     public Integer getPosition() { return position; }
+    public Integer getDisplayOrder() { return displayOrder; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public List<Category> getSubCategories() { return subCategories; }
+    public String getCategoryImage() { return categoryImage; }
 
     // Setters
     public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
@@ -66,9 +74,11 @@ public class Category {
     public void setParentCategory(Category parentCategory) { this.parentCategory = parentCategory; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
     public void setPosition(Integer position) { this.position = position; }
+    public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public void setSubCategories(List<Category> subCategories) { this.subCategories = subCategories; }
+    public void setCategoryImage(String categoryImage) { this.categoryImage = categoryImage; }
 
     @PrePersist
     protected void onCreate() {
@@ -77,6 +87,9 @@ public class Category {
         }
         if (this.position == null) {
             this.position = 0; // Default position
+        }
+        if (this.displayOrder == null) {
+            this.displayOrder = 0; // Default display order
         }
         Instant now = Instant.now();
         this.createdAt = now;

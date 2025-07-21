@@ -23,6 +23,12 @@ public class Banner {
     @Column(name = "link_to", nullable = false)
     private String linkTo;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
+
+    @Column(name = "description")
+    private String description;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BannerStatus status;
@@ -40,6 +46,8 @@ public class Banner {
     public void setImage(String image) { this.image = image; }
     public String getLinkTo() { return linkTo; }
     public void setLinkTo(String linkTo) { this.linkTo = linkTo; }
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
     public BannerStatus getStatus() { return status; }
     public void setStatus(BannerStatus status) { this.status = status; }
     public Instant getCreatedAt() { return createdAt; }

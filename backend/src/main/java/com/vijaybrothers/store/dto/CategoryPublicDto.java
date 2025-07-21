@@ -1,34 +1,47 @@
 package com.vijaybrothers.store.dto;
 
-import com.vijaybrothers.store.model.Category;
-import lombok.Builder;
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.Setter;
 
-@Builder
-public record CategoryPublicDto(
-    Integer categoryId,
-    String name,
-    String slug,
-    String description,
-    Integer parentId,
-    Integer position,
-    List<CategoryPublicDto> subCategories
-) {
-    public static CategoryPublicDto fromEntity(Category category) {
-        return CategoryPublicDto.builder()
-                .categoryId(category.getCategoryId())
-                .name(category.getName())
-                .slug(category.getSlug())
-                .description(category.getDescription())
-                .parentId(category.getParentCategory() != null ? category.getParentCategory().getCategoryId() : null)
-                .position(category.getPosition())
-                .subCategories(category.getSubCategories() != null ?
-                        category.getSubCategories().stream()
-                                .filter(Category::getIsActive)
-                                .sorted((c1, c2) -> c1.getPosition().compareTo(c2.getPosition()))
-                                .map(CategoryPublicDto::fromEntity)
-                                .collect(Collectors.toList()) : List.of())
-                .build();
+import java.util.ArrayList;
+import java.util.List;
+
+@Getter
+@Setter
+public class CategoryPublicDto {
+    private Integer categoryId;
+    private String name;
+    private String slug;
+    private String description;
+    private Integer parentId;
+    private String parentName;
+    private List<CategoryPublicDto> subCategories = new ArrayList<>();
+
+    // Constructor for mapping from Category entity
+    public CategoryPublicDto(Integer categoryId, String name, String slug, String description) {
+        this.categoryId = categoryId;
+        this.name = name;
+        this.slug = slug;
+        this.description = description;
+    }
+
+    public static CategoryPublicDto fromEntity(com.vijaybrothers.store.model.Category category) {
+        CategoryPublicDto dto = new CategoryPublicDto(
+                category.getCategoryId(),
+                category.getName(),
+                category.getSlug(),
+                category.getDescription()
+        );
+        if (category.getParentCategory() != null) {
+            dto.setParentId(category.getParentCategory().getCategoryId());
+            dto.setParentName(category.getParentCategory().getName());
+        }
+        // Recursively add subcategories
+        if (category.getSubCategories() != null && !category.getSubCategories().isEmpty()) {
+            for (com.vijaybrothers.store.model.Category subCategory : category.getSubCategories()) {
+                dto.getSubCategories().add(fromEntity(subCategory));
+            }
+        }
+        return dto;
     }
 }

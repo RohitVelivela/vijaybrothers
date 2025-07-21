@@ -1,15 +1,39 @@
-import React, { useState } from 'react';
-import { Search, ShoppingCart, Menu, X } from 'lucide-react';
-import { subcategories } from '../data/subcategories'; // Import subcategories
+import React, { useState, useEffect } from 'react';
+import { Search, ShoppingCart, Menu, X, Instagram, Youtube } from 'lucide-react';
 import { useCart } from '../context/CartContext'; // Import useCart hook
 import Link from 'next/link'; // Import Link for navigation
+import { Category, fetchPublicCategories } from '../lib/api'; // Import Category interface and fetchPublicCategories
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getCartItemCount } = useCart(); // Use the useCart hook
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  const getSubcategories = (parentCategory: string) => {
-    return subcategories.filter(sub => sub.parentCategory === parentCategory);
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const fetchedCategories = await fetchPublicCategories();
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error('Failed to fetch public categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  const renderCategoryLinks = (categoryList: Category[]) => {
+    return categoryList.map((category) => (
+      <li key={category.categoryId} className="relative group">
+        <Link href={`/category/${category.slug}`} className="hover:text-gray-900 transition-colors">
+          {category.name}
+        </Link>
+        {category.subCategories && category.subCategories.length > 0 && (
+          <ul className="absolute hidden group-hover:block bg-white shadow-lg py-2 rounded-md w-48 z-10">
+            {renderCategoryLinks(category.subCategories)}
+          </ul>
+        )}
+      </li>
+    ));
   };
 
   return (
@@ -43,8 +67,16 @@ const Header: React.FC = () => {
 
           {/* Cart Icon */}
           <div className="flex items-center space-x-7 md:mr-10  ">
+            <a href="https://www.instagram.com/vijaybrothers_sarees" target="_blank" rel="noopener noreferrer" className="relative flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors">
+              <Instagram className="w-8 h-8" />
+              <span className="text-xs font-medium mt-1">Instagram</span>
+            </a>
+            <a href="https://www.youtube.com/@vijaybrothers/featured" target="_blank" rel="noopener noreferrer" className="relative flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors">
+              <Youtube className="w-8 h-8" />
+              <span className="text-xs font-medium mt-1">Youtube</span>
+            </a>
             <Link href="/cart" className="relative flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors">
-              <ShoppingCart className="w-6 h-6" />
+              <ShoppingCart className="w-8 h-8" />
               <span className="text-xs font-medium mt-1">Cart</span>
               <span className="absolute -top-2 -right-3 bg-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">{getCartItemCount()}</span>
             </Link>
@@ -60,34 +92,8 @@ const Header: React.FC = () => {
 
         {/* Categories Navigation */}
         <nav className="hidden md:block py-3 border-t border-gray-200">
-          <ul className="flex justify-center space-x-8 text-times new roman font-30 text-black-800">
-            <li className="relative group">
-              <Link href="/category/fabric" className="hover:text-gray-900 transition-colors">Fabric</Link>
-              <ul className="absolute hidden group-hover:block bg-white shadow-lg py-2 rounded-md w-48 z-10">
-                {getSubcategories("Fabric").map((sub) => (
-                  <li key={sub.id}>
-                    <Link href={sub.link} className="block px-4 py-2 text-gray-800 hover:bg-red-100 hover:text-red-500">{sub.title}</Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
-            <li className="relative group">
-              <Link href="/category/handloom-sarees" className="hover:text-gray-900 transition-colors">Handloom Sarees</Link>
-              <ul className="absolute hidden group-hover:block bg-white shadow-lg py-2 rounded-md w-48 z-10">
-                {getSubcategories("Handloom Sarees").map((sub) => (
-                  <li key={sub.id}>
-                    <Link href={sub.link} className="block px-4 py-2 text-gray-800 hover:bg-red-100 hover:text-red-500">{sub.title}</Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
-            <li><Link href="/category/office-wear" className="hover:text-gray-900 transition-colors">Office Wear</Link></li>
-            <li><Link href="/category/catalogue-sarees" className="hover:text-gray-900 transition-colors">Catalogue Sarees</Link></li>
-            <li><Link href="/category/featured" className="hover:text-gray-900 transition-colors">Featured</Link></li>
-            <li><Link href="/category/latest-collections" className="hover:text-gray-900 transition-colors">Latest Collections</Link></li>
-            <li><Link href="/contactus" className="hover:text-gray-900 transition-colors">Contact Us</Link></li>
-            <li><a href="https://www.instagram.com/vijaybrothers_sarees" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">Instagram</a></li>
-            <li><a href="https://www.youtube.com/@vijaybrothers/featured" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">Youtube</a></li>
+          <ul className="flex justify-center space-x-8 text-black">
+            {renderCategoryLinks(categories.slice(0, 8))}
             <li><Link href="/aboutus" className="hover:text-gray-900 transition-colors">About Us</Link></li>
           </ul>
         </nav>

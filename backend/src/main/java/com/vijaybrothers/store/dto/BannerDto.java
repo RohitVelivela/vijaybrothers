@@ -8,6 +8,8 @@ public record BannerDto(
     String image,
     String linkTo,
     String status,
+    Boolean isActive,
+    String description,
     Instant createdAt,
     Instant updatedAt
 ) {}

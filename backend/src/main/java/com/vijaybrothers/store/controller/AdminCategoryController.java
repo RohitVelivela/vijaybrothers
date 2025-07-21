@@ -1,130 +1,96 @@
 package com.vijaybrothers.store.controller;
 
 import com.vijaybrothers.store.dto.CategoryCreateRequest;
-import com.vijaybrothers.store.dto.CategoryProductAssignRequest;
-import com.vijaybrothers.store.model.Category;
 import com.vijaybrothers.store.service.AdminCategoryService;
-import jakarta.validation.Valid;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vijaybrothers.store.model.Category;
+import com.vijaybrothers.store.repository.CategoryRepository;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.vijaybrothers.store.repository.ProductRepository;
+import com.vijaybrothers.store.model.Product;
+import java.util.List;
+import java.util.stream.Collectors;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
 
-@RestController
-@RequestMapping("/api/admin/categories")
-@RequiredArgsConstructor
+ @RestController @RequestMapping("/api/admin/categories") @RequiredArgsConstructor
 public class AdminCategoryController {
 
-    private final AdminCategoryService service;
+    private final AdminCategoryService categoryService;
+    private final ObjectMapper objectMapper;
+    private final CategoryRepository categoryRepository;
+private final ProductRepository productRepository;
 
-    /**
-     * Retrieves all categories
-     * GET /api/admin/categories
-     *
-     * @return 200 OK with list of categories
-     */
+    /** Create a new category (JSON + optional file) */
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String,String>> createCategory(
+        @ModelAttribute @Valid CategoryCreateRequest req,
+        @RequestPart(value="image", required=false) MultipartFile image
+    ) {
+        try {
+            categoryService.createCategory(req, image);
+            return ResponseEntity
+              .status(HttpStatus.CREATED)
+              .body(Map.of("message","Category created successfully"));
+        } catch (Exception e) {
+            return ResponseEntity
+              .badRequest()
+              .body(Map.of("error","Invalid request: " +e.getMessage()));
+        }
+    }
+
+    /** Update an existing category */
+    @PutMapping(path="/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String,String>> updateCategory(
+        @PathVariable Integer id,
+        @ModelAttribute @Valid CategoryCreateRequest req,
+        @RequestPart(value="image", required=false) MultipartFile image
+    ) {
+        try {
+            categoryService.updateCategory(id, req, image);
+            return ResponseEntity.ok(Map.of("message","Category updated successfully"));
+        } catch (Exception e) {
+            return ResponseEntity
+              .status(HttpStatus.BAD_REQUEST)
+              .body(Map.of("error","Invalid request: " +e.getMessage()));
+        }
+    }
+
     @GetMapping
-    public ResponseEntity<List<Category>> getAllCategories() {
-        return ResponseEntity.ok(service.getAllCategories());
+    public ResponseEntity<List<Map<String, Object>>> getAllCategories() {
+        List<Category> categories = categoryRepository.findAll();
+        List<Map<String, Object>> dtos = categories.stream().map(c -> {
+            Map<String, Object> dto = new HashMap<>();
+            dto.put("categoryId", c.getCategoryId());
+            dto.put("name", c.getName());
+            dto.put("slug", c.getSlug());
+            dto.put("description", c.getDescription());
+            dto.put("categoryImage", c.getCategoryImage());
+            dto.put("parentId", c.getParentCategory() != null ? c.getParentCategory().getCategoryId() : null);
+            dto.put("parentName", c.getParentCategory() != null ? c.getParentCategory().getName() : null);
+            dto.put("isActive", c.getIsActive());
+            dto.put("position", c.getPosition());
+            dto.put("createdAt", c.getCreatedAt().toString());
+            dto.put("updatedAt", c.getUpdatedAt().toString());
+            return dto;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
-    /**
-     * Creates a new product category
-
-     * POST /api/admin/categories
-     * 
-     * @param req The category details
-     * @return 201 CREATED with success message, or 400 BAD REQUEST if validation fails
-     */
-    @PostMapping
-    public ResponseEntity<Map<String, String>> createCategory(
-            @Valid @RequestBody CategoryCreateRequest req
-    ) {
-        try {
-            service.createCategory(req);
-            return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(Map.of("message", "Category is created successfully"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity
-                .badRequest()
-                .body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    /**
-     * Assigns multiple products to a category in bulk
-     * POST /api/admin/categories/{categoryId}/products
-     * 
-     * @param categoryId The ID of the category to assign products to
-     * @param req Request containing list of product IDs
-     * @return 200 OK with success message, or error response
-     */
-    @PostMapping("/{categoryId}/products")
-    public ResponseEntity<Map<String, String>> assignProducts(
-            @PathVariable Integer categoryId,
-            @Valid @RequestBody CategoryProductAssignRequest req
-    ) {
-        try {
-            service.assignProductsToCategory(categoryId, req);
-            return ResponseEntity.ok(Map.of("message", "Products assigned to category successfully"));
-        } catch (IllegalArgumentException e) {
-            String error = e.getMessage();
-            HttpStatus status = error.equals("Category not found") ? HttpStatus.NOT_FOUND : HttpStatus.BAD_REQUEST;
-            return ResponseEntity
-                .status(status)
-                .body(Map.of("error", error));
-        }
-    }
-
-    /**
-     * Deletes a category
-     * DELETE /api/admin/categories/{id}
-     * 
-     * @param id The ID of the category to delete
-     * @return 204 NO CONTENT on success, or error response
-     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteCategory(@PathVariable Integer id) {
-        try {
-            service.deleteCategory(id);
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", e.getMessage()));
-        } catch (IllegalStateException e) {
-            return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(Map.of("error", e.getMessage()));
+    public ResponseEntity<Map<String, String>> deleteCategory(@PathVariable Integer id) {
+        List<Product> products = productRepository.findByCategory_CategoryId(id);
+        if (!products.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Cannot delete category with assigned products."));
         }
-    }
-
-    /**
-     * Updates an existing product category
-     * PUT /api/admin/categories/{id}
-     *
-     * @param id The ID of the category to update
-     * @param req The updated category details
-     * @return 200 OK with success message, or error response
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<Map<String, String>> updateCategory(
-            @PathVariable Integer id,
-            @Valid @RequestBody CategoryCreateRequest req
-    ) {
-        try {
-            service.updateCategory(id, req);
-            return ResponseEntity.ok(Map.of("message", "Category updated successfully"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", e.getMessage()));
-        }
+        categoryRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Category deleted successfully."));
     }
 }

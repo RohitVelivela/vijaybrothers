@@ -46,6 +46,9 @@ export default function CategoriesPage() {
   const [newParentId, setNewParentId] = useState<number | undefined>(undefined);
   const [newIsActive, setNewIsActive] = useState<boolean>(true);
   const [newPosition, setNewPosition] = useState<number>(0);
+  const [newDisplayOrder, setNewDisplayOrder] = useState<number>(0);
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const [newImageUrl, setNewImageUrl] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const loadCategories = async () => {
@@ -141,6 +144,9 @@ export default function CategoriesPage() {
     setNewParentId(undefined);
     setNewIsActive(true);
     setNewPosition(0);
+    setNewDisplayOrder(0);
+    setNewImageFile(null);
+    setNewImageUrl(null);
     openModal();
   };
 
@@ -154,6 +160,8 @@ export default function CategoriesPage() {
       setNewParentId(categoryToEdit.parentId);
       setNewIsActive(categoryToEdit.isActive);
       setNewPosition(categoryToEdit.position);
+      setNewImageUrl(categoryToEdit.categoryImage || null);
+      setNewImageFile(null);
       setIsModalOpen(true);
     }
   };
@@ -199,6 +207,9 @@ export default function CategoriesPage() {
     setNewParentId(undefined);
     setNewIsActive(true);
     setNewPosition(0);
+    setNewDisplayOrder(0);
+    setNewImageFile(null);
+    setNewImageUrl(null);
     setEditingCategory(null);
     setIsModalOpen(true);
   };
@@ -209,24 +220,43 @@ export default function CategoriesPage() {
         alert('Name and slug are required.');
         return;
       }
-      const payload = { 
-        name: newName, 
-        slug: newSlug, 
-        description: newDescription,
-        parentId: newParentId,
-        isActive: newIsActive,
-        position: newPosition
-      };
+
+      const formData = new FormData();
+      formData.append('name', newName.trim());
+      formData.append('slug', newSlug.trim());
+      formData.append('description', newDescription);
+      if (newParentId) formData.append('parentId', newParentId.toString());
+      formData.append('isActive', newIsActive.toString());
+      formData.append('position', newPosition.toString());
+      formData.append('displayOrder', newDisplayOrder.toString());
+      if (newImageFile) {
+        formData.append('image', newImageFile);
+      } else if (editingCategory && newImageUrl === null) {
+        formData.append('clearImage', 'true');
+      }
+
+      console.log("Sending FormData:");
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
 
       if (editingCategory) {
-        await updateCategory(editingCategory.categoryId, payload);
+        await updateCategory(editingCategory.categoryId, formData);
       } else {
-        await createCategory(payload);
+        await createCategory(formData);
       }
       setIsModalOpen(false);
       loadCategories();
     } catch (err) {
       alert((err as Error).message);
+    }
+  };
+
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setNewImageFile(file);
+      setNewImageUrl(URL.createObjectURL(file)); // Create a preview URL
     }
   };
 
@@ -419,6 +449,20 @@ export default function CategoriesPage() {
                   className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
                 />
               </div>
+              <div>
+                <label htmlFor="categoryImage" className="block text-sm font-medium text-gray-700 mb-1">Category Image</label>
+                <Input
+                  id="categoryImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                />
+                {newImageUrl && (
+                  <div className="mt-2">
+                    <img src={newImageUrl} alt="Category Preview" className="w-32 h-32 object-cover rounded-md" />
+                  </div>
+                )}
               </div>
               <div>
                 <label htmlFor="parentCategory" className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
@@ -442,22 +486,36 @@ export default function CategoriesPage() {
                   id="isActive"
                   checked={newIsActive}
                   onChange={(e) => setNewIsActive(e.target.checked)}
-                  className="form-checkbox h-5 w-5 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500"
+                  className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded"
                 />
-                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Is Active (Visible on frontend)</label>
+                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Active</label>
               </div>
-              <div>
-                <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">Display Order (Position)</label>
-                <Input
-                  id="position"
-                  type="number"
-                  placeholder="e.g., 0 (lower number appears first in list)"
-                  value={newPosition}
-                  onChange={(e) => setNewPosition(Number(e.target.value))}
-                  className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
-                />
-                <p className="text-xs text-gray-500 mt-1">Defines the order of categories under the same parent. Lower numbers appear higher.</p>
-              </div>
+              {newIsActive && (
+                <>
+                  <div>
+                    <label htmlFor="categoryPosition" className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                    <Input
+                      id="categoryPosition"
+                      type="number"
+                      value={newPosition}
+                      onChange={(e) => setNewPosition(Number(e.target.value))}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="categoryDisplayOrder" className="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
+                    <Input
+                      id="categoryDisplayOrder"
+                      type="number"
+                      value={newDisplayOrder}
+                      onChange={(e) => setNewDisplayOrder(Number(e.target.value))}
+                      className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+              
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
               <Button onClick={saveCategory}>{editingCategory ? 'Update Category' : 'Save Category'}</Button>

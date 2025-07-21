@@ -42,10 +42,27 @@ public class ProductDto {
         dto.setStockQuantity(product.getStockQuantity());
         dto.setInStock(product.getInStock());
         dto.setYoutubeLink(product.getYoutubeLink());
-        dto.setColor(product.getColor());
-        dto.setFabric(product.getFabric());
-        dto.setDeleted(product.isDeleted());
-        dto.setCreatedAt(product.getCreatedAt() != null ? product.getCreatedAt().toString() : null);
+        dto.color = product.getColor();
+        dto.fabric = product.getFabric();
+        dto.deleted = product.isDeleted();
+        dto.createdAt = product.getCreatedAt() != null ? product.getCreatedAt().toString() : null;
         return dto;
+    }
+
+    // Explicit setters for fields that Lombok might not be generating correctly
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public void setFabric(String fabric) {
+        this.fabric = fabric;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
     }
 }

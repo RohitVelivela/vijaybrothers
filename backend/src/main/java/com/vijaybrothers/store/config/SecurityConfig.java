@@ -109,6 +109,7 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/public/banners").permitAll()
                 .requestMatchers(HttpMethod.PUT, "/api/categories/**").permitAll()
                 .requestMatchers("/api/cart/**").permitAll()
                 .requestMatchers("/api/checkout/guest/**").permitAll()

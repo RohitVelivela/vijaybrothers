@@ -16,9 +16,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @RequiredArgsConstructor
 public class BannerServiceImpl implements BannerService {
+
+    private static final Logger log = LoggerFactory.getLogger(BannerServiceImpl.class);
 
     private final BannerRepository repository;
 
@@ -28,6 +33,8 @@ public class BannerServiceImpl implements BannerService {
         banner.setName(req.name());
         banner.setImage(req.image());
         banner.setLinkTo(req.linkTo());
+        banner.setIsActive(req.isActive());
+        banner.setDescription(req.description());
         banner.setCreatedAt(Instant.now());
         banner.setUpdatedAt(Instant.now());
         banner.setStatus(BannerStatus.ACTIVE);
@@ -42,6 +49,8 @@ public class BannerServiceImpl implements BannerService {
         banner.setName(dto.getName());
         banner.setImage(dto.getImage());
         banner.setLinkTo(dto.getLinkTo());
+        banner.setIsActive(dto.getIsActive());
+        banner.setDescription(dto.getDescription());
         banner.setStatus(dto.getStatus());
         banner.setUpdatedAt(Instant.now());
 
@@ -50,10 +59,13 @@ public class BannerServiceImpl implements BannerService {
 
     @Override
     public List<BannerDto> getActiveBanners() {
-        return repository.findByStatus(BannerStatus.ACTIVE)
+        log.info("Fetching active banners.");
+        List<BannerDto> activeBanners = repository.findByStatus(BannerStatus.ACTIVE)
                 .stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
+        log.info("Found {} active banners.", activeBanners.size());
+        return activeBanners;
     }
 
     @Override
@@ -76,6 +88,8 @@ public class BannerServiceImpl implements BannerService {
             banner.getImage(),
             banner.getLinkTo(),
             banner.getStatus().name(),
+            banner.getIsActive(),
+            banner.getDescription(),
             banner.getCreatedAt(),
             banner.getUpdatedAt()
         );

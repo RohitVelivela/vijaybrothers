@@ -15,6 +15,10 @@ public class BannerUpdateDto {
     @NotBlank
     private String linkTo;
 
+    private Boolean isActive;
+
+    private String description;
+
     @NotNull
     private BannerStatus status;
 
@@ -29,5 +33,10 @@ public class BannerUpdateDto {
 
     public BannerStatus getStatus() { return status; }
     public void setStatus(BannerStatus status) { this.status = status; }
-}
 
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+}

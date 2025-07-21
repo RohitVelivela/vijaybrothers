@@ -1,23 +1,95 @@
 package com.vijaybrothers.store.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 
 /**
- * Request DTO for creating a new category
- * Used in POST /api/admin/categories
+ * Basic fields for creating/updating a Category.
  */
-public record CategoryCreateRequest(
-    @NotBlank(message = "Category name cannot be blank")
-    String name,
+public class CategoryCreateRequest {
+    @NotBlank(message = "Name is required")
+    private String name;
 
-    @NotBlank(message = "Category slug cannot be blank")
-    String slug,
+    @NotBlank(message = "Slug is required")
+    private String slug;
 
-    String description,
+    private String description;
+    private Integer parentId;
 
-    Integer parentId,
+    @NotNull(message = "isActive flag is required")
+    private Boolean isActive;
 
-    Boolean isActive,
+    private Integer position;
+    private String categoryImage;
+    private Integer categoryId;
+    private Integer displayOrder;
 
-    Integer position
-) {}
+    // getters & setters...
+    public String getCategoryImage() {
+        return categoryImage;
+    }
+
+    public void setCategoryImage(String categoryImage) {
+        this.categoryImage = categoryImage;
+    }
+    public Integer getCategoryId() {
+        return categoryId;
+    }
+    public void setCategoryId(Integer categoryId) {
+        this.categoryId = categoryId;
+    }
+    public Integer getDisplayOrder() {
+        return displayOrder;
+    }
+    public void setDisplayOrder(Integer displayOrder) {
+        this.displayOrder = displayOrder;
+    }
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(Integer parentId) {
+        this.parentId = parentId;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public Integer getPosition() {
+        return position;
+    }
+
+    public void setPosition(Integer position) {
+        this.position = position;
+    }
+}
