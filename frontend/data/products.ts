@@ -32,7 +32,7 @@ export const topHandpickedSarees: Product[] = [
     title: "Royal Banarasi Silk Saree with Gold Zari Work",
     price: "$125.00",
     originalPrice: "$150.00",
-    image: "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image: "/images/Royal Banarasi Silk Saree with Gold Zari Work.jpg",
     badge: "Best Seller",
     badgeColor: "bg-red-500",
     category: "Banarasi Silk",
@@ -53,9 +53,7 @@ export const topHandpickedSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054599/pexels-photo-9054599.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839825/pexels-photo-8839825.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -63,7 +61,7 @@ export const topHandpickedSarees: Product[] = [
     title: "Traditional Kanjivaram Wedding Saree",
     price: "$180.00",
     originalPrice: "$220.00",
-    image: "https://images.pexels.com/photos/9054599/pexels-photo-9054599.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image: "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     badge: "Premium",
     badgeColor: "bg-purple-500",
     category: "Kanjivaram",
@@ -83,9 +81,7 @@ export const topHandpickedSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/9054599/pexels-photo-9054599.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839825/pexels-photo-8839825.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -93,7 +89,7 @@ export const topHandpickedSarees: Product[] = [
     title: "Handloom Cotton Saree with Block Print",
     price: "$45.00",
     originalPrice: "$60.00",
-    image: "https://images.pexels.com/photos/8839825/pexels-photo-8839825.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image: "/images/Handloom Cotton Saree with Block Print.jpeg",
     badge: "Eco-Friendly",
     badgeColor: "bg-green-500",
     category: "Cotton Handloom",
@@ -113,9 +109,7 @@ export const topHandpickedSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839825/pexels-photo-8839825.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054599/pexels-photo-9054599.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -123,7 +117,7 @@ export const topHandpickedSarees: Product[] = [
     title: "Designer Georgette Saree with Sequin Work",
     price: "$85.00",
     originalPrice: "$110.00",
-    image: "https://images.pexels.com/photos/9054595/pexels-photo-9054595.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image: "/images/Designer Georgette Saree with Sequin Work.jpeg",
     badge: "Trending",
     badgeColor: "bg-orange-500",
     category: "Designer",
@@ -143,9 +137,7 @@ export const topHandpickedSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/9054595/pexels-photo-9054595.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054599/pexels-photo-9054599.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   }
 ];
@@ -155,7 +147,7 @@ export const newArrivalSarees: Product[] = [
     id: 5,
     title: "Bridal Red Silk Saree with Heavy Embroidery",
     price: "$250.00",
-    image: "https://images.pexels.com/photos/8839846/pexels-photo-8839846.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image: "/images/Bridal Red Silk Saree with Heavy Embroidery.jpeg",
     badge: "New",
     badgeColor: "bg-blue-500",
     category: "Bridal",
@@ -175,16 +167,16 @@ export const newArrivalSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839846/pexels-photo-8839846.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054593/pexels-photo-9054593.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839827/pexels-photo-8839827.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Handloom Cotton Saree with Block Print.jpeg",
+      "/images/Royal Banarasi Silk Saree with Gold Zari Work.jpg",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
     id: 6,
     title: "Elegant Chiffon Saree with Pearl Work",
     price: "$75.00",
-    image: "https://images.pexels.com/photos/9054593/pexels-photo-9054593.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image: "/images/Elegant Chiffon Saree with Pearl Work.jpeg",
     badge: "New",
     badgeColor: "bg-blue-500",
     category: "Chiffon",
@@ -204,16 +196,14 @@ export const newArrivalSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/9054593/pexels-photo-9054593.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839846/pexels-photo-8839846.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839827/pexels-photo-8839827.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
     id: 7,
     title: "Tissue Silk Saree with Gold Border",
     price: "$95.00",
-    image: "https://images.pexels.com/photos/8839827/pexels-photo-8839827.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image: "/images/Tissue Silk Saree with Gold Border.jpeg",
     badge: "New",
     badgeColor: "bg-blue-500",
     category: "Tissue Silk",
@@ -233,16 +223,16 @@ export const newArrivalSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839827/pexels-photo-8839827.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839846/pexels-photo-8839846.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054593/pexels-photo-9054593.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Handloom Cotton Saree with Block Print.jpeg",
+      "/images/Royal Banarasi Silk Saree with Gold Zari Work.jpg",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
     id: 8,
     title: "Mangalagiri Cotton Saree with Traditional Border",
     price: "$55.00",
-    image: "https://images.pexels.com/photos/9054597/pexels-photo-9054597.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image: "/images/Handloom Cotton Saree with Block Print.jpeg",
     badge: "New",
     badgeColor: "bg-blue-500",
     category: "Mangalagiri",
@@ -262,9 +252,7 @@ export const newArrivalSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/9054597/pexels-photo-9054597.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839846/pexels-photo-8839846.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054593/pexels-photo-9054593.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   }
 ];
@@ -294,9 +282,7 @@ export const festivalCollection: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839831/pexels-photo-8839831.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054595/pexels-photo-9054595.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839825/pexels-photo-8839825.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -323,9 +309,7 @@ export const festivalCollection: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839825/pexels-photo-8839825.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839831/pexels-photo-8839831.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054595/pexels-photo-9054595.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -352,9 +336,7 @@ export const festivalCollection: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/9054595/pexels-photo-9054595.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839831/pexels-photo-8839831.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839825/pexels-photo-8839825.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -381,9 +363,7 @@ export const festivalCollection: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/9054599/pexels-photo-9054599.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839831/pexels-photo-8839831.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054595/pexels-photo-9054595.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   }
 ];
@@ -413,9 +393,7 @@ export const officeWearSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054593/pexels-photo-9054593.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839827/pexels-photo-8839827.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -442,9 +420,9 @@ export const officeWearSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/9054593/pexels-photo-9054593.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839827/pexels-photo-8839827.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Handloom Cotton Saree with Block Print.jpeg",
+      "/images/Royal Banarasi Silk Saree with Gold Zari Work.jpg",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -471,9 +449,7 @@ export const officeWearSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839827/pexels-photo-8839827.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054593/pexels-photo-9054593.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -500,9 +476,7 @@ export const officeWearSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839846/pexels-photo-8839846.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054593/pexels-photo-9054593.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   }
 ];
@@ -532,9 +506,7 @@ export const casualSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/9054597/pexels-photo-9054597.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839831/pexels-photo-8839831.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054595/pexels-photo-9054595.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -561,9 +533,7 @@ export const casualSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839831/pexels-photo-8839831.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054597/pexels-photo-9054597.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054595/pexels-photo-9054595.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -590,9 +560,7 @@ export const casualSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/9054595/pexels-photo-9054595.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054597/pexels-photo-9054597.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839831/pexels-photo-8839831.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -619,9 +587,7 @@ export const casualSarees: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839825/pexels-photo-8839825.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054597/pexels-photo-9054597.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839831/pexels-photo-8839831.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   }
 ];
@@ -652,9 +618,7 @@ export const premiumCollection: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054599/pexels-photo-9054599.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839825/pexels-photo-8839825.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -682,9 +646,7 @@ export const premiumCollection: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/9054599/pexels-photo-9054599.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839825/pexels-photo-8839825.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -712,9 +674,7 @@ export const premiumCollection: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839846/pexels-photo-8839846.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054599/pexels-photo-9054599.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   },
   {
@@ -742,9 +702,7 @@ export const premiumCollection: Product[] = [
       media: "Instagram",
     },
     thumbnailImages: [
-      "https://images.pexels.com/photos/8839827/pexels-photo-8839827.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=600",
-      "https://images.pexels.com/photos/9054599/pexels-photo-9054599.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/images/Traditional Kanjivaram Wedding Saree.jpeg",
     ],
   }
 ];

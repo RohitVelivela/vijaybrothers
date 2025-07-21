@@ -303,7 +303,7 @@ export default function CategoriesPage() {
                   <TableHead className="cursor-pointer" onClick={() => handleSort('categoryId')}>Category ID</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>Name</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('slug')}>Slug</TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('parentId')}>Parent ID</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => handleSort('parentName')}>Parent Category</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('isActive')}>Active</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('position')}>Position</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('createdAt')}>Created Date</TableHead>
@@ -316,7 +316,7 @@ export default function CategoriesPage() {
                     <TableCell className="font-medium">{category.categoryId}</TableCell>
                     <TableCell>{category.name}</TableCell>
                     <TableCell>{category.slug}</TableCell>
-                    <TableCell>{category.parentId || '-'}</TableCell>
+                    <TableCell>{category.parentName || '-'}</TableCell>
                     <TableCell>{category.isActive ? 'Yes' : 'No'}</TableCell>
                     <TableCell>{category.position}</TableCell>
                     <TableCell>{new Date(category.createdAt).toLocaleDateString()}</TableCell>

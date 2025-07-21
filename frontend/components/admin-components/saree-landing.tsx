@@ -40,7 +40,7 @@ const SareeLanding = () => {
       <div className="absolute top-5 left-5 z-20 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
         <div className="relative w-32 h-32 bg-white flex items-center justify-center shadow-lg rounded-lg overflow-hidden">
           <Image
-            src="/images/logo.png"      // now loading from public/images/logo.png
+            src="/VB logo white back.png"      // now loading from public/images/logo.png
             alt="Vijay Brothers Logo"
             fill                        // fills the 128×128 container
             sizes="128px"

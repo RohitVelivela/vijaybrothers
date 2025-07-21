@@ -83,7 +83,7 @@ const Signup: React.FC = () => {
       <div className="relative z-10 w-full max-w-xs px-4 transform -translate-y-15 -translate-x-4">
         <div className="flex justify-center mb-6">
           <img
-            src="/images/logo.png"
+            src="/VB logo white back.png"
             alt="Vijay Brothers Logo"
             className="w-32 h-32 object-contain rounded-lg shadow-lg bg-white"
           />

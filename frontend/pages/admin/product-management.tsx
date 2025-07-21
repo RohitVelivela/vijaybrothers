@@ -57,10 +57,11 @@ export default function ProductsPage() {
   const [currentImageUrls, setCurrentImageUrls] = useState<string[]>([]);
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(0); // 0-indexed for backend
+  const [currentPage, setCurrentPage] = useState(1); // 1-indexed for UI
+  const [productsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const observer = useRef<IntersectionObserver | null>(null);
 
   // Form state
   const [newName, setNewName] = useState('');
@@ -76,37 +77,27 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategoryId, setNewCategoryId] = useState<number | undefined>(undefined);
 
-  const loadProducts = useCallback(async (reset = false) => {
-    if (loading || (!hasMore && !reset)) return;
+  const loadProducts = useCallback(async (page: number) => {
     setLoading(true);
-    if (reset) {
-      setProducts([]);
-      setCurrentPage(0);
-      setHasMore(true);
-    }
     try {
-      const data: Page<Product> = await fetchProducts(reset ? 0 : currentPage, 10, showDeleted); // Fetch 10 products per page
-      
-      setProducts(prevProducts => reset ? data.content : [...prevProducts, ...data.content]);
-      setHasMore(data.number < data.totalPages - 1);
-      setCurrentPage(prevPage => reset ? 1 : prevPage + 1);
+      // API uses 0-indexed pages, UI uses 1-indexed
+      const data: Page<Product> = await fetchProducts(page - 1, productsPerPage, showDeleted);
+      setProducts(data.content);
+      setTotalPages(data.totalPages);
+      setTotalElements(data.totalElements);
     } catch (err) {
-      setHasMore(false); // Stop trying to load more on error
+      Swal.fire('Error!', 'Failed to load products.', 'error');
+      setProducts([]);
+      setTotalPages(0);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, loading, hasMore, showDeleted]);
+  }, [productsPerPage, showDeleted]);
 
-  const lastProductElementRef = useCallback((node: HTMLDivElement) => {
-    if (loading) return;
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        loadProducts();
-      }
-    });
-    if (node) observer.current.observe(node);
-  }, [loading, hasMore, loadProducts]);
+  useEffect(() => {
+    loadProducts(currentPage);
+  }, [currentPage, showDeleted, loadProducts]);
 
   const loadCategories = async () => {
     try {
@@ -118,9 +109,8 @@ export default function ProductsPage() {
   };
 
   useEffect(() => {
-    loadProducts(true);
     loadCategories();
-  }, [showDeleted]);
+  }, []);
 
   const handleMenuToggle = () => {
     if (window.innerWidth >= 1024) {
@@ -159,7 +149,13 @@ export default function ProductsPage() {
 
       return 0;
     });
-  }, [products, searchTerm, filterCategory, sortColumn, sortDirection, showDeleted]);
+  }, [products, searchTerm, filterCategory, sortColumn, sortDirection]);
+
+  const paginate = (pageNumber: number) => {
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   const handleSort = (column: keyof Product) => {
     if (sortColumn === column) {
@@ -213,16 +209,14 @@ export default function ProductsPage() {
 
     if (result.isConfirmed) {
       try {
-        // Optimistically update the UI
-        setProducts(products.map(p => p.productId === id ? { ...p, deleted: true } : p));
         await deleteProduct(id);
+        loadProducts(currentPage); // Reload current page
         Swal.fire(
           'Deleted!',
           'Your product has been marked as deleted.',
           'success'
         );
       } catch (err) {
-        setProducts(products.map(p => p.productId === id ? { ...p, deleted: false } : p));
         Swal.fire(
           'Error!',
           `Failed to delete product: ${(err as Error).message}`,
@@ -234,16 +228,14 @@ export default function ProductsPage() {
 
   const handleRestoreProduct = async (id: number) => {
     try {
-      // Optimistically update the UI
-      setProducts(products.map(p => p.productId === id ? { ...p, deleted: false } : p));
       await restoreProduct(id);
+      loadProducts(currentPage); // Reload current page
       Swal.fire(
         'Restored!',
         'Your product has been restored.',
         'success'
       );
     } catch (err) {
-      setProducts(products.map(p => p.productId === id ? { ...p, deleted: true } : p));
       Swal.fire(
         'Error!',
         `Failed to restore product: ${(err as Error).message}`,
@@ -316,11 +308,7 @@ export default function ProductsPage() {
       newImages.forEach((image, index) => {
         if (image instanceof File) {
           formData.append(`images`, image);
-          // For new images, the first one uploaded will be considered main if no existing main image
-          // The backend handles the isMain logic for new images based on order and existing main image presence.
         } else {
-          // This is an existing image
-          // We only need to track which one is the main image if it's an existing one
           if (image.isMain) {
             mainImageIdToSend = image.id;
           }
@@ -335,21 +323,15 @@ export default function ProductsPage() {
         deletedImageIds.forEach(id => {
           formData.append(`deletedImageIds`, id.toString());
         });
-        // Update existing product
         await updateProduct(editingProduct.productId, formData);
         Swal.fire('Updated!', 'Product has been updated.', 'success');
       } else {
-        // Create new product
         await createProduct(formData);
         Swal.fire('Created!', 'New product has been created.', 'success');
       }
 
       setIsModalOpen(false);
-      // After save, reload products from scratch to ensure correct pagination
-      setProducts([]);
-      setCurrentPage(0);
-      setHasMore(true);
-      loadProducts();
+      loadProducts(editingProduct ? currentPage : 1);
     } catch (err) {
       Swal.fire('Error!', (err as Error).message, 'error');
     }
@@ -453,78 +435,124 @@ export default function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product) => (
-                  <TableRow key={product.productId}>
-                    <TableCell className="font-medium">{product.productId}</TableCell>
-                    <TableCell>{product.name}</TableCell>
-                    <TableCell>{product.productCode}</TableCell>
-                    <TableCell>{product.price}</TableCell>
-                    <TableCell>
-                        {product.stockQuantity ?? 0}
-                        {(product.stockQuantity ?? 0) < 10 && (
-                            <span className="ml-2 bg-red-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Low Stock</span>
-                        )}
-                    </TableCell>
-                    <TableCell>
-                      {product.category?.name || categories.find(cat => cat.categoryId === product.categoryId)?.name || 'N/A'}
-                    </TableCell>
-                    <TableCell className="align-top">
-                      {product.images && product.images.length > 0 ? (
-                        (() => {
-                          const mainImage = product.images.find(img => img.isMain) || product.images[0];
-                          return (
-                            <div
-                              className="cursor-pointer"
-                              onClick={() => {
-                                setCurrentImageUrls(product.images.map(img => img.imageUrl));
-                                setIsImageModalOpen(true);
-                              }}
-                            >
-                              <img src={mainImage.imageUrl} alt={product.name} className="w-24 h-24 object-cover rounded-md" />
-                            </div>
-                          );
-                        })()
-                      ) : (
-                        'N/A'
-                      )}
-                    </TableCell>
-                    <TableCell>{new Date(product.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      {product.deleted ? (
-                        <span className="bg-red-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Deleted</span>
-                      ) : (
-                        <span className="bg-green-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Active</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        {product.deleted ? (
-                          <Button variant="outline" size="icon" onClick={() => handleRestoreProduct(product.productId)}>
-                            <RotateCcw className="h-4 w-4 text-green-500" />
-                          </Button>
+                {loading ? (
+                  <TableRow><TableCell colSpan={10} className="text-center text-gray-500 p-4">Loading products...</TableCell></TableRow>
+                ) : filteredProducts.length > 0 ? (
+                  filteredProducts.map((product) => (
+                    <TableRow key={product.productId}>
+                      <TableCell className="font-medium">{product.productId}</TableCell>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell>{product.productCode}</TableCell>
+                      <TableCell>{product.price}</TableCell>
+                      <TableCell>
+                          {product.stockQuantity ?? 0}
+                          {(product.stockQuantity ?? 0) < 10 && (
+                              <span className="ml-2 bg-red-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Low Stock</span>
+                          )}
+                      </TableCell>
+                      <TableCell>
+                        {product.category?.name || categories.find(cat => cat.categoryId === product.categoryId)?.name || 'N/A'}
+                      </TableCell>
+                      <TableCell className="align-top">
+                        {product.images && product.images.length > 0 ? (
+                          (() => {
+                            const mainImage = product.images.find(img => img.isMain) || product.images[0];
+                            return (
+                              <div
+                                className="cursor-pointer"
+                                onClick={() => {
+                                  setCurrentImageUrls(product.images.map(img => img.imageUrl));
+                                  setIsImageModalOpen(true);
+                                }}
+                              >
+                                <img src={mainImage.imageUrl} alt={product.name} className="w-24 h-24 object-cover rounded-md" />
+                              </div>
+                            );
+                          })()
                         ) : (
-                          <>
-                            <Button variant="outline" size="icon" onClick={() => handleEditProduct(product.productId)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="icon" onClick={() => handleDeleteProduct(product.productId)}>
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </>
+                          'N/A'
                         )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {loading && <TableRow><TableCell colSpan={9} className="text-center text-gray-500">Loading more products...</TableCell></TableRow>}
-                {!hasMore && !loading && products.length > 0 && <TableRow><TableCell colSpan={9} className="text-center text-gray-500">No more products to load.</TableCell></TableRow>}
-                {products.length === 0 && !loading && <TableRow><TableCell colSpan={9} className="text-center text-gray-500">No products found.</TableCell></TableRow>}
+                      </TableCell>
+                      <TableCell>{new Date(product.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {product.deleted ? (
+                          <span className="bg-red-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Deleted</span>
+                        ) : (
+                          <span className="bg-green-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Active</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          {product.deleted ? (
+                            <Button variant="outline" size="icon" onClick={() => handleRestoreProduct(product.productId)}>
+                              <RotateCcw className="h-4 w-4 text-green-500" />
+                            </Button>
+                          ) : (
+                            <>
+                              <Button variant="outline" size="icon" onClick={() => handleEditProduct(product.productId)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="outline" size="icon" onClick={() => handleDeleteProduct(product.productId)}>
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow><TableCell colSpan={10} className="text-center text-gray-500 p-4">No products found.</TableCell></TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
 
           {/* Pagination */}
-          <div ref={lastProductElementRef} style={{ height: '1px' }} /> {/* Invisible element to trigger IntersectionObserver */}
+          <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+            <div className="text-gray-600 text-sm">
+              Showing {Math.min((currentPage - 1) * productsPerPage + 1, totalElements)} - {Math.min(currentPage * productsPerPage, totalElements)} of {totalElements} products
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1 || loading}
+              >
+                Previous
+              </Button>
+              {Array.from({ length: totalPages }, (_, index) => {
+                const pageNum = index + 1;
+                const showPage = Math.abs(pageNum - currentPage) < 2 || pageNum === 1 || pageNum === totalPages;
+                const showEllipsis = Math.abs(pageNum - currentPage) === 2 && pageNum > 1 && pageNum < totalPages;
+
+                if (showEllipsis) {
+                  return <span key={`ellipsis-${pageNum}`} className="px-4 py-2">...</span>;
+                }
+
+                if (showPage) {
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? 'default' : 'outline'}
+                      onClick={() => paginate(pageNum)}
+                      disabled={loading}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                }
+                return null;
+              })}
+              <Button
+                variant="outline"
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages || loading}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
 
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogContent>
@@ -703,3 +731,4 @@ export default function ProductsPage() {
     </div>
   );
 }
+''

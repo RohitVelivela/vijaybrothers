@@ -13,8 +13,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
+// Define the type first, based on the expected shape
+interface EditProfileFormInputs {
+  username: string;
+  oldPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}
+
 // Define the Zod schema for profile editing
-const editProfileSchema = z.object({
+const editProfileSchema: z.ZodSchema<EditProfileFormInputs> = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters').max(50, 'Username must be at most 50 characters'),
   oldPassword: z.string().optional(),
   newPassword: z.string().optional(),
@@ -53,8 +61,6 @@ const editProfileSchema = z.object({
   path: ['confirmPassword'],
 });
 
-type EditProfileFormInputs = z.infer<typeof editProfileSchema>;
-
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const EditProfilePage = () => {
@@ -63,6 +69,7 @@ const EditProfilePage = () => {
   const { user, logout, setUser } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [imageError, setImageError] = useState('');
@@ -179,10 +186,8 @@ const EditProfilePage = () => {
       reader.readAsDataURL(compressedFile);
       setIsChanged(true); // Mark as changed
     } catch (error) {
-      toast({
-        title: 'Failed to compress image.',
+      toast.error('Failed to compress image.', {
         description: (error as Error).message || 'An unexpected error occurred during image compression.',
-        variant: 'destructive',
       });
       setImageError('Failed to process image.');
       setProfileImageFile(null);
@@ -216,73 +221,50 @@ const EditProfilePage = () => {
       }
     }
 
-    const payload: {
-      userName: string;
-      email: string;
-      profileImage?: string; // Base64 string
-      removeProfileImage?: boolean;
-      oldPassword?: string;
-      newPassword?: string;
-    } = {
-      userName: data.username,
-      email: user?.email || '', // Use current user email from context
-    };
+    const formData = new FormData();
+    formData.append('userName', data.username);
+    formData.append('email', user?.email || ''); // Use current user email from context
 
     if (profileImageFile) {
-      // Convert File to Base64 string
-      const reader = new FileReader();
-      reader.readAsDataURL(profileImageFile);
-      reader.onloadend = async () => {
-        payload.profileImage = (reader.result as string).split(',')[1]; // Get base64 part
-        if (showPasswordForm) {
-          payload.oldPassword = data.oldPassword;
-          payload.newPassword = data.newPassword;
-        }
-        await sendUpdate(payload);
-      };
-      reader.onerror = (error) => {
-        toast({
-          title: 'Image conversion failed.',
-          description: (error as any).message || 'An unexpected error occurred during image conversion.',
-          variant: 'destructive',
-        });
-      };
-    } else {
-      if (removeProfileImage) {
-        payload.removeProfileImage = true;
-      } else if (user?.profileImageUrl) {
-        // If no new image and not removing, keep existing image URL
-        payload.profileImage = user.profileImageUrl;
-      }
-      if (showPasswordForm) {
-        payload.oldPassword = data.oldPassword;
-        payload.newPassword = data.newPassword;
-      }
-      await sendUpdate(payload);
+      formData.append('profileImage', profileImageFile);
+    } else if (removeProfileImage) {
+      formData.append('removeProfileImage', String(removeProfileImage));
     }
+
+    if (showPasswordForm) {
+      if (data.oldPassword) formData.append('oldPassword', data.oldPassword);
+      if (data.newPassword) formData.append('newPassword', data.newPassword);
+    }
+    await sendUpdate(formData, data);
   };
 
-  const sendUpdate = async (payload: any) => {
+  const sendUpdate = async (formData: FormData, data: EditProfileFormInputs) => {
     try {
       const token = getCookie('token');
 
       if (!token) {
-        toast({
-          title: 'Authentication token not found.',
+        toast.error('Authentication token not found.', {
           description: 'Please log in again.',
-          variant: 'destructive',
         });
         router.push('/admin/login');
         return;
       }
 
-      const response = await fetch('http://localhost:8080/api/admin/profile', {
-        method: 'PUT', // Keep PUT, but send JSON
+      if (!user || !user.id) {
+        toast.error('User ID not found.', {
+          description: 'Please log in again or refresh the page.',
+        });
+        router.push('/admin/login');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:8080/api/admin/users/${user?.id}`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json', // Specify JSON content type
+          // 'Content-Type': 'application/json', // Removed: FormData sets its own Content-Type
         },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -291,8 +273,7 @@ const EditProfilePage = () => {
       }
 
       const responseData = await response.json();
-      toast({
-        title: 'Profile updated successfully!',
+      toast.success('Profile updated successfully!', {
         description: responseData.message || 'Your profile has been updated.',
       });
 
@@ -300,8 +281,8 @@ const EditProfilePage = () => {
       if (user) {
         setUser({
           ...user,
-          name: payload.userName,
-          email: payload.email,
+          name: data.username,
+          email: data.email || user.email,
           profileImageUrl: responseData.profileImageUrl !== undefined ? responseData.profileImageUrl : user.profileImageUrl,
         });
       }
@@ -310,17 +291,15 @@ const EditProfilePage = () => {
       setProfileImageFile(null); // Clear file input after successful upload
       clearErrors(); // Clear form errors
       reset({ // Reset form fields, especially passwords
-        username: payload.userName,
+        username: data.username,
         oldPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
       setPasswordError(''); // Clear password error
     } catch (error: any) {
-      toast({
-        title: 'Failed to update profile.',
+      toast.error('Failed to update profile.', {
         description: error.message || 'An unexpected error occurred.',
-        variant: 'destructive',
       });
       if (showPasswordForm) {
         setPasswordError(error.message || 'An unexpected error occurred.');
@@ -365,7 +344,7 @@ const EditProfilePage = () => {
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={user?.email || ''} disabled />
+                    <Input id="email" type="email" value={user?.email || ''} disabled={!isEditing} />
                   </div>
                   
                   <div className="flex items-center space-x-2">
@@ -455,6 +434,11 @@ const EditProfilePage = () => {
                   </details>
 
                   <div className="flex justify-end space-x-3 mt-6">
+                    {!isEditing && (
+                      <Button type="button" onClick={() => setIsEditing(true)}>
+                        Edit Profile
+                      </Button>
+                    )}
                     {isEditing && (
                       <>
                         <Button 

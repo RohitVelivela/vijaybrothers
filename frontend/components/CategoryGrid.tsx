@@ -27,11 +27,11 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll 
     },
     { 
       title: "Fancy Sarees", 
-      image: "/images/categories/fancy sarees.jpeg",
+      image: "/images/categories/fancy sareess.jpeg",
     },
     { 
       title: "Tissue Silk Sarees", 
-      image: "/images/categories/tissue silk sarees.jpeg",
+      image: "/images/categories/tiissue silk sarees.jpeg",
     },
     { 
       title: "Kuppadam Sico Sarees", 
@@ -47,7 +47,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll 
     },
     { 
       title: "Kalanjali Silk Sarees", 
-      image: "/images/categories/kalanjali silk sarees.jpeg",
+      image: "/images/categories/kalanajal slik saress.jpeg",
     }
   ];
 

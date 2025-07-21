@@ -53,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, activeLink, togg
       <div className="flex flex-col items-center justify-center py-8 border-b border-white/10">
         <Link href="/admin/dashboard" className="flex flex-col items-center space-y-2">
           <div className="p-2 bg-white rounded-full shadow-md mb-2" style={{ marginTop: isCollapsed ? '0' : '1rem' }}>
-            <ImageNext src="/images/logo.png" alt="Vijay Brothers Logo" width={100} height={100} className="rounded-full" />
+            <ImageNext src="/VB logo white back.png" alt="Vijay Brothers Logo" width={100} height={100} className="rounded-full" />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col items-center mt-3">

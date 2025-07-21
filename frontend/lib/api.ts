@@ -19,16 +19,16 @@ export interface Category {
   slug: string;
   description: string;
   parentId?: number; // Optional, for nested categories
+  parentName?: string; // Optional, for parent category name
   isActive: boolean; // For visibility control
   position: number; // For display order
   createdAt: string;
   updatedAt: string;
+  subCategories?: Category[];
 }
 
 export async function fetchCategories(): Promise<Category[]> {
-  const res = await fetch(`${API_BASE_URL}/admin/categories`, {
-    headers: getAuthHeaders(),
-  });
+  const res = await fetch(`${API_BASE_URL}/categories`);
   if (!res.ok) {
     throw new Error('Failed to fetch categories');
   }
