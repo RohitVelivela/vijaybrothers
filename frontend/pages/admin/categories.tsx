@@ -230,6 +230,7 @@ export default function CategoriesPage() {
       formData.append('position', newPosition.toString());
       formData.append('displayOrder', newDisplayOrder.toString());
       if (newImageFile) {
+        console.log("newImageFile before FormData append:", newImageFile);
         formData.append('image', newImageFile);
       } else if (editingCategory && newImageUrl === null) {
         formData.append('clearImage', 'true');
@@ -331,6 +332,7 @@ export default function CategoriesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('categoryId')}>Category ID</TableHead>
+                  <TableHead>Image</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>Name</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('slug')}>Slug</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('parentName')}>Parent Category</TableHead>
@@ -344,6 +346,15 @@ export default function CategoriesPage() {
                 {currentCategories.map((category) => (
                   <TableRow key={category.categoryId}>
                     <TableCell className="font-medium">{category.categoryId}</TableCell>
+                    <td className="py-2 pl-1 border-b text-left">
+                {category.categoryImage && (
+                  <img 
+                    src={`http://localhost:8080${category.categoryImage}`} 
+                    alt={category.name} 
+                    className="w-32 h-32 object-cover rounded block mr-auto" 
+                  />
+                )}
+              </td>
                     <TableCell>{category.name}</TableCell>
                     <TableCell>{category.slug}</TableCell>
                     <TableCell>{category.parentName || '-'}</TableCell>
@@ -364,7 +375,7 @@ export default function CategoriesPage() {
                 ))}
                 {currentCategories.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-gray-500 p-4">
+                    <TableCell colSpan={9} className="text-center text-gray-500 p-4">
                       No categories found.
                     </TableCell>
                   </TableRow>

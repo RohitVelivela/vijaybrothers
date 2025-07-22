@@ -22,7 +22,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    private final String UPLOAD_DIR = "src/main/resources/static/images/categories/";
+    private final String UPLOAD_DIR = System.getProperty("user.home") + "/uploads/images/categories/";
 
     @Override
     @Transactional
@@ -85,7 +85,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
         String fileName = UUID.randomUUID().toString() + "-" + image.getOriginalFilename();
         Path filePath = uploadPath.resolve(fileName);
         Files.copy(image.getInputStream(), filePath);
-        return "/images/categories/" + fileName; // Return relative path for URL
+        return "/uploads/images/categories/" + fileName; // Return relative path for URL
     }
 
     private void deleteImage(String imageUrl) {

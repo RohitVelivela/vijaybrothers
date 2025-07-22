@@ -52,7 +52,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll 
   ];
 
   return (
-    <section className="py-20 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 relative overflow-hidden">
+    <section className="py-20 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 relative overflow-hidden min-h-screen">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -86,15 +86,26 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll 
         </div>
 
         {/* Banarasi Category Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-10">
-          {ornateCategories.map((category, index) => (
-            <BanarasiCategoryCard
-              key={category.title}
-              title={category.title}
-              image={category.image}
-              className="transform hover:scale-105 transition-all duration-500"
-            />
-          ))}
+        <div className="grid grid-cols-4 gap-8 lg:gap-10">
+          {ornateCategories.map((category, index) => {
+            let spanClass = '';
+            if (index === 0) spanClass = 'col-span-2 row-span-2';
+            else if (index === 1) spanClass = 'col-span-1 row-span-1';
+            else if (index === 2) spanClass = 'col-span-1 row-span-1';
+            else if (index === 3) spanClass = 'col-span-1 row-span-1';
+            else if (index === 4) spanClass = 'col-span-1 row-span-1';
+            else if (index === 5) spanClass = 'col-span-1 row-span-1';
+            else if (index === 6) spanClass = 'col-span-1 row-span-1';
+            else if (index === 7) spanClass = 'col-span-2 row-span-1';
+            return (
+              <BanarasiCategoryCard
+                key={category.title}
+                title={category.title}
+                image={category.image}
+                className={`h-full min-h-[250px] transform hover:scale-105 transition-all duration-500 ${spanClass}`}
+              />
+            );
+          })}
         </div>
 
         {/* Hand Picked Sarees */}
@@ -102,7 +113,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll 
           <h3 className="font-cinzel text-2xl md:text-3xl font-bold text-gray-800 mb-4 tracking-wide">Hand Picked Sarees</h3>
           <div className="text-center mt-4 mb-8">
             <button onClick={() => router.push('/products/handpicked')} className="group relative bg-gradient-to-r from-red-600 to-amber-600 text-white px-4 py-2 rounded-full font-playfair font-bold text-sm hover:from-red-700 hover:to-amber-700 transition-all duration-500 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 overflow-hidden">
-              <span className="relative z-10">View All --></span>
+              <span className="relative z-10">View All &gt;&gt;</span>
             </button>
           </div>
           <ProductGrid products={topHandpickedSarees.slice(0, 3)} cardClassName="h-64" />
@@ -113,7 +124,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll 
           <h3 className="font-cinzel text-2xl md:text-3xl font-bold text-gray-800 mb-4 tracking-wide">Managalgiri sarees</h3>
           <div className="text-center mt-4 mb-8">
             <button onClick={() => router.push('/products/managalgiri')} className="group relative bg-gradient-to-r from-red-600 to-amber-600 text-white px-4 py-2 rounded-full font-playfair font-bold text-sm hover:from-red-700 hover:to-amber-700 transition-all duration-500 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 overflow-hidden">
-              <span className="relative z-10">View All --></span>
+              <span className="relative z-10">View All &gt;&gt;</span>
             </button>
           </div>
           <ProductGrid products={newArrivalSarees.slice(0, 3)} cardClassName="h-64" />

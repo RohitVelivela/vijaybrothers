@@ -20,11 +20,11 @@ const BanarasiCategoryCard: React.FC<BanarasiCategoryCardProps> = ({
 
   return (
     <div 
-      className={`relative group cursor-pointer overflow-hidden rounded-2xl ${className}`}
+      className={`relative group cursor-pointer rounded-2xl ${className}`}
       onClick={handleCardClick}
     >
       {/* Main Card Container */}
-      <div className="relative aspect-[4/5] bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 shadow-2xl hover:shadow-3xl transition-all duration-500">
+      <div className="relative h-full bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 shadow-2xl hover:shadow-3xl transition-all duration-500">
         
         {/* High-Resolution Sharp Background Image */}
         <div className="absolute inset-0 rounded-2xl overflow-hidden">
