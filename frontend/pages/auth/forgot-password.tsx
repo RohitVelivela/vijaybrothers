@@ -59,10 +59,10 @@ const ForgotPasswordPage: React.FC = () => {
       ></div>
 
       {/* Form Container */}
-      <div className="relative z-25 w-full max-w-md px-6 -translate-y-15">
+      <div className="relative z-25 w-full max-w-md px-6 -translate-y-15 md:-translate-x-7">
         <div className="bg-[rgba(44,24,16,0.85)] backdrop-blur-sm rounded-xl p-4 border-2 border-[#D4AF37]" style={{ boxShadow: '0 0 30px rgba(212, 175, 55, 0.2)' }}>
           <h2 className="text-2xl font-bold text-center mb-6 text-[#D4AF37]">Forgot Password</h2>
-          <p className="text-center text-gray-600 mb-6 text-[#D4AF37]">Enter your email address to receive a password reset link.</p>
+          <p className="text-center mb-6 text-white">Enter your email address to receive a password reset link.</p>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
