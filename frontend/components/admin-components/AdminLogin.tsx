@@ -156,9 +156,9 @@ const AdminLogin: React.FC = () => {
 
           {/* Links */}
           <div className="mt-4 text-center space-y-2">
-            <a href="#" className="block text-[#D4AF37] hover:text-[#FFD700] font-serif text-sm cursor-pointer">
+            <Link href="/auth/forgot-password" className="block text-[#D4AF37] hover:text-[#FFD700] font-serif text-sm cursor-pointer">
               Forgot Password?
-            </a>
+            </Link>
             <a href="/admin/signup" className="block text-[#D4AF37] hover:text-[#FFD700] font-serif text-sm cursor-pointer">
               Create Account
             </a>

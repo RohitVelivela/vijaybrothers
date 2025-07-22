@@ -105,7 +105,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
-                .requestMatchers("/api/admin/signup", "/api/admin/login").permitAll()
+                .requestMatchers("/api/admin/signup", "/api/admin/login", "/api/admin/forgot-password", "/api/admin/reset-password").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()

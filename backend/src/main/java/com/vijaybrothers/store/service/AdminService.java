@@ -12,4 +12,8 @@ public interface AdminService {
     LoginResponse login(LoginRequest req);
     
     ProfileUpdateResponse updateUser(Long userId, AdminProfileUpdateDTO req);
+
+    void forgotPassword(String email, String resetLinkBase);
+
+    void resetPassword(String token, String newPassword);
 }

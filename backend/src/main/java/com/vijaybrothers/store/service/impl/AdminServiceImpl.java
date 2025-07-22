@@ -8,19 +8,25 @@ import com.vijaybrothers.store.dto.auth.SignupResponse;
 import com.vijaybrothers.store.dto.auth.ProfileUpdateResponse;
 import com.vijaybrothers.store.model.Admin;
 import com.vijaybrothers.store.repository.AdminRepository;
+import com.vijaybrothers.store.repository.PasswordResetTokenRepository;
 import com.vijaybrothers.store.security.JwtService;
 import com.vijaybrothers.store.service.AdminService;
+import com.vijaybrothers.store.service.EmailService;
 import com.vijaybrothers.store.service.StorageService;
+import com.vijaybrothers.store.model.PasswordResetToken;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Service
@@ -30,6 +36,9 @@ public class AdminServiceImpl implements AdminService {
     private AdminRepository adminRepository;
 
     @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -37,6 +46,9 @@ public class AdminServiceImpl implements AdminService {
 
     @Autowired
     private StorageService storageService;
+
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public SignupResponse signup(SignupRequest request) {
@@ -136,5 +148,47 @@ public class AdminServiceImpl implements AdminService {
             e.printStackTrace();
             return ProfileUpdateResponse.builder().message("An unexpected error occurred during profile update.").build();
         }
+    }
+
+    @Override
+    @Transactional
+    public void forgotPassword(String email, String resetLinkBase) {
+        Admin admin = adminRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Admin with this email not found."));
+
+        // Invalidate any existing tokens for this admin
+        passwordResetTokenRepository.deleteByAdmin_AdminId(admin.getAdminId());
+
+        String token = UUID.randomUUID().toString();
+        Instant expiryDate = Instant.now().plus(1, ChronoUnit.HOURS); // Token valid for 1 hour
+
+        PasswordResetToken resetToken = new PasswordResetToken(token, admin, expiryDate);
+        passwordResetTokenRepository.save(resetToken);
+
+        String resetLink = resetLinkBase + "?token=" + token;
+        String subject = "Password Reset Request";
+        String text = "To reset your password, click the following link: " + resetLink +
+                      "\n\nThis link will expire in 1 hour.";
+
+        emailService.sendEmail(admin.getEmail(), subject, text);
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired password reset token."));
+
+        if (resetToken.isExpired()) {
+            passwordResetTokenRepository.delete(resetToken); // Clean up expired token
+            throw new IllegalArgumentException("Password reset token has expired.");
+        }
+
+        Admin admin = resetToken.getAdmin();
+        admin.setPassword(passwordEncoder.encode(newPassword));
+        admin.setUpdatedAt(Instant.now());
+        adminRepository.save(admin);
+
+        passwordResetTokenRepository.delete(resetToken); // Invalidate token after use
     }
 }

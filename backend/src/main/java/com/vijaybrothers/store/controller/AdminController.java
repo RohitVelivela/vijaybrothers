@@ -7,9 +7,12 @@ import com.vijaybrothers.store.dto.auth.LoginResponse;
 import com.vijaybrothers.store.dto.auth.ProfileUpdateResponse;
 import com.vijaybrothers.store.dto.auth.SignupRequest;
 import com.vijaybrothers.store.dto.auth.SignupResponse;
+import com.vijaybrothers.store.dto.auth.ForgotPasswordRequest;
+import com.vijaybrothers.store.dto.auth.ResetPasswordRequest;
 import com.vijaybrothers.store.model.Admin;
 import com.vijaybrothers.store.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,6 +37,9 @@ public class AdminController {
 
     @Autowired
     private AdminService adminService;
+
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
 
     @Operation(
@@ -113,4 +119,38 @@ public class AdminController {
         return ResponseEntity.ok(resp);
     }
 
+    @Operation(
+        summary = "Request password reset",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Password reset email sent"),
+            @ApiResponse(responseCode = "400", description = "Invalid email or other error")
+        }
+    )
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        try {
+            String resetLinkBase = frontendUrl + "/auth/reset-password"; // Frontend reset password page
+            adminService.forgotPassword(request.getEmail(), resetLinkBase);
+            return ResponseEntity.ok("Password reset link sent to your email.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @Operation(
+        summary = "Reset password",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid token or other error")
+        }
+    )
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        try {
+            adminService.resetPassword(request.getToken(), request.getNewPassword());
+            return ResponseEntity.ok("Password has been reset successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

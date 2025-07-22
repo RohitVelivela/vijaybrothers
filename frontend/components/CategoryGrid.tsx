@@ -52,7 +52,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll 
   ];
 
   return (
-    <section className="py-20 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 relative overflow-hidden min-h-screen">
+    <section className="py-20 bg-white relative overflow-hidden min-h-screen">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -86,7 +86,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll 
         </div>
 
         {/* Banarasi Category Cards Grid */}
-        <div className="grid grid-cols-4 gap-8 lg:gap-10">
+        <div className="grid grid-cols-4 gap-6 lg:gap-8">
           {ornateCategories.map((category, index) => {
             let spanClass = '';
             if (index === 0) spanClass = 'col-span-2 row-span-2';
