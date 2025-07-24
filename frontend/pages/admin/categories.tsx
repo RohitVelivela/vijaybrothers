@@ -7,6 +7,7 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { ChevronDown, Search, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import {
   Dialog,
@@ -47,6 +48,7 @@ export default function CategoriesPage() {
   const [newIsActive, setNewIsActive] = useState<boolean>(true);
   const [newPosition, setNewPosition] = useState<number>(0);
   const [newDisplayOrder, setNewDisplayOrder] = useState<number>(0);
+  const [newDisplayTypes, setNewDisplayTypes] = useState<string[]>([]); // Changed to string array
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const [newImageUrl, setNewImageUrl] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -145,6 +147,7 @@ export default function CategoriesPage() {
     setNewIsActive(true);
     setNewPosition(0);
     setNewDisplayOrder(0);
+    setNewDisplayTypes([]); // Reset display types to empty array
     setNewImageFile(null);
     setNewImageUrl(null);
     openModal();
@@ -160,6 +163,8 @@ export default function CategoriesPage() {
       setNewParentId(categoryToEdit.parentId);
       setNewIsActive(categoryToEdit.isActive);
       setNewPosition(categoryToEdit.position);
+      setNewDisplayOrder(categoryToEdit.displayOrder || 0); // Ensure displayOrder is set
+      setNewDisplayTypes(categoryToEdit.displayTypes || []); // Set display types to array or empty array
       setNewImageUrl(categoryToEdit.categoryImage || null);
       setNewImageFile(null);
       setIsModalOpen(true);
@@ -208,6 +213,7 @@ export default function CategoriesPage() {
     setNewIsActive(true);
     setNewPosition(0);
     setNewDisplayOrder(0);
+    setNewDisplayTypes([]); // Reset display types to empty array
     setNewImageFile(null);
     setNewImageUrl(null);
     setEditingCategory(null);
@@ -216,40 +222,76 @@ export default function CategoriesPage() {
 
   const saveCategory = async () => {
     try {
+      // --- Validation: Check for required fields ---
       if (!newName || !newSlug) {
-        alert('Name and slug are required.');
+        alert('Category Name and Slug are required.');
         return;
       }
 
+      // --- Validation: Check for image if 'Top Category' is selected ---
+      if (newDisplayTypes.includes('Top Category') && !newImageFile && !newImageUrl) {
+        alert("An image is required when selecting 'Top Category'.");
+        return;
+      }
+
+      // --- Validation: Check for unique Position and Display Order for sub-categories ---
+      if (newParentId) {
+        const parentIdNum = parseInt(String(newParentId), 10);
+        const currentPosition = parseInt(String(newPosition), 10);
+        const currentDisplayOrder = parseInt(String(newDisplayOrder), 10);
+
+        const siblingCategories = categories.filter(
+          (c) => c.parentId === parentIdNum && c.categoryId !== editingCategory?.categoryId
+        );
+
+        const conflictExists = siblingCategories.some((sibling) => {
+            const siblingPosition = parseInt(String(sibling.position), 10);
+            const siblingDisplayOrder = parseInt(String(sibling.displayOrder), 10);
+            return siblingPosition === currentPosition && siblingDisplayOrder === currentDisplayOrder;
+        });
+
+        if (conflictExists) {
+          alert(
+            `Error: A category with Position ${currentPosition} and Display Order ${currentDisplayOrder} already exists under this parent. Please use a unique combination.`
+          );
+          return;
+        }
+      }
+
+      // --- Create FormData and Append Data ---
       const formData = new FormData();
       formData.append('name', newName.trim());
       formData.append('slug', newSlug.trim());
       formData.append('description', newDescription);
-      if (newParentId) formData.append('parentId', newParentId.toString());
+      if (newParentId) {
+        formData.append('parentId', newParentId.toString());
+      }
       formData.append('isActive', newIsActive.toString());
       formData.append('position', newPosition.toString());
       formData.append('displayOrder', newDisplayOrder.toString());
+      formData.append('displayTypes', JSON.stringify(newDisplayTypes));
+
       if (newImageFile) {
-        console.log("newImageFile before FormData append:", newImageFile);
         formData.append('image', newImageFile);
       } else if (editingCategory && newImageUrl === null) {
         formData.append('clearImage', 'true');
       }
 
-      console.log("Sending FormData:");
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-
+      // --- API Call: Update or Create Category ---
       if (editingCategory) {
         await updateCategory(editingCategory.categoryId, formData);
       } else {
         await createCategory(formData);
       }
+
+      // --- Final Steps: Close modal and reload categories ---
       setIsModalOpen(false);
       loadCategories();
+
     } catch (err) {
-      alert((err as Error).message);
+      // --- Error Handling ---
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      Swal.fire('Error!', errorMessage, 'error');
     }
   };
 
@@ -259,6 +301,13 @@ export default function CategoriesPage() {
       setNewImageFile(file);
       setNewImageUrl(URL.createObjectURL(file)); // Create a preview URL
     }
+  };
+
+  const handleDisplayTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = e.target;
+    setNewDisplayTypes(prev => 
+      checked ? [...prev, value] : prev.filter(item => item !== value)
+    );
   };
 
 
@@ -460,21 +509,23 @@ export default function CategoriesPage() {
                   className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
                 />
               </div>
-              <div>
-                <label htmlFor="categoryImage" className="block text-sm font-medium text-gray-700 mb-1">Category Image</label>
-                <Input
-                  id="categoryImage"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
-                />
-                {newImageUrl && (
-                  <div className="mt-2">
-                    <img src={newImageUrl} alt="Category Preview" className="w-32 h-32 object-cover rounded-md" />
-                  </div>
-                )}
-              </div>
+              {newDisplayTypes.includes('Top Category') && (
+                <div>
+                  <label htmlFor="categoryImage" className="block text-sm font-medium text-gray-700 mb-1">Category Image</label>
+                  <Input
+                    id="categoryImage"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
+                  />
+                  {newImageUrl && (
+                    <div className="mt-2">
+                      <img src={newImageUrl} alt="Category Preview" className="w-32 h-32 object-cover rounded-md" />
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <label htmlFor="parentCategory" className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
                 <select
@@ -523,6 +574,32 @@ export default function CategoriesPage() {
                       className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
                     />
                   </div>
+                  {(!newParentId || !categories.find(c => c.categoryId === newParentId)?.displayTypes.includes('Navigation Menu')) && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Display Type</label>
+                    <div className="space-y-2">
+                      {['Navigation Menu', 'Top Category', 'Promotional Sections'].map(type => (
+                        <div key={type} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={type}
+                            value={type}
+                            checked={newDisplayTypes.includes(type)}
+                            onChange={handleDisplayTypeChange}
+                            className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor={type} className="ml-2 text-sm text-gray-700">{type}</label>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-base text-gray-500 mt-1">
+                      <p>Select where you want to display this category. You can select multiple options.</p>
+                      <p><strong className="text-blue-600">Navigation Menu:</strong> For regular navigation menu</p>
+                      <p><strong className="text-yellow-600">Top Category:</strong> To showcase this on homepage as a priority</p>
+                      <p><strong className="text-rose-600">Promotional Sections:</strong> For special campaigns like handpicked, deals, etc.</p>
+                    </div>
+                  </div>
+                  )}
                 </>
               )}
             </div>

@@ -7,4 +7,5 @@ import java.io.IOException;
 public interface AdminCategoryService {
     void createCategory(CategoryCreateRequest request, MultipartFile image);
     void updateCategory(Integer id, CategoryCreateRequest request, MultipartFile image);
+    void deleteCategory(Integer id);
 }

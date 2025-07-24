@@ -5,12 +5,6 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 47, 47, 47;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 255, 255, 255;
-}
-
 @layer base {
   :root {
     --background: 42 45% 96%;
@@ -67,14 +61,7 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
+
 
 /* Hide Next.js badge and error messages */
 body > nextjs-portal {
@@ -119,6 +106,41 @@ body > nextjs-portal {
   background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.4), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
+}
+
+.my-swal-popup {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  text-align: center !important;
+}
+
+.my-swal-popup .swal2-image {
+  margin-bottom: 15px !important;
+}
+
+.my-swal-title {
+  font-size: 1.5em !important;
+  font-weight: bold !important;
+  color: #333 !important;
+  margin-bottom: 10px !important;
+}
+
+.my-swal-html-container {
+  font-size: 1em !important;
+  color: #555 !important;
+  margin-bottom: 20px !important;
+}
+
+.my-swal-confirm-button {
+  background-color: #4CAF50 !important;
+  color: white !important;
+  border: none !important;
+  padding: 10px 20px !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  font-size: 1em !important;
 }
 
 /* Custom gradients */

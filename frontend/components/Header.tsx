@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, ShoppingCart, Menu, X, Instagram, Youtube } from 'lucide-react';
 import { useCart } from '../context/CartContext'; // Import useCart hook
 import Link from 'next/link'; // Import Link for navigation
-import { Category, fetchPublicCategories } from '../lib/api'; // Import Category interface and fetchPublicCategories
+import { Category, fetchPublicCategories, fetchCategoriesByDisplayType } from '../lib/api'; // Import Category interface and fetchPublicCategories
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,7 +13,7 @@ const Header: React.FC = () => {
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const fetchedCategories = await fetchPublicCategories();
+        const fetchedCategories = await fetchCategoriesByDisplayType('Navigation Menu');
         setCategories(fetchedCategories);
       } catch (error) {
         console.error('Failed to fetch public categories:', error);
@@ -24,13 +25,27 @@ const Header: React.FC = () => {
   const renderCategoryLinks = (categoryList: Category[]) => {
     return categoryList.map((category) => (
       <li key={category.categoryId} className="relative group">
-        <Link href={`/category/${category.slug}`} className="hover:text-gray-900 transition-colors">
-          {category.name}
-        </Link>
-        {category.subCategories && category.subCategories.length > 0 && (
-          <ul className="absolute hidden group-hover:block bg-white shadow-lg py-2 rounded-md w-48 z-10">
-            {renderCategoryLinks(category.subCategories)}
-          </ul>
+        {category.subCategories && category.subCategories.length > 0 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Link href={`/category/${category.slug}`} className="hover:text-gray-900 transition-colors cursor-pointer">
+                {category.name}
+              </Link>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {category.subCategories.map((subCategory) => (
+                <DropdownMenuItem key={subCategory.categoryId}>
+                  <Link href={`/category/${subCategory.slug}`}>
+                    {subCategory.name}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Link href={`/category/${category.slug}`} className="hover:text-gray-900 transition-colors">
+            {category.name}
+          </Link>
         )}
       </li>
     ));

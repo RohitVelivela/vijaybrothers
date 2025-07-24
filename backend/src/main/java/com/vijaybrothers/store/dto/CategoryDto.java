@@ -17,6 +17,7 @@ public class CategoryDto {
     private String description;
     private Instant createdAt;
     private Integer parentId;
+    private List<String> displayTypes; // New field
     private List<CategoryDto> subCategories = new ArrayList<>();
 
     public CategoryDto() {
@@ -38,6 +39,7 @@ public class CategoryDto {
         dto.setSlug(c.getSlug());
         dto.setDescription(c.getDescription());
         dto.setCreatedAt(c.getCreatedAt());
+        dto.setDisplayTypes(c.getDisplayTypes()); // Map displayTypes
         if (c.getParentCategory() != null) {
             dto.setParentId(c.getParentCategory().getCategoryId());
         }

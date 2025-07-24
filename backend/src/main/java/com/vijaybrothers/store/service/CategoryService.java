@@ -69,29 +69,20 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public List<CategoryPublicDto> getPublicCategories() {
-        log.info("Fetching all categories for public view using native query.");
-        List<Object[]> rawCategories = categoryRepository.findAllCategoriesWithParentDetailsNative();
-        log.info("Found {} raw categories for public view.", rawCategories.size());
+        log.info("Fetching all active categories for public view.");
+        List<Category> allCategories = categoryRepository.findAll(); // Fetch all categories
 
         java.util.Map<Integer, CategoryPublicDto> categoryMap = new java.util.HashMap<>();
 
-        for (Object[] row : rawCategories) {
-            Integer categoryId = (Integer) row[0];
-            String name = (String) row[1];
-            String slug = (String) row[2];
-            String description = (String) row[3];
-            // row[4] is created_at, row[5] is is_active, row[6] is position - not directly used in CategoryPublicDto constructor
-            Integer parentId = (Integer) row[7];
-            String parentName = (String) row[8];
-
-            CategoryPublicDto dto = new CategoryPublicDto(categoryId, name, slug, description);
-            dto.setParentId(parentId);
-            dto.setParentName(parentName);
-            categoryMap.put(categoryId, dto);
+        // First pass: create DTOs and populate map
+        for (Category category : allCategories) {
+            CategoryPublicDto dto = CategoryPublicDto.fromEntity(category);
+            categoryMap.put(category.getCategoryId(), dto);
         }
 
         List<CategoryPublicDto> rootCategories = new java.util.ArrayList<>();
 
+        // Second pass: build hierarchy
         for (CategoryPublicDto dto : categoryMap.values()) {
             if (dto.getParentId() == null) {
                 rootCategories.add(dto);
@@ -104,5 +95,14 @@ public class CategoryService {
         }
         log.info("Returning {} root categories for public view.", rootCategories.size());
         return rootCategories;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryPublicDto> getPublicCategoriesByDisplayType(String displayType) {
+        log.info("Fetching active categories for public view by display type: {}", displayType);
+        List<Category> categories = categoryRepository.findByIsActiveTrueAndDisplayTypesContaining(displayType);
+        return categories.stream()
+                .map(CategoryPublicDto::fromEntity)
+                .collect(Collectors.toList());
     }
 }

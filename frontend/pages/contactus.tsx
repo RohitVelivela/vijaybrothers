@@ -1,21 +1,75 @@
-import React, { useState } from 'react';
+'use client';
 
-const ContactUs = () => {
-  const [formData, setFormData] = useState({
+import React, { useState } from 'react';
+import Swal from 'sweetalert2';
+import 'sweetalert2/src/sweetalert2.scss';
+
+// Define interface for form data
+interface ContactFormData {
+  name: string;
+  email: string;
+  contactNo: string;
+  subject: string;
+  message: string;
+}
+
+const ContactUs: React.FC = () => {
+  const [formData, setFormData] = useState<ContactFormData>({
     name: '',
     email: '',
+    contactNo: '',
     subject: '',
     message: '',
   });
-  const [status, setStatus] = useState('');
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('Sending...');
+
+    if (!formData.name || !formData.email || !formData.contactNo || !formData.subject || !formData.message) {
+      Swal.fire({
+        title: 'Error!',
+        text: 'Please fill in all fields.',
+        icon: 'error',
+        imageUrl: '/VB logo white back.png', // Path to your logo
+        imageWidth: 100,
+        imageHeight: 100,
+        imageAlt: 'Vijay Brothers Logo',
+        confirmButtonText: 'OK',
+        customClass: {
+          popup: 'my-swal-popup',
+          title: 'my-swal-title',
+          htmlContainer: 'my-swal-html-container',
+          confirmButton: 'my-swal-confirm-button',
+        },
+        buttonsStyling: false,
+      });
+      return;
+    }
+
+    if (!/^\d{10}$/.test(formData.contactNo)) {
+      Swal.fire({
+        title: 'Error!',
+        text: 'Contact number must be 10 digits.',
+        icon: 'error',
+        imageUrl: '/VB logo white back.png', // Path to your logo
+        imageWidth: 100,
+        imageHeight: 100,
+        imageAlt: 'Vijay Brothers Logo',
+        confirmButtonText: 'OK',
+        customClass: {
+          popup: 'my-swal-popup',
+          title: 'my-swal-title',
+          htmlContainer: 'my-swal-html-container',
+          confirmButton: 'my-swal-confirm-button',
+        },
+        buttonsStyling: false,
+      });
+      return;
+    }
 
     try {
       const response = await fetch('/api/contact', {
@@ -26,20 +80,71 @@ const ContactUs = () => {
         body: JSON.stringify(formData),
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        setStatus('Message sent successfully!');
+        Swal.fire({
+          title: 'Success!',
+          text: result.message || 'Message sent to Vijay Brothers successfully!',
+          icon: 'success',
+          imageUrl: '/VB logo white back.png', // Path to your logo
+          imageWidth: 100,
+          imageHeight: 100,
+          imageAlt: 'Vijay Brothers Logo',
+          confirmButtonText: 'OK',
+          customClass: {
+            popup: 'my-swal-popup',
+            title: 'my-swal-title',
+            htmlContainer: 'my-swal-html-container',
+            confirmButton: 'my-swal-confirm-button',
+          },
+          buttonsStyling: false,
+        });
         setFormData({
           name: '',
           email: '',
+          contactNo: '',
           subject: '',
           message: '',
         });
       } else {
-        const errorData = await response.json();
-        setStatus(`Failed to send message: ${errorData.message || response.statusText}`);
+        Swal.fire({
+          title: 'Error!',
+          text: result.message || 'Failed to send message.',
+          icon: 'error',
+          imageUrl: '/VB logo white back.png', // Path to your logo
+          imageWidth: 100,
+          imageHeight: 100,
+          imageAlt: 'Vijay Brothers Logo',
+          confirmButtonText: 'OK',
+          customClass: {
+            popup: 'my-swal-popup',
+            title: 'my-swal-title',
+            htmlContainer: 'my-swal-html-container',
+            confirmButton: 'my-swal-confirm-button',
+          },
+          buttonsStyling: false,
+        });
       }
-    } catch (error) {
-      setStatus(`Failed to send message: ${error.message}`);
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'An error occurred while sending your message.',
+        icon: 'error',
+        imageUrl: '/VB logo white back.png', // Path to your logo
+        imageWidth: 100,
+        imageHeight: 100,
+        imageAlt: 'Vijay Brothers Logo',
+        confirmButtonText: 'OK',
+        customClass: {
+          popup: 'my-swal-popup',
+          title: 'my-swal-title',
+          htmlContainer: 'my-swal-html-container',
+          confirmButton: 'my-swal-confirm-button',
+        },
+        buttonsStyling: false,
+      });
     }
   };
 
@@ -101,7 +206,7 @@ const ContactUs = () => {
 
           {/* Contact Form Section */}
           <div className="bg-white p-10 rounded-xl shadow-lg border border-gray-100 transform transition duration-300 hover:scale-105">
-            <h2 className="text-2xl font-bold text-gray-800 mb-8 font-serif">Send Us a Message</h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-8 font-serif">Send Us a Message</h2>
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="name" className="block text-gray-700 text-sm font-semibold mb-2">
@@ -134,6 +239,21 @@ const ContactUs = () => {
                 />
               </div>
               <div>
+                <label htmlFor="contactNo" className="block text-gray-700 text-sm font-semibold mb-2">
+                  Contact Number
+                </label>
+                <input
+                  type="tel"
+                  id="contactNo"
+                  name="contactNo"
+                  value={formData.contactNo}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
+                  placeholder="Your Contact Number"
+                  required
+                />
+              </div>
+              <div>
                 <label htmlFor="subject" className="block text-gray-700 text-sm font-semibold mb-2">
                   Subject
                 </label>
@@ -155,7 +275,7 @@ const ContactUs = () => {
                 <textarea
                   id="message"
                   name="message"
-                  rows="6"
+                  rows={6}
                   value={formData.message}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
@@ -172,7 +292,7 @@ const ContactUs = () => {
                 </button>
               </div>
             </form>
-            {status && <p className="text-center mt-4 text-sm font-semibold text-gray-700">{status}</p>}
+            {/* Removed status display as SweetAlert2 handles feedback */}
           </div>
         </div>
       </main>

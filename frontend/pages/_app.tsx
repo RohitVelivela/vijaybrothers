@@ -1,6 +1,6 @@
 import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router'; // Import useRouter
-import './admin/globals.css'; // Global styles from the original project
+import './admin/globals.css';
 import Header from '../components/Header'; // Import the Header component
 import Footer from '../components/Footer'; // Import the Footer component
 

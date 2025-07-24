@@ -17,4 +17,9 @@ public class CategoryPublicService {
     public List<CategoryPublicDto> getActiveCategoriesHierarchy() {
         return categoryService.getPublicCategories();
     }
+
+    @Transactional(readOnly = true)
+    public List<CategoryPublicDto> getPublicCategoriesByDisplayType(String displayType) {
+        return categoryService.getPublicCategoriesByDisplayType(displayType);
+    }
 }

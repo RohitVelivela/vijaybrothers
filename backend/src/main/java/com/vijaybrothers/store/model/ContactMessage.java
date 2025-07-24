@@ -1,31 +1,32 @@
 package com.vijaybrothers.store.model;
 
-import jakarta.persistence.*;
-import lombok.*;
-import java.time.Instant;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.Builder;
 
 @Entity
 @Table(name = "contact_messages")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ContactMessage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "message_id")
-    private Integer messageId;
+    private Long id;
 
-    @Column(nullable = false)
     private String name;
-
-    @Column(nullable = false)
     private String email;
-
-    @Column(nullable = false)
-    private String phone;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
+    private String subject;
     private String message;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private String contactNo;
+    private boolean isRead = false;
+    private java.time.Instant createdAt;
 }

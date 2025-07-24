@@ -87,7 +87,7 @@ public class ProductServiceImpl implements ProductService {
         if (categoryId == null) {
             throw new IllegalArgumentException("Category ID cannot be null");
         }
-        return productRepository.findByCategory_CategoryId(categoryId).stream()
+        return productRepository.findByCategory_CategoryIdAndDeletedFalse(categoryId).stream()
                 .map(ProductResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }

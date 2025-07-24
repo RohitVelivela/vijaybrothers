@@ -15,6 +15,7 @@ public class CategoryPublicDto {
     private String description;
     private Integer parentId;
     private String parentName;
+    private List<String> displayTypes; // New field
     private List<CategoryPublicDto> subCategories = new ArrayList<>();
 
     // Constructor for mapping from Category entity
@@ -32,6 +33,7 @@ public class CategoryPublicDto {
                 category.getSlug(),
                 category.getDescription()
         );
+        dto.setDisplayTypes(category.getDisplayTypes());
         if (category.getParentCategory() != null) {
             dto.setParentId(category.getParentCategory().getCategoryId());
             dto.setParentName(category.getParentCategory().getName());

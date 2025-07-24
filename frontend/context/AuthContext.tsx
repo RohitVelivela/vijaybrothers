@@ -31,6 +31,7 @@ export function eraseCookie(name: string) {
 }
 
 interface User {
+  id: number; // Add id property
   name: string;
   email: string;
   profileImageUrl?: string;

@@ -16,6 +16,7 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Integer> {
     Optional<Product> findBySlug(String slug);
     List<Product> findByNameContainingIgnoreCase(String name);
+    List<Product> findByCategory_CategoryIdAndDeletedFalse(Integer categoryId);
     List<Product> findByCategory_CategoryId(Integer categoryId);
     List<Product> findByStockQuantityLessThanEqual(Integer stockQuantity);
     List<Product> findByStockQuantityLessThanAndDeletedFalse(Integer quantity);

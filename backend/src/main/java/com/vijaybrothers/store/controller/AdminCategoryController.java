@@ -77,6 +77,7 @@ private final ProductRepository productRepository;
             dto.put("parentName", c.getParentCategory() != null ? c.getParentCategory().getName() : null);
             dto.put("isActive", c.getIsActive());
             dto.put("position", c.getPosition());
+            dto.put("displayTypes", c.getDisplayTypes()); // Add displayTypes
             dto.put("createdAt", c.getCreatedAt().toString());
             dto.put("updatedAt", c.getUpdatedAt().toString());
             return dto;
@@ -86,11 +87,11 @@ private final ProductRepository productRepository;
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteCategory(@PathVariable Integer id) {
-        List<Product> products = productRepository.findByCategory_CategoryId(id);
-        if (!products.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Cannot delete category with assigned products."));
+        try {
+            categoryService.deleteCategory(id);
+            return ResponseEntity.ok(Map.of("message", "Category deleted successfully."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-        categoryRepository.deleteById(id);
-        return ResponseEntity.ok(Map.of("message", "Category deleted successfully."));
     }
 }

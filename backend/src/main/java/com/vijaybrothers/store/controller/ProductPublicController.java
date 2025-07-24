@@ -6,11 +6,13 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/api/public/products")
 @Tag(name = "Products", description = "Public product listing endpoints")
 @RequiredArgsConstructor
 public class ProductPublicController {
@@ -18,7 +20,7 @@ public class ProductPublicController {
     private final ProductRepository productRepo;
 
     /**
-     * GET /api/products
+     * GET /api/public/products
      *
      * Query-params (all optional):
      *   page        default 0
@@ -39,5 +41,18 @@ public class ProductPublicController {
     ) {
         var products = productRepo.filterProducts(categoryId, color, fabric, inStock);
         return products.stream().map(ProductListItem::from).toList();
+    }
+
+    /**
+     * GET /api/public/products/by-category/{categoryId}
+     * Fetch products by category ID.
+     */
+    @GetMapping("/by-category/{categoryId}")
+    @Operation(summary = "Fetch products by category ID")
+    public ResponseEntity<List<ProductListItem>> getProductsByCategoryId(@PathVariable Integer categoryId) {
+        List<ProductListItem> products = productRepo.findByCategory_CategoryIdAndDeletedFalse(categoryId).stream()
+                .map(ProductListItem::from)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(products);
     }
 }

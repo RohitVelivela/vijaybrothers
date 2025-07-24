@@ -23,9 +23,19 @@ export interface Category {
   parentName?: string; // Optional, for parent category name
   isActive: boolean; // For visibility control
   position: number; // For display order
+  displayOrder: number; // For display order
+  displayTypes: string[]; // New field for display types
   createdAt: string;
   updatedAt: string;
   subCategories?: Category[];
+}
+
+export async function fetchCategoriesByDisplayType(displayType: string): Promise<Category[]> {
+  const res = await fetch(`${API_BASE_URL}/public/categories/by-display-type?type=${displayType}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch categories for display type ${displayType}`);
+  }
+  return await res.json();
 }
 
 export async function fetchCategories(): Promise<Category[]> {
@@ -128,6 +138,14 @@ export interface Product {
   updatedBy: string;
 }
 
+export interface ContactMessage {
+  id: number;
+  name: string;
+  email: string;
+  message: string;
+  isRead: boolean;
+}
+
 export async function fetchProducts(page: number = 0, size: number = 10, includeDeleted: boolean = false): Promise<Page<Product>> {
   const params = new URLSearchParams();
   params.append('page', page.toString());
@@ -151,6 +169,14 @@ export async function fetchProductById(id: number): Promise<Product> {
         throw new Error('Failed to fetch product');
     }
     return await res.json();
+}
+
+export async function fetchProductsByCategoryId(categoryId: number): Promise<Product[]> {
+  const res = await fetch(`${API_BASE_URL}/public/products/by-category/${categoryId}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch products for category ${categoryId}`);
+  }
+  return await res.json();
 }
 
 export async function createProduct(productData: FormData): Promise<void> {
@@ -257,7 +283,8 @@ export interface Banner {
   image: string;
   linkTo: string;
   status: 'ACTIVE' | 'INACTIVE';
-  isActive: boolean; // New field
+  isActive: boolean;
+  isDefault: boolean; // Added isDefault property
   createdAt: string;
   updatedAt: string;
   description?: string;
@@ -273,7 +300,7 @@ export async function fetchBanners(): Promise<Banner[]> {
   return await res.json();
 }
 
-export async function createBanner(banner: { name: string; image: string; linkTo: string; status?: 'ACTIVE' | 'INACTIVE'; isDefault?: boolean }): Promise<void> {
+export async function createBanner(banner: { name: string; image: string; linkTo: string; status?: 'ACTIVE' | 'INACTIVE'; isActive?: boolean; description?: string }): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/admin/banners`, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },

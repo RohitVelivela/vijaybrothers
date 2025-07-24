@@ -15,6 +15,9 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
     boolean existsBySlug(String slug);
     List<Category> findByParentCategoryIsNullAndIsActiveTrue();
 
+    @Query("SELECT c FROM Category c JOIN c.displayTypes dt WHERE c.isActive = true AND dt = :displayType")
+    List<Category> findByIsActiveTrueAndDisplayTypesContaining(String displayType);
+
     @Query(value = """
         SELECT 
             c.category_id,

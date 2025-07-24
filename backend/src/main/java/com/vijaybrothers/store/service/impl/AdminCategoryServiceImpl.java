@@ -2,18 +2,23 @@ package com.vijaybrothers.store.service.impl;
 
 import com.vijaybrothers.store.dto.CategoryCreateRequest;
 import com.vijaybrothers.store.model.Category;
+import com.vijaybrothers.store.model.Product;
 import com.vijaybrothers.store.repository.CategoryRepository;
+import com.vijaybrothers.store.repository.ProductRepository;
 import com.vijaybrothers.store.service.AdminCategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,6 +26,7 @@ import java.util.UUID;
 public class AdminCategoryServiceImpl implements AdminCategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
     private final String UPLOAD_DIR = System.getProperty("user.home") + "/uploads/images/categories/";
 
@@ -34,6 +40,20 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
     @Transactional
     public void updateCategory(Integer id, CategoryCreateRequest req, MultipartFile image) {
         saveCategory(id, req, image);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCategory(Integer id) {
+        // Soft-delete all products associated with this category first
+        List<com.vijaybrothers.store.model.Product> productsToUpdate = productRepository.findByCategory_CategoryId(id);
+        for (com.vijaybrothers.store.model.Product product : productsToUpdate) {
+            product.setDeleted(true);
+            product.setCategory(null); // Unlink product from category
+            productRepository.save(product);
+        }
+
+        categoryRepository.deleteById(id);
     }
 
     private void saveCategory(Integer id, CategoryCreateRequest req, MultipartFile image) {
@@ -61,6 +81,15 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
             cat.setIsActive(req.getIsActive());
             cat.setPosition(req.getPosition());
             cat.setDisplayOrder(req.getDisplayOrder());
+
+            // Parse displayTypes JSON string
+            if (req.getDisplayTypes() != null && !req.getDisplayTypes().isEmpty()) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                List<String> displayTypesList = objectMapper.readValue(req.getDisplayTypes(), new TypeReference<List<String>>() {});
+                cat.setDisplayTypes(displayTypesList);
+            } else {
+                cat.setDisplayTypes(null);
+            }
 
             if (image != null && !image.isEmpty()) {
                 String imageUrl = saveImage(image);

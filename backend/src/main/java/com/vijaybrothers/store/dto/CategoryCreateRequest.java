@@ -3,6 +3,7 @@ package com.vijaybrothers.store.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Basic fields for creating/updating a Category.
@@ -24,6 +25,7 @@ public class CategoryCreateRequest {
     private String categoryImage;
     private Integer categoryId;
     private Integer displayOrder;
+    private String displayTypes; // New field for display types as JSON string
 
     // getters & setters...
     public String getCategoryImage() {
@@ -44,6 +46,14 @@ public class CategoryCreateRequest {
     }
     public void setDisplayOrder(Integer displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public String getDisplayTypes() {
+        return displayTypes;
+    }
+
+    public void setDisplayTypes(String displayTypes) {
+        this.displayTypes = displayTypes;
     }
     public String getName() {
         return name;

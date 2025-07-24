@@ -40,7 +40,10 @@ public class Category {
     @Column(nullable = false)
     private Integer displayOrder;
 
-    
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "category_display_types", joinColumns = @JoinColumn(name = "category_id"))
+    @Column(name = "display_type")
+    private List<String> displayTypes;
 
     @Column(nullable = false)
     private Instant createdAt;
@@ -61,6 +64,7 @@ public class Category {
     public Boolean getIsActive() { return isActive; }
     public Integer getPosition() { return position; }
     public Integer getDisplayOrder() { return displayOrder; }
+    public List<String> getDisplayTypes() { return displayTypes; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public List<Category> getSubCategories() { return subCategories; }
@@ -75,6 +79,7 @@ public class Category {
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
     public void setPosition(Integer position) { this.position = position; }
     public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
+    public void setDisplayTypes(List<String> displayTypes) { this.displayTypes = displayTypes; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public void setSubCategories(List<Category> subCategories) { this.subCategories = subCategories; }

@@ -68,6 +68,9 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      backgroundSize: {
+        'silk': '20px 20px',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -79,11 +82,8 @@ export default {
       },
       backgroundImage: {
         'silk-texture': 'linear-gradient(45deg, #fef7f0 25%, transparent 25%), linear-gradient(-45deg, #fef7f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #fef7f0 75%), linear-gradient(-45deg, transparent 75%, #fef7f0 75%)',
-      },
-      backgroundSize: {
-        'silk': '20px 20px',
       }
-    },
+    }
   },
   plugins: [],
 };

@@ -51,7 +51,7 @@ const BannersPage = () => {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [linkTo, setLinkTo] = useState('');
   const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
-  const [isDefault, setIsDefault] = useState(false);
+  const [isActiveState, setIsActiveState] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
 
@@ -103,8 +103,8 @@ const BannersPage = () => {
       } else if (activeBanners.length === 1 && !defaultBannerExists) {
         // If only one active banner and no default, make it default
         const activeBanner = activeBanners[0];
-        await updateBanner({ ...activeBanner, isDefault: true });
-        setBanners(prev => prev.map(b => b.id === activeBanner.id ? { ...b, isDefault: true } : b));
+        await updateBanner({ ...activeBanner, isActive: true });
+        setBanners(prev => prev.map(b => b.id === activeBanner.id ? { ...b, isActive: true } : b));
         toast.info("The only active banner has been set as default.");
       }
     } catch (error) {
@@ -124,7 +124,7 @@ const BannersPage = () => {
     const newStatus = bannerToUpdate.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
     if (newStatus === 'INACTIVE') {
-      if (bannerToUpdate.isDefault) {
+      if (bannerToUpdate.isActive) {
         toast.error("Cannot deactivate the default banner. Please set another banner as default first.");
         return;
       }
@@ -166,7 +166,7 @@ const BannersPage = () => {
       }
     }
 
-    if (bannerToDelete?.isDefault) {
+    if (bannerToDelete?.isActive) {
       toast.error("Cannot delete the default banner. Please set another banner as default first.");
       return;
     }
@@ -184,7 +184,7 @@ const BannersPage = () => {
     if (result.isConfirmed) {
       try {
         await deleteBanner(id);
-        setBanners(prev => prev.filter(b => b.id !== id));
+        loadBanners(); // Reload banners after successful deletion
         Swal.fire(
           'Deleted!',
           'Your banner has been deleted.',
@@ -214,8 +214,8 @@ const BannersPage = () => {
           name: bannerName,
           image: imageUrl,
           linkTo,
-          status: isDefault ? 'ACTIVE' : status, // If default, force active
-          isDefault: isDefault,
+          status: isActiveState ? 'ACTIVE' : status, // If default, force active
+          isActive: isActiveState,
         });
         toast.success("Banner updated successfully.");
       } else {
@@ -223,17 +223,17 @@ const BannersPage = () => {
           name: bannerName,
           image: imageUrl,
           linkTo: linkTo,
-          status: isDefault ? 'ACTIVE' : status, // If default, force active
-          isDefault: isDefault,
+          status: isActiveState ? 'ACTIVE' : status, // If default, force active
+          isActive: isActiveState,
         });
         toast.success("Banner created successfully.");
       }
 
-      if (isDefault) {
-        // Deactivate all other banners and set their isDefault to false
+      if (isActiveState) {
+        // Deactivate all other banners and set their isActive to false
         const otherBanners = banners.filter(b => b.id !== editingBanner?.id);
         for (const banner of otherBanners) {
-          await updateBanner({ ...banner, status: 'INACTIVE', isDefault: false });
+          await updateBanner({ ...banner, status: 'INACTIVE', isActive: false });
         }
       }
       setIsModalOpen(false);
@@ -326,6 +326,7 @@ const BannersPage = () => {
                           setImageUrl(b.image);
                           setLinkTo(b.linkTo);
                           setStatus(b.status);
+                          setIsActiveState(b.isActive);
                           setIsModalOpen(true);
                         }}>
                           <Edit className="h-4 w-4 text-blue-600" />
@@ -397,11 +398,11 @@ const BannersPage = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="isDefault"
-                    checked={isDefault}
-                    onCheckedChange={setIsDefault}
+                    id="isActiveState"
+                    checked={isActiveState}
+                    onCheckedChange={setIsActiveState}
                   />
-                  <Label htmlFor="isDefault">Set as Default Banner</Label>
+                  <Label htmlFor="isActiveState">Set as Active Banner</Label>
                 </div>
                 
               </div>

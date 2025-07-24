@@ -23,8 +23,9 @@ public class ContactService {
         ContactMessage cm = ContactMessage.builder()
                 .name(req.name())
                 .email(req.email())
-                .phone(req.phone())
+                .subject(req.subject())
                 .message(req.message())
+                .contactNo(req.contactNo())
                 .createdAt(Instant.now())
                 .build();
         repo.save(cm);
