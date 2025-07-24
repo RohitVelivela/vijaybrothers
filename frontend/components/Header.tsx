@@ -27,14 +27,12 @@ const Header: React.FC = () => {
       <li key={category.categoryId} className="relative group">
         {category.subCategories && category.subCategories.length > 0 ? (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Link href={`/category/${category.slug}`} className="hover:text-gray-900 transition-colors cursor-pointer">
-                {category.name}
-              </Link>
+            <DropdownMenuTrigger className="hover:text-gray-900 transition-colors cursor-pointer">
+              {category.name}
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {category.subCategories.map((subCategory) => (
-                <DropdownMenuItem key={subCategory.categoryId}>
+                <DropdownMenuItem key={subCategory.categoryId} asChild>
                   <Link href={`/category/${subCategory.slug}`}>
                     {subCategory.name}
                   </Link>

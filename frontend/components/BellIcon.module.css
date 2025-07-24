@@ -34,11 +34,13 @@
   box-shadow: 0 0 12px -8px rgba(0, 0, 0, 0.6);
 }
 .bell-icon:focus .bell-icon__group,
-.bell-icon:hover .bell-icon__group {
+.bell-icon:hover .bell-icon__group,
+.bell-icon.animate-bell .bell-icon__group {
   animation: animateGroup 2.3s;
 }
 .bell-icon:focus .bell-icon__ball,
-.bell-icon:hover .bell-icon__ball {
+.bell-icon:hover .bell-icon__ball,
+.bell-icon.animate-bell .bell-icon__ball {
   animation: animateBall 2.3s;
 }
 .bell-icon:focus .notification-amount,

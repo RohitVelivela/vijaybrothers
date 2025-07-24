@@ -142,8 +142,33 @@ export interface ContactMessage {
   id: number;
   name: string;
   email: string;
+  subject: string;
   message: string;
+  contactNo: string;
   isRead: boolean;
+  createdAt: string;
+}
+
+export async function fetchContactMessages(unread: boolean = false): Promise<ContactMessage[]> {
+  const params = unread ? '?unread=true' : '';
+  const res = await fetch(`${API_BASE_URL}/contact-messages${params}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch contact messages');
+  }
+  return await res.json();
+}
+
+export async function markMessageAsRead(id: number): Promise<ContactMessage> {
+  const res = await fetch(`${API_BASE_URL}/contact-messages/${id}/read`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to mark message as read');
+  }
+  return await res.json();
 }
 
 export async function fetchProducts(page: number = 0, size: number = 10, includeDeleted: boolean = false): Promise<Page<Product>> {
