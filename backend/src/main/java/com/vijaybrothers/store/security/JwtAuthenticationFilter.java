@@ -30,22 +30,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
-        System.out.println("Auth Header: " + authHeader); // DEBUG
         final String jwt;
-        if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
-            System.out.println("No Bearer token found or invalid header format."); // DEBUG
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
-        jwt = authHeader.substring(7);
-        System.out.println("Extracted JWT: " + jwt); // DEBUG
+
+        // Handle cases with single or multiple "Bearer" prefixes
+        String[] parts = authHeader.split(" ");
+        jwt = parts[parts.length - 1];
+
         final String userName = jwtService.extractUsername(jwt);
-        System.out.println("Extracted Username from JWT: " + userName); // DEBUG
         if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userName);
-            System.out.println("Loaded UserDetails: " + (userDetails != null ? userDetails.getUsername() : "null")); // DEBUG
-            if (userDetails != null && jwtService.isTokenValid(jwt, userDetails)) {
-                System.out.println("JWT is valid. Setting SecurityContextHolder."); // DEBUG
+            if (jwtService.isTokenValid(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
@@ -55,11 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-            } else {
-                System.out.println("JWT is invalid or userDetails is null."); // DEBUG
             }
-        } else {
-            System.out.println("Username is null or SecurityContextHolder already has authentication."); // DEBUG
         }
         filterChain.doFilter(request, response);
     }

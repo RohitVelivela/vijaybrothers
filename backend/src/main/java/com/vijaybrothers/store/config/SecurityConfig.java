@@ -109,38 +109,16 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/public/banners").permitAll()
-                .requestMatchers(HttpMethod.PUT, "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
                 .requestMatchers("/api/cart/**").permitAll()
                 .requestMatchers("/api/checkout/guest/**").permitAll()
                 .requestMatchers("/api/payments/webhook").permitAll()
 
-                .requestMatchers(HttpMethod.POST, "/api/admin/categories").permitAll()
-
-                // Admin product management - now public (no auth required)
-                .requestMatchers(HttpMethod.POST, "/api/admin/products").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/admin/products").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/admin/products/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/admin/products/**").hasRole("ADMIN")
-
-                // Admin category management - now public (no auth required)
-                
-                .requestMatchers(HttpMethod.GET, "/api/admin/categories/**").permitAll()
-                .requestMatchers(HttpMethod.PUT, "/api/admin/categories/**").permitAll()
-                .requestMatchers(HttpMethod.DELETE, "/api/admin/categories/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/admin/categories/*/products").authenticated()
-
-                // Admin order management (still protected)
-                //.requestMatchers(HttpMethod.GET, "/api/admin/orders/**").hasRole("ADMIN")
-
-                // Permit authenticated access to /api/orders endpoints
-                //.requestMatchers("/api/orders/**").authenticated()
-
-                // Admin profile management (still protected)
-                //.requestMatchers(HttpMethod.PUT, "/api/admin/profile").hasRole("ADMIN")
+                // Admin endpoints
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 // All other endpoints
-                .anyRequest().permitAll()
+                .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter(jwtService, userDetailsService()), UsernamePasswordAuthenticationFilter.class);

@@ -29,13 +29,12 @@ public class AdminCategoryController {
 private final ProductRepository productRepository;
 
     /** Create a new category (JSON + optional file) */
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping
     public ResponseEntity<Map<String,String>> createCategory(
-        @ModelAttribute @Valid CategoryCreateRequest req,
-        @RequestPart(value="image", required=false) MultipartFile image
+        @Valid @RequestBody CategoryCreateRequest req
     ) {
         try {
-            categoryService.createCategory(req, image);
+            categoryService.createCategory(req, null);
             return ResponseEntity
               .status(HttpStatus.CREATED)
               .body(Map.of("message","Category created successfully"));
@@ -47,14 +46,13 @@ private final ProductRepository productRepository;
     }
 
     /** Update an existing category */
-    @PutMapping(path="/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(path="/{id}")
     public ResponseEntity<Map<String,String>> updateCategory(
         @PathVariable Integer id,
-        @ModelAttribute @Valid CategoryCreateRequest req,
-        @RequestPart(value="image", required=false) MultipartFile image
+        @Valid @RequestBody CategoryCreateRequest req
     ) {
         try {
-            categoryService.updateCategory(id, req, image);
+            categoryService.updateCategory(id, req, null);
             return ResponseEntity.ok(Map.of("message","Category updated successfully"));
         } catch (Exception e) {
             return ResponseEntity

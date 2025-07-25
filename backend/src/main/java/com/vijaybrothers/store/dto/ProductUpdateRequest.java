@@ -28,7 +28,4 @@ public class ProductUpdateRequest {
     private Integer stockQuantity;
     private Boolean inStock;
     private String youtubeLink;
-    private List<MultipartFile> images;
-    private List<Long> deletedImageIds;
-    private Long mainImageId;
 }

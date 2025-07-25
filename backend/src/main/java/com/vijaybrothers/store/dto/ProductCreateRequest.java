@@ -39,5 +39,4 @@ public class ProductCreateRequest {
 
     private String youtubeLink;
 
-    private List<MultipartFile> images;
 }

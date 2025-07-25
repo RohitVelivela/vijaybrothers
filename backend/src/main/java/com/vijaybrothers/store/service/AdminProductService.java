@@ -60,21 +60,6 @@ public class AdminProductService {
         p.setUpdatedAt(Instant.now());
 
         productRepo.save(p);
-
-        // Handle images
-        if (req.getImages() != null && !req.getImages().isEmpty()) {
-            for (int i = 0; i < req.getImages().size(); i++) {
-                MultipartFile file = req.getImages().get(i);
-                String imageUrl = storageService.store(file);
-                ProductImage productImage = ProductImage.builder()
-                    .imageUrl(imageUrl)
-                    .product(p)
-                    .isMain(i == 0) // First image is main
-                    .build();
-                productImageRepo.save(productImage);
-                p.getImages().add(productImage);
-            }
-        }
     }
 
     /**
@@ -155,43 +140,6 @@ public class AdminProductService {
         }
         if (req.getYoutubeLink() != null) {
             p.setYoutubeLink(req.getYoutubeLink());
-        }
-
-        // Handle images update
-        if (req.getDeletedImageIds() != null && !req.getDeletedImageIds().isEmpty()) {
-            req.getDeletedImageIds().forEach(id -> productImageRepo.deleteById(id));
-            // Remove deleted images from the product's image list
-            p.getImages().removeIf(img -> req.getDeletedImageIds().contains(img.getId()));
-        }
-
-        // Handle images update
-        if (req.getDeletedImageIds() != null && !req.getDeletedImageIds().isEmpty()) {
-            req.getDeletedImageIds().forEach(id -> productImageRepo.deleteById(id));
-            // Remove deleted images from the product's image list
-            p.getImages().removeIf(img -> req.getDeletedImageIds().contains(img.getId()));
-        }
-
-        // Update isMain for existing images
-        if (req.getMainImageId() != null) {
-            p.getImages().forEach(img -> {
-                img.setMain(img.getId().equals(req.getMainImageId()));
-                productImageRepo.save(img);
-            });
-        }
-
-        if (req.getImages() != null && !req.getImages().isEmpty()) {
-            boolean hasMainImage = p.getImages().stream().anyMatch(ProductImage::isMain);
-            for (int i = 0; i < req.getImages().size(); i++) {
-                MultipartFile file = req.getImages().get(i);
-                String imageUrl = storageService.store(file);
-                ProductImage productImage = ProductImage.builder()
-                    .imageUrl(imageUrl)
-                    .product(p)
-                    .isMain(!hasMainImage && i == 0) // Set as main if no existing main image and it's the first new image
-                    .build();
-                productImageRepo.save(productImage);
-                p.getImages().add(productImage);
-            }
         }
 
         p.setUpdatedAt(Instant.now());
