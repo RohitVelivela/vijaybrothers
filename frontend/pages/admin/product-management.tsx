@@ -7,7 +7,6 @@ import { Button } from '../../components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { ChevronDown, Search, PlusCircle, Edit, Trash2, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
-
 import {
   Dialog,
   DialogContent,
@@ -18,6 +17,10 @@ import {
 } from '../../components/ui/dialog';
 
 import React, { useState, useEffect, useMemo, ChangeEvent, useCallback, useRef } from 'react';
+import dynamic from 'next/dynamic';
+
+const ClientSwiper = dynamic(() => import('../../components/ClientSwiper'), { ssr: false });
+const ClientLightbox = dynamic(() => import('../../components/ClientLightbox'), { ssr: false });
 import Swal from 'sweetalert2';
 import 'sweetalert2/src/sweetalert2.scss';
 import {
@@ -37,6 +40,8 @@ import AdminHeader from '../../components/AdminHeader';
 
 export default function ProductsPage() {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi'>('en');
+
+  
   // ─── State ─────────────────────────────────────────────────────────────
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [products, setProducts] = useState<Product[]>([]);
@@ -48,7 +53,9 @@ export default function ProductsPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxImageUrls, setLightboxImageUrls] = useState<string[]>([]);
+  const [currentLightboxIndex, setCurrentLightboxIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   
 
@@ -193,6 +200,7 @@ export default function ProductsPage() {
     }
     setEditingProduct(productToEdit);
     setNewName(productToEdit.name);
+    setNewProductCode(productToEdit.productCode);
     setNewProductCode(productToEdit.productCode);
     setNewPrice(productToEdit.price);
     setNewStockQuantity(productToEdit.stockQuantity);
@@ -486,7 +494,13 @@ export default function ProductsPage() {
                                 src={mainImage.imageUrl}
                                 alt={product.name}
                                 className="w-full h-full object-cover rounded-md"
-                                onClick={() => setLightboxUrl(mainImage.imageUrl)}
+                                onClick={() => {
+                                  const urls = product.images.map(img => img.imageUrl);
+                                  const clickedIndex = product.images.findIndex(img => img.imageUrl === mainImage.imageUrl);
+                                  setLightboxImageUrls(urls);
+                                  setCurrentLightboxIndex(clickedIndex !== -1 ? clickedIndex : 0);
+                                  setIsLightboxOpen(true);
+                                }}
                               />
                             </div>
                           );
@@ -723,17 +737,12 @@ export default function ProductsPage() {
         </div>
       </main>
 
-      {lightboxUrl && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
-          onClick={() => setLightboxUrl(null)}
-        >
-          <img
-            src={lightboxUrl}
-            alt="Full Size"
-            className="max-w-full max-h-full object-contain"
-          />
-        </div>
+      {isLightboxOpen && (
+        <ClientLightbox
+          images={lightboxImageUrls}
+          startIndex={currentLightboxIndex}
+          onClose={() => setIsLightboxOpen(false)}
+        />
       )}
     </div>
   );
