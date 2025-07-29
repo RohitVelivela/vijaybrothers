@@ -44,6 +44,10 @@ public class AdminProductService {
      */
     @Transactional
     public void createProduct(ProductCreateRequest req) {
+        if (productRepo.findByProductCode(req.getProductCode()).isPresent()) {
+            throw new IllegalArgumentException("Product with SKU '" + req.getProductCode() + "' already exists.");
+        }
+
         Category cat = categoryRepo.findById(req.getCategoryId())
             .orElseThrow(() -> new IllegalArgumentException("Category not found"));
 
@@ -60,6 +64,22 @@ public class AdminProductService {
         p.setUpdatedAt(Instant.now());
 
         productRepo.save(p);
+
+        // Handle product images
+        if (req.getProductImages() != null && !req.getProductImages().isEmpty()) {
+            for (int i = 0; i < req.getProductImages().size(); i++) {
+                MultipartFile imageFile = req.getProductImages().get(i);
+                String imageUrl = storageService.store(imageFile, "products", req.getName()); // Store in 'products' subfolder
+                ProductImage productImage = ProductImage.builder()
+                        .imageUrl(imageUrl)
+                        .product(p)
+                        .isMain(i == 0) // Set first image as main
+                        .displayOrder(i) // Assign display order based on index
+                        .build();
+                p.getImages().add(productImage);
+            }
+            productImageRepo.saveAll(p.getImages()); // Save new product images
+        }
     }
 
     /**
@@ -142,9 +162,29 @@ public class AdminProductService {
             p.setYoutubeLink(req.getYoutubeLink());
         }
 
+        // Handle product images
+        if (req.getProductImages() != null && !req.getProductImages().isEmpty()) {
+            // Clear existing images if new ones are provided (optional, depending on desired behavior)
+            p.getImages().forEach(productImageRepo::delete);
+            p.getImages().clear();
+
+            for (int i = 0; i < req.getProductImages().size(); i++) {
+                MultipartFile imageFile = req.getProductImages().get(i);
+                String imageUrl = storageService.store(imageFile, "products", p.getName()); // Store in 'products' subfolder
+                ProductImage productImage = ProductImage.builder()
+                        .imageUrl(imageUrl)
+                        .product(p)
+                        .isMain(i == 0) // Set first image as main
+                        .displayOrder(i) // Assign display order based on index
+                        .build();
+                p.getImages().add(productImage);
+            }
+        }
+
         p.setUpdatedAt(Instant.now());
 
         productRepo.save(p);
+        productImageRepo.saveAll(p.getImages()); // Save new product images
     }
 
     /**

@@ -1,4 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { Dialog, DialogContent, DialogHeader } from './ui/dialog';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 import { ArrowLeft, Heart, Share2, Star, Minus, Plus, ShoppingCart, Zap, Truck, Shield, RotateCcw } from 'lucide-react';
 import Header from './Header';
 import Footer from './Footer';
@@ -13,6 +19,8 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onBack, onBuyNow 
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('details');
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const productImages = [
     "https://images.pexels.com/photos/8839833/pexels-photo-8839833.jpeg?auto=compress&cs=tinysrgb&w=800",
@@ -25,6 +33,11 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onBack, onBuyNow 
   };
 
   const totalAmount = 1480 * quantity;
+
+  const openImageModal = useCallback((index: number) => {
+    setCurrentImageIndex(index);
+    setIsImageModalOpen(true);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -72,12 +85,16 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onBack, onBuyNow 
               <img
                 src={productImages[selectedImage]}
                 alt="Fancy Pattu Kanchi Border Purple Saree"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover cursor-pointer"
+                onClick={() => openImageModal(selectedImage)}
               />
 
               {/* Zoom Icon */}
               <div className="absolute bottom-4 right-4">
-                <button className="bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors">
+                <button 
+                  onClick={() => openImageModal(selectedImage)}
+                  className="bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors"
+                >
                   <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                   </svg>
@@ -90,7 +107,7 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onBack, onBuyNow 
               {productImages.map((image, index) => (
                 <button
                   key={index}
-                  onClick={() => setSelectedImage(index)}
+                  onClick={() => openImageModal(index)}
                   className={`relative w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${
                     selectedImage === index ? 'border-orange-500' : 'border-gray-200 hover:border-gray-300'
                   }`}
@@ -280,6 +297,33 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ onBack, onBuyNow 
 
       {/* Footer */}
       <Footer />
+
+      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+        {isImageModalOpen && (
+          <DialogContent className="sm:max-w-[800px] max-h-screen overflow-hidden">
+            <DialogHeader>
+              <DialogTitle>Product Image</DialogTitle>
+            </DialogHeader>
+            <div className="relative h-[calc(100vh-150px)]"> {/* Adjust height as needed */}
+              <Swiper
+                modules={[Navigation, Pagination]}
+                spaceBetween={10}
+                slidesPerView={1}
+                navigation
+                pagination={{ clickable: true }}
+                initialSlide={currentImageIndex}
+                className="w-full h-full"
+              >
+                {productImages.map((imageUrl, index) => (
+                  <SwiperSlide key={index}>
+                    <img src={imageUrl} alt={`Product Image ${index + 1}`} className="w-full h-full object-contain" />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 };

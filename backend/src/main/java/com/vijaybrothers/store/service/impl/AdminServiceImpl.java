@@ -122,7 +122,7 @@ public class AdminServiceImpl implements AdminService {
             if (request.isRemoveProfileImage()) {
                 admin.setProfileImageUrl(null);
             } else if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
-                String imageUrl = storageService.store(request.getProfileImage());
+                String imageUrl = storageService.store(request.getProfileImage(), "profile_images", admin.getUserName());
                 admin.setProfileImageUrl(imageUrl);
             }
 

@@ -39,4 +39,13 @@ public class ProductCreateRequest {
 
     private String youtubeLink;
 
+    private List<MultipartFile> productImages;
+
+    public List<MultipartFile> getProductImages() {
+        return productImages;
+    }
+
+    public void setProductImages(List<MultipartFile> productImages) {
+        this.productImages = productImages;
+    }
 }

@@ -29,7 +29,33 @@ public class ProductDetailDto {
     private String fabric;
     private List<String> imageUrls;
 
-    
+    // Getters
+    public Integer getProductId() { return productId; }
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+    public BigDecimal getPrice() { return price; }
+    public Integer getCategoryId() { return categoryId; }
+    public String getCategoryName() { return categoryName; }
+    public Integer getStockQuantity() { return stockQuantity; }
+    public Boolean getInStock() { return inStock; }
+    public String getYoutubeLink() { return youtubeLink; }
+    public String getColor() { return color; }
+    public String getFabric() { return fabric; }
+    public List<String> getImageUrls() { return imageUrls; }
+
+    // Setters
+    public void setProductId(Integer productId) { this.productId = productId; }
+    public void setName(String name) { this.name = name; }
+    public void setDescription(String description) { this.description = description; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+    public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
+    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+    public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
+    public void setInStock(Boolean inStock) { this.inStock = inStock; }
+    public void setYoutubeLink(String youtubeLink) { this.youtubeLink = youtubeLink; }
+    public void setColor(String color) { this.color = color; }
+    public void setFabric(String fabric) { this.fabric = fabric; }
+    public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }
 
     public static ProductDetailDto fromEntity(Product product) {
         ProductDetailDto dto = new ProductDetailDto();

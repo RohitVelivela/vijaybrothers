@@ -3,6 +3,8 @@ package com.vijaybrothers.store.dto;
 import com.vijaybrothers.store.model.Product;
 import lombok.Data;
 import java.math.BigDecimal;
+import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class CreateProductRequest {
@@ -17,6 +19,8 @@ public class CreateProductRequest {
     
     private String color;
     private String fabric;
+
+    private List<MultipartFile> productImages;
 
     public Product toEntity() {
         Product product = new Product();

@@ -27,6 +27,7 @@ public class ContactMessage {
     private String subject;
     private String message;
     private String contactNo;
+    @Builder.Default
     private boolean isRead = false;
     private java.time.Instant createdAt;
 }

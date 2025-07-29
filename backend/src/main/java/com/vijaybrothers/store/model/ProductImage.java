@@ -24,8 +24,14 @@ public class ProductImage {
 
     private boolean isMain;
 
+    private Integer displayOrder;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     @JsonBackReference
     private Product product;
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
 }

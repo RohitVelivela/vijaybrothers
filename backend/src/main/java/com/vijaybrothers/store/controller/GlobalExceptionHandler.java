@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.security.access.AccessDeniedException;
 import jakarta.persistence.EntityNotFoundException;
 
+import org.springframework.dao.DataIntegrityViolationException;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +27,19 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
         return ResponseEntity.badRequest().body(errors);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        Map<String, String> error = new HashMap<>();
+        String errorMessage = "A data integrity violation occurred.";
+        if (ex.getMessage() != null && ex.getMessage().contains("product_code")) {
+            errorMessage = "Product with this SKU already exists.";
+        } else if (ex.getMessage() != null && ex.getMessage().contains("slug")) {
+            errorMessage = "Category with this slug already exists.";
+        }
+        error.put("error", errorMessage);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(RuntimeException.class)

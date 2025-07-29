@@ -7,11 +7,7 @@ import { Button } from '../../components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { ChevronDown, Search, PlusCircle, Edit, Trash2, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
+
 import {
   Dialog,
   DialogContent,
@@ -52,9 +48,9 @@ export default function ProductsPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [currentImageUrl, setCurrentImageUrl] = useState('');
-  const [currentImageUrls, setCurrentImageUrls] = useState<string[]>([]);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1); // 1-indexed for UI
@@ -80,12 +76,26 @@ export default function ProductsPage() {
   const loadProducts = useCallback(async (page: number) => {
     setLoading(true);
     try {
-      // API uses 0-indexed pages, UI uses 1-indexed
-      const data: Page<Product> = await fetchProducts(page - 1, productsPerPage, showDeleted);
+      const categoryId = filterCategory === 'All' ? undefined : categories.find(cat => cat.name === filterCategory)?.categoryId;
+      const sortString = `${sortColumn},${sortDirection}`;
+      
+      console.log('loadProducts: Calling fetchProducts with:', {
+        page: page - 1,
+        productsPerPage,
+        categoryId,
+        searchTerm,
+        sortString,
+        showDeleted
+      });
+
+      const data: Page<Product> = await fetchProducts(page - 1, productsPerPage, categoryId, searchTerm, sortString, showDeleted);
+      console.log('loadProducts: Received data from fetchProducts:', data);
+
       setProducts(data.content);
       setTotalPages(data.totalPages);
       setTotalElements(data.totalElements);
     } catch (err) {
+      
       Swal.fire('Error!', 'Failed to load products.', 'error');
       setProducts([]);
       setTotalPages(0);
@@ -93,7 +103,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [productsPerPage, showDeleted]);
+  }, [productsPerPage, showDeleted, filterCategory, searchTerm, sortColumn, sortDirection, categories]);
 
   useEffect(() => {
     loadProducts(currentPage);
@@ -265,7 +275,21 @@ export default function ProductsPage() {
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      setNewImages(prevImages => [...prevImages, ...Array.from(files)]);
+      Array.from(files).forEach(file => {
+        const img = new Image();
+        img.onload = () => {
+          if (img.width === 1500 && img.height === 2250) {
+            setNewImages(prevImages => [...prevImages, file]);
+          } else {
+            Swal.fire(
+              'Error!',
+              `Image ${file.name} has dimensions ${img.width}x${img.height}. Required: 1500x2250.`, 
+              'error'
+            );
+          }
+        };
+        img.src = URL.createObjectURL(file);
+      });
     }
   };
 
@@ -307,7 +331,7 @@ export default function ProductsPage() {
 
       newImages.forEach((image, index) => {
         if (image instanceof File) {
-          formData.append(`images`, image);
+          formData.append(`productImages`, image);
         } else {
           if (image.isMain) {
             mainImageIdToSend = image.id;
@@ -441,37 +465,32 @@ export default function ProductsPage() {
                   filteredProducts.map((product) => (
                     <TableRow key={product.productId}>
                       <TableCell className="font-medium">{product.productId}</TableCell>
-                      <TableCell>{product.name}</TableCell>
+                      <TableCell className="min-w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{product.name}</TableCell>
                       <TableCell>{product.productCode}</TableCell>
                       <TableCell>{product.price}</TableCell>
-                      <TableCell>
+                      <TableCell className="min-w-[100px] whitespace-nowrap overflow-hidden text-ellipsis">
                           {product.stockQuantity ?? 0}
                           {(product.stockQuantity ?? 0) < 10 && (
                               <span className="ml-2 bg-red-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">Low Stock</span>
                           )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="min-w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">
                         {product.category?.name || categories.find(cat => cat.categoryId === product.categoryId)?.name || 'N/A'}
                       </TableCell>
                       <TableCell className="align-top">
-                        {product.images && product.images.length > 0 ? (
-                          (() => {
-                            const mainImage = product.images.find(img => img.isMain) || product.images[0];
-                            return (
-                              <div
-                                className="cursor-pointer"
-                                onClick={() => {
-                                  setCurrentImageUrls(product.images.map(img => img.imageUrl));
-                                  setIsImageModalOpen(true);
-                                }}
-                              >
-                                <img src={mainImage.imageUrl} alt={product.name} className="w-24 h-24 object-cover rounded-md" />
-                              </div>
-                            );
-                          })()
-                        ) : (
-                          'N/A'
-                        )}
+                        {product.images && product.images.length > 0 ? (() => {
+                          const mainImage = product.images.find(img => img.isMain) || product.images[0];
+                          return (
+                            <div className="w-20 h-20 flex-none cursor-pointer">
+                              <img
+                                src={mainImage.imageUrl}
+                                alt={product.name}
+                                className="w-full h-full object-cover rounded-md"
+                                onClick={() => setLightboxUrl(mainImage.imageUrl)}
+                              />
+                            </div>
+                          );
+                        })() : 'N/A'}
                       </TableCell>
                       <TableCell>{new Date(product.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>
@@ -646,7 +665,7 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="productImages" className="block text-sm font-medium text-gray-700 mb-1">Product Images</label>
+                    <label htmlFor="productImages" className="block text-sm font-medium text-gray-700 mb-1">Product Images <span className="text-gray-500 text-xs">(Required: 1500px width x 2250px height)</span></label>
                     <Input
                       id="productImages"
                       type="file"
@@ -700,35 +719,22 @@ export default function ProductsPage() {
               </DialogContent>
           </Dialog>
 
-          <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-            <DialogContent className="sm:max-w-[800px]">
-              <DialogHeader>
-                <DialogTitle>Product Images</DialogTitle>
-              </DialogHeader>
-              <div className="relative">
-                <Swiper
-                  modules={[Navigation, Pagination]}
-                  spaceBetween={10}
-                  slidesPerView={1}
-                  navigation
-                  pagination={{ clickable: true }}
-                  className="mySwiper"
-                >
-                  {currentImageUrls.map((imageUrl, index) => (
-                    <SwiperSlide key={index}>
-                      <img src={imageUrl} alt={`Product Image ${index + 1}`} className="max-w-full h-auto object-contain" />
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              </div>
-              <DialogFooter>
-                <Button onClick={() => setIsImageModalOpen(false)}>Close</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          
         </div>
       </main>
+
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <img
+            src={lightboxUrl}
+            alt="Full Size"
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }
-''

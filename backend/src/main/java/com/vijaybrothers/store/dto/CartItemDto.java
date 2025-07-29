@@ -13,14 +13,16 @@ public class CartItemDto {
     private Integer quantity;
     private Instant addedAt;
 
+    public CartItemDto(Integer cartItemId, Integer productId, String productName, Integer quantity, Instant addedAt) {
+        this.cartItemId = cartItemId;
+        this.productId = productId;
+        this.productName = productName;
+        this.quantity = quantity;
+        this.addedAt = addedAt;
+    }
+
     public static CartItemDto from(CartItem ci) {
-        return CartItemDto.builder()
-            .cartItemId(ci.getCartItemId())
-            .productId(ci.getProduct().getProductId())
-            .productName(ci.getProduct().getName())
-            .quantity(ci.getQuantity())
-            .addedAt(ci.getAddedAt())
-            .build();
+        return new CartItemDto(ci.getCartItemId(), ci.getProduct().getProductId(), ci.getProduct().getName(), ci.getQuantity(), ci.getAddedAt());
     }
 
     // Getters

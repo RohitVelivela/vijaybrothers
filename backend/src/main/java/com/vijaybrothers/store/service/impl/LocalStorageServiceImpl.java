@@ -2,23 +2,20 @@ package com.vijaybrothers.store.service.impl;
 
 import com.vijaybrothers.store.service.StorageService;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
-public class FileSystemStorageService implements StorageService {
+@Primary
+public class LocalStorageServiceImpl implements StorageService {
 
-    private final java.nio.file.Path rootLocation;
-
-    public FileSystemStorageService() {
-        this.rootLocation = Paths.get(System.getProperty("user.home"), "uploads");
-    }
+    private final Path rootLocation = Paths.get("../frontend/public/uploads");
 
     @Override
     public String store(MultipartFile file, String subfolder, String productName) {
@@ -26,7 +23,7 @@ public class FileSystemStorageService implements StorageService {
             if (file.isEmpty()) {
                 throw new RuntimeException("Failed to store empty file.");
             }
-            java.nio.file.Path subfolderPath = this.rootLocation.resolve(subfolder);
+            Path subfolderPath = rootLocation.resolve(subfolder);
             if (!Files.exists(subfolderPath)) {
                 Files.createDirectories(subfolderPath);
             }
@@ -39,16 +36,10 @@ public class FileSystemStorageService implements StorageService {
             // Sanitize product name for filename
             String sanitizedProductName = productName.replaceAll("[^a-zA-Z0-9\\s-]", "").replaceAll("\\s+", "-").toLowerCase();
             String newFilename = sanitizedProductName + "-" + UUID.randomUUID().toString() + extension;
-            java.nio.file.Path destinationFile = subfolderPath.resolve(newFilename)
-                    .normalize().toAbsolutePath();
-            if (!destinationFile.getParent().equals(subfolderPath.toAbsolutePath())) {
-                // This is a security check
-                throw new RuntimeException(
-                        "Cannot store file outside current directory.");
-            }
-            try (InputStream inputStream = file.getInputStream()) {
-                Files.copy(inputStream, destinationFile,
-                    StandardCopyOption.REPLACE_EXISTING);
+            Path destinationFile = subfolderPath.resolve(newFilename).normalize().toAbsolutePath();
+
+            try (var inputStream = file.getInputStream()) {
+                Files.copy(inputStream, destinationFile);
             }
             return "/uploads/" + subfolder + "/" + newFilename;
         } catch (IOException e) {
@@ -56,14 +47,26 @@ public class FileSystemStorageService implements StorageService {
         }
     }
 
+    public byte[] downloadFile(String fileName) {
+        try {
+            Path file = rootLocation.resolve(fileName);
+            return Files.readAllBytes(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read file: " + fileName, e);
+        }
+    }
+
+    public String getFileUrl(String fileName) {
+        return "/uploads/" + fileName;
+    }
+
     @Override
     public void deleteFile(String fileName) {
         try {
-            java.nio.file.Path file = this.rootLocation.resolve(fileName);
+            Path file = Paths.get("../frontend/public" + fileName);
             Files.deleteIfExists(file);
         } catch (IOException e) {
             throw new RuntimeException("Failed to delete file: " + fileName, e);
         }
     }
-
 }

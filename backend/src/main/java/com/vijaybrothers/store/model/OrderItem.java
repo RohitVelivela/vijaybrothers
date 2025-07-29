@@ -33,4 +33,22 @@ public class OrderItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", insertable = false, updatable = false)
     private Product product;
+
+    // Getters
+    public Long getOrderItemId() { return orderItemId; }
+    public Order getOrder() { return order; }
+    public Long getProductId() { return productId; }
+    public Integer getQuantity() { return quantity; }
+    public BigDecimal getUnitPrice() { return unitPrice; }
+    public BigDecimal getLineTotal() { return lineTotal; }
+    public Product getProduct() { return product; }
+
+    // Setters
+    public void setOrderItemId(Long orderItemId) { this.orderItemId = orderItemId; }
+    public void setOrder(Order order) { this.order = order; }
+    public void setProductId(Long productId) { this.productId = productId; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+    public void setLineTotal(BigDecimal lineTotal) { this.lineTotal = lineTotal; }
+    public void setProduct(Product product) { this.product = product; }
 }

@@ -19,6 +19,32 @@ public class ProductResponseDto {
     private String color;
     private String fabric;
 
+    // Getters
+    public Long getProductId() { return productId; }
+    public String getProductCode() { return productCode; }
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+    public BigDecimal getPrice() { return price; }
+    public Integer getCategoryId() { return categoryId; }
+    public Integer getStockQuantity() { return stockQuantity; }
+    public Boolean getIsInStock() { return isInStock; }
+    public String getYoutubeLink() { return youtubeLink; }
+    public String getColor() { return color; }
+    public String getFabric() { return fabric; }
+
+    // Setters
+    public void setProductId(Long productId) { this.productId = productId; }
+    public void setProductCode(String productCode) { this.productCode = productCode; }
+    public void setName(String name) { this.name = name; }
+    public void setDescription(String description) { this.description = description; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+    public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
+    public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
+    public void setIsInStock(Boolean isInStock) { this.isInStock = isInStock; }
+    public void setYoutubeLink(String youtubeLink) { this.youtubeLink = youtubeLink; }
+    public void setColor(String color) { this.color = color; }
+    public void setFabric(String fabric) { this.fabric = fabric; }
+
     public static ProductResponseDto fromEntity(Product product) {
         ProductResponseDto dto = new ProductResponseDto();
         dto.setProductId(product.getProductId().longValue());

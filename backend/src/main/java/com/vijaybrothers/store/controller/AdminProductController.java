@@ -29,9 +29,9 @@ public class AdminProductController {
         return ResponseEntity.ok(list);
     }
 
-    @PostMapping
+    @PostMapping(consumes = { org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Map<String, String>> create(
-        @Valid @RequestBody ProductCreateRequest req
+        @Valid @ModelAttribute ProductCreateRequest req
     ) {
         svc.createProduct(req);
         return ResponseEntity
@@ -47,10 +47,10 @@ public class AdminProductController {
         return svc.listProducts(pageable, includeDeleted);
     }
 
-    @PutMapping("/{productId}")
+    @PutMapping(value = "/{productId}", consumes = { org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Map<String, String>> update(
         @PathVariable Integer productId,
-        @Valid @RequestBody ProductUpdateRequest req
+        @Valid @ModelAttribute ProductUpdateRequest req
     ) {
         svc.updateProduct(productId, req); // Pass both productId and req
         return ResponseEntity

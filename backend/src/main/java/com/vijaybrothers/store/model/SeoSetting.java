@@ -27,4 +27,20 @@ public class SeoSetting {
 
     @Column(name = "meta_keywords", columnDefinition = "TEXT")
     private String metaKeywords;
+
+    // Getters
+    public Integer getSeoId() { return seoId; }
+    public String getPageType() { return pageType; }
+    public Integer getReferenceId() { return referenceId; }
+    public String getMetaTitle() { return metaTitle; }
+    public String getMetaDesc() { return metaDesc; }
+    public String getMetaKeywords() { return metaKeywords; }
+
+    // Setters
+    public void setSeoId(Integer seoId) { this.seoId = seoId; }
+    public void setPageType(String pageType) { this.pageType = pageType; }
+    public void setReferenceId(Integer referenceId) { this.referenceId = referenceId; }
+    public void setMetaTitle(String metaTitle) { this.metaTitle = metaTitle; }
+    public void setMetaDesc(String metaDesc) { this.metaDesc = metaDesc; }
+    public void setMetaKeywords(String metaKeywords) { this.metaKeywords = metaKeywords; }
 }

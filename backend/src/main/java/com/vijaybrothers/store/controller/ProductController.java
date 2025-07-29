@@ -1,6 +1,5 @@
 package com.vijaybrothers.store.controller;
 
-import com.vijaybrothers.store.dto.ProductDetailDto;
 import com.vijaybrothers.store.dto.ProductDto;
 import com.vijaybrothers.store.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -17,25 +16,6 @@ import java.util.Map;
 public class ProductController {
 
     private final ProductService service;
-
-    /**
-     * Get detailed information about a specific product
-     * GET /api/products/{productId}
-     * 
-     * @param productId The ID of the product to retrieve
-     * @return Product details or error response
-     */
-    @GetMapping("/{productId}")
-    public ResponseEntity<?> getProductById(@PathVariable Integer productId) {
-        try {
-            ProductDetailDto product = service.getProductDetailById(productId);
-            return ResponseEntity.ok(product);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity
-                .status(404)
-                .body(Map.of("error", e.getMessage()));
-        }
-    }
 
     /**
      * GET /api/products/sku/{sku}

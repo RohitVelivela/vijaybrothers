@@ -171,19 +171,36 @@ export async function markMessageAsRead(id: number): Promise<ContactMessage> {
   return await res.json();
 }
 
-export async function fetchProducts(page: number = 0, size: number = 10, includeDeleted: boolean = false): Promise<Page<Product>> {
+export async function fetchProducts(page: number = 0, size: number = 10, categoryId?: number, q?: string, sort?: string, includeDeleted: boolean = false): Promise<Page<Product>> {
   const params = new URLSearchParams();
   params.append('page', page.toString());
   params.append('size', size.toString());
+  if (categoryId) {
+    params.append('categoryId', categoryId.toString());
+  }
+  if (q) {
+    params.append('q', q);
+  }
+  if (sort) {
+    params.append('sort', sort);
+  }
   params.append('includeDeleted', includeDeleted.toString());
 
-  const res = await fetch(`${API_BASE_URL}/admin/products?${params.toString()}`, {
+  const url = `${API_BASE_URL}/admin/products?${params.toString()}`;
+  console.log('fetchProducts: Requesting URL:', url);
+
+  const res = await fetch(url, {
     headers: getAuthHeaders(),
   });
+  
+  console.log('fetchProducts: Raw response status:', res.status);
   if (!res.ok) {
-    throw new Error('Failed to fetch products');
+    const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
+    throw new Error(errorData.error || errorData.message || 'Failed to fetch products');
   }
-  return await res.json();
+  const data = await res.json();
+  console.log('fetchProducts: Parsed JSON data:', data);
+  return data;
 }
 
 export async function fetchProductById(id: number): Promise<Product> {
@@ -394,7 +411,7 @@ export async function updateOrderStatus(orderId: number, status: string): Promis
     body: JSON.stringify({ status }),
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to update order status');
+    const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
+    throw new Error(errorData.error || errorData.message || 'Failed to update order status');
   }
 }
