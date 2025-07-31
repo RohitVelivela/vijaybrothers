@@ -67,7 +67,7 @@ const CategoryTable: React.FC = () => {
               <td className="py-2 px-4 border-b">
                 {category.categoryImage && (
                   <img 
-                    src={category.categoryImage} 
+                    src={`/uploads/categories/${category.name}.jpg`} 
                     alt={category.name} 
                     className="w-16 h-16 object-cover rounded" 
                   />

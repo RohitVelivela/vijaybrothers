@@ -28,7 +28,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
 
-    private final String UPLOAD_DIR = System.getProperty("user.home") + "/uploads/images/categories/";
+    private final String UPLOAD_DIR = Paths.get("uploads", "images", "categories").toAbsolutePath().toString();
 
     @Override
     @Transactional
