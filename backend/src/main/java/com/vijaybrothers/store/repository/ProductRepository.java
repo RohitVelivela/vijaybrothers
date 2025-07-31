@@ -20,7 +20,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findByCategory_CategoryId(Integer categoryId);
     List<Product> findByStockQuantityLessThanEqual(Integer stockQuantity);
     List<Product> findByStockQuantityLessThanAndDeletedFalse(Integer quantity);
-    List<Product> findByInStock(boolean inStock);
+    long countByInStock(boolean inStock);
     boolean existsByCategory_CategoryId(Integer categoryId);
     Optional<Product> findByProductCode(String productCode);
     @EntityGraph(attributePaths = "images")
@@ -36,6 +36,8 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     @Query("SELECT p FROM Product p WHERE (:categoryId IS NULL OR p.category.categoryId = :categoryId) AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR p.productCode LIKE CONCAT('%', :query, '%')) AND p.deleted = false")
     Page<Product> search(@Param("categoryId") Integer categoryId, @Param("query") String query, Pageable pageable);
+
+    List<Product> findByInStock(boolean inStock);
 
     @Query("SELECT p FROM Product p WHERE (:categoryId IS NULL OR p.category.categoryId = :categoryId) " +
            "AND (:color IS NULL OR p.color = :color) " +

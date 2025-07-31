@@ -52,6 +52,7 @@ export default function CategoriesPage() {
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const [newImageUrl, setNewImageUrl] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isParentCategory, setIsParentCategory] = useState(false);
 
   const loadCategories = async () => {
     try {
@@ -94,15 +95,15 @@ export default function CategoriesPage() {
       const bValue = b[sortColumn];
 
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' 
-          ? aValue.localeCompare(bValue) 
+        return sortDirection === 'asc'
+          ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
-      } 
-      
+      }
+
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
-      
+
       return 0;
     });
   }, [categories, searchTerm, filterCategory, sortColumn, sortDirection]);
@@ -150,6 +151,7 @@ export default function CategoriesPage() {
     setNewDisplayTypes([]); // Reset display types to empty array
     setNewImageFile(null);
     setNewImageUrl(null);
+    setIsParentCategory(false);
     openModal();
   };
 
@@ -167,6 +169,7 @@ export default function CategoriesPage() {
       setNewDisplayTypes(categoryToEdit.displayTypes || []); // Set display types to array or empty array
       setNewImageUrl(categoryToEdit.categoryImage || null);
       setNewImageFile(null);
+      setIsParentCategory(!categoryToEdit.parentId);
       setIsModalOpen(true);
     }
   };
@@ -192,11 +195,23 @@ export default function CategoriesPage() {
           'success'
         );
       } catch (err) {
-        Swal.fire(
-          'Error!',
-          (err as Error).message,
-          'error'
-        );
+        const errorMessage = (err as Error).message;
+        console.error("Failed to delete category:", err); // Log the full error to the console
+
+        // Check for foreign key violation error
+        if (errorMessage.includes('violates foreign key constraint') || errorMessage.includes('is still referenced from table')) {
+          Swal.fire(
+            'Deletion Failed!',
+            'This category has products associated with it. Please go to the Products page and delete the associated products first.',
+            'error'
+          );
+        } else {
+          Swal.fire(
+            'Error!',
+            'An unexpected error occurred while trying to delete the category.',
+            'error'
+          );
+        }
       }
     }
   };
@@ -290,6 +305,7 @@ export default function CategoriesPage() {
 
     } catch (err) {
       // --- Error Handling ---
+      console.error("Failed to save category:", err); // Log the full error to the console
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       Swal.fire('Error!', errorMessage, 'error');
     }
@@ -305,7 +321,7 @@ export default function CategoriesPage() {
 
   const handleDisplayTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
-    setNewDisplayTypes(prev => 
+    setNewDisplayTypes(prev =>
       checked ? [...prev, value] : prev.filter(item => item !== value)
     );
   };
@@ -388,6 +404,7 @@ export default function CategoriesPage() {
                   <TableHead className="cursor-pointer" onClick={() => handleSort('isActive')}>Active</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('position')}>Position</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('createdAt')}>Created Date</TableHead>
+                  <TableHead>Display Types</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -397,19 +414,37 @@ export default function CategoriesPage() {
                     <TableCell className="font-medium">{category.categoryId}</TableCell>
                     <td className="py-2 pl-1 border-b text-left">
                 {category.categoryImage && (
-                  <img 
-                    src={`http://localhost:8080${category.categoryImage}`} 
-                    alt={category.name} 
-                    className="w-32 h-32 object-cover rounded block mr-auto" 
+                  <img
+                    src={`http://localhost:8080${category.categoryImage}`}
+                    alt={category.name}
+                    className="w-32 h-32 object-cover rounded block mr-auto"
                   />
                 )}
               </td>
                     <TableCell>{category.name}</TableCell>
                     <TableCell>{category.slug}</TableCell>
-                    <TableCell>{category.parentName || '-'}</TableCell>
+                    <TableCell>
+                      {category.parentId === null ? (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          <span className={`w-2 h-2 mr-1 rounded-full ${category.isActive ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                          {category.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      ) : (
+                        <>
+                          {category.parentName || '-'}
+                          {category.parentName && category.parentIsActive !== undefined && (
+                            <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${category.parentIsActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              <span className={`w-2 h-2 mr-1 rounded-full ${category.parentIsActive ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                              ({category.parentIsActive ? 'Active' : 'Inactive'})
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </TableCell>
                     <TableCell>{category.isActive ? 'Yes' : 'No'}</TableCell>
                     <TableCell>{category.position}</TableCell>
                     <TableCell>{new Date(category.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{category.displayTypes?.join(', ') || '-'}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Button variant="outline" size="icon" onClick={() => handleEditCategory(category.categoryId)}>
@@ -424,7 +459,7 @@ export default function CategoriesPage() {
                 ))}
                 {currentCategories.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-gray-500 p-4">
+                    <TableCell colSpan={10} className="text-center text-gray-500 p-4">
                       No categories found.
                     </TableCell>
                   </TableRow>
@@ -527,33 +562,83 @@ export default function CategoriesPage() {
                 </div>
               )}
               <div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isParentCategory"
+                    checked={isParentCategory}
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      setIsParentCategory(isChecked);
+                      setNewIsActive(isChecked); // Set isActive based on checkbox state
+                      if (isChecked) {
+                        setNewParentId(undefined);
+                      }
+                    }}
+                    className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="isParentCategory" className="ml-2 block text-sm font-medium text-gray-700">Is Parent Category</label>
+                </div>
+              </div>
+              {!isParentCategory && (
+              <div>
                 <label htmlFor="parentCategory" className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
                 <select
                   id="parentCategory"
                   value={newParentId === undefined ? '' : newParentId}
                   onChange={(e) => setNewParentId(e.target.value === '' ? undefined : Number(e.target.value))}
                   className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-800"
+                  disabled={isParentCategory}
                 >
-                  <option value="">-- Select Parent Category (Leave blank for main category) --</option>
-                  {categories.filter(cat => cat.categoryId !== editingCategory?.categoryId).map(cat => (
+                  <option value="">-- Select Parent Category --</option>
+                  {categories.filter(cat => !cat.parentId && cat.categoryId !== editingCategory?.categoryId).map(cat => (
                     <option key={cat.categoryId} value={cat.categoryId}>
                       {cat.name}
                     </option>
                   ))}
                 </select>
               </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={newIsActive}
-                  onChange={(e) => setNewIsActive(e.target.checked)}
-                  className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded"
-                />
-                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Active</label>
-              </div>
-              {newIsActive && (
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Display Type</label>
+                <div className="space-y-2">
+                  {[
+                      { value: 'Navigation Menu', label: 'Navigation Menu' },
+                      { value: 'Top Category', label: 'Top Category' },
+                      { value: 'Promotional Sections', label: 'Promotional Sections' }
+                  ].map(type => (
+                    <div key={type.value} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={type.value}
+                            value={type.value}
+                            checked={newDisplayTypes.includes(type.value)}
+                            onChange={handleDisplayTypeChange}
+                            className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor={type.value} className="ml-2 text-sm text-gray-700">{type.label}</label>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-base text-gray-500 mt-1">
+                      <p>Select where you want to display this category. You can select multiple options.</p>
+                      <p><strong className="text-blue-600">Navigation Menu:</strong> For regular navigation menu</p>
+                      <p><strong className="text-yellow-600">Top Category:</strong> To showcase this on homepage as a priority</p>
+                      <p><strong className="text-rose-600">Promotional Sections:</strong> For special campaigns like handpicked, deals, etc.</p>
+                    </div>
+                  </div>
+              {!isParentCategory && newDisplayTypes.includes('Navigation Menu') && (
                 <>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      checked={newIsActive}
+                      onChange={(e) => setNewIsActive(e.target.checked)}
+                      className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Active</label>
+                  </div>
                   <div>
                     <label htmlFor="categoryPosition" className="block text-sm font-medium text-gray-700 mb-1">Position</label>
                     <Input
@@ -574,36 +659,10 @@ export default function CategoriesPage() {
                       className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800"
                     />
                   </div>
-                  {(!newParentId || !categories.find(c => c.categoryId === newParentId)?.displayTypes.includes('Navigation Menu')) && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Display Type</label>
-                    <div className="space-y-2">
-                      {['Navigation Menu', 'Top Category', 'Promotional Sections'].map(type => (
-                        <div key={type} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id={type}
-                            value={type}
-                            checked={newDisplayTypes.includes(type)}
-                            onChange={handleDisplayTypeChange}
-                            className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded"
-                          />
-                          <label htmlFor={type} className="ml-2 text-sm text-gray-700">{type}</label>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-base text-gray-500 mt-1">
-                      <p>Select where you want to display this category. You can select multiple options.</p>
-                      <p><strong className="text-blue-600">Navigation Menu:</strong> For regular navigation menu</p>
-                      <p><strong className="text-yellow-600">Top Category:</strong> To showcase this on homepage as a priority</p>
-                      <p><strong className="text-rose-600">Promotional Sections:</strong> For special campaigns like handpicked, deals, etc.</p>
-                    </div>
-                  </div>
-                  )}
                 </>
               )}
             </div>
-              
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
               <Button onClick={saveCategory}>{editingCategory ? 'Update Category' : 'Save Category'}</Button>

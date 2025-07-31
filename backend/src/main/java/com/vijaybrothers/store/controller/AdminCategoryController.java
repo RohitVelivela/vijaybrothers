@@ -29,12 +29,13 @@ public class AdminCategoryController {
 private final ProductRepository productRepository;
 
     /** Create a new category (JSON + optional file) */
-    @PostMapping
+    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Map<String,String>> createCategory(
-        @Valid @RequestBody CategoryCreateRequest req
+        @Valid @ModelAttribute CategoryCreateRequest req,
+        @RequestParam(value = "image", required = false) MultipartFile image
     ) {
         try {
-            categoryService.createCategory(req, null);
+            categoryService.createCategory(req, image);
             return ResponseEntity
               .status(HttpStatus.CREATED)
               .body(Map.of("message","Category created successfully"));
@@ -46,13 +47,14 @@ private final ProductRepository productRepository;
     }
 
     /** Update an existing category */
-    @PutMapping(path="/{id}")
+    @PutMapping(path="/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Map<String,String>> updateCategory(
         @PathVariable Integer id,
-        @Valid @RequestBody CategoryCreateRequest req
+        @Valid @ModelAttribute CategoryCreateRequest req,
+        @RequestParam(value = "image", required = false) MultipartFile image
     ) {
         try {
-            categoryService.updateCategory(id, req, null);
+            categoryService.updateCategory(id, req, image);
             return ResponseEntity.ok(Map.of("message","Category updated successfully"));
         } catch (Exception e) {
             return ResponseEntity
@@ -73,6 +75,7 @@ private final ProductRepository productRepository;
             dto.put("categoryImage", c.getCategoryImage());
             dto.put("parentId", c.getParentCategory() != null ? c.getParentCategory().getCategoryId() : null);
             dto.put("parentName", c.getParentCategory() != null ? c.getParentCategory().getName() : null);
+            dto.put("parentIsActive", c.getParentCategory() != null ? c.getParentCategory().getIsActive() : null);
             dto.put("isActive", c.getIsActive());
             dto.put("position", c.getPosition());
             dto.put("displayTypes", c.getDisplayTypes()); // Add displayTypes

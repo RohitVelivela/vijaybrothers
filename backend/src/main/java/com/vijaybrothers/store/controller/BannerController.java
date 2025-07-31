@@ -19,7 +19,7 @@ public class BannerController {
 
     @GetMapping
     public ResponseEntity<List<BannerDto>> getAllBanners() {
-        List<BannerDto> banners = bannerService.getAllBanners();
+        List<BannerDto> banners = bannerService.getActiveBanners();
         return ResponseEntity.ok(banners);
     }
 }

@@ -102,4 +102,14 @@ public class CategoryCreateRequest {
     public void setPosition(Integer position) {
         this.position = position;
     }
+
+    private Boolean isParentCategory;
+
+    public Boolean getIsParentCategory() {
+        return isParentCategory;
+    }
+
+    public void setIsParentCategory(Boolean isParentCategory) {
+        this.isParentCategory = isParentCategory;
+    }
 }

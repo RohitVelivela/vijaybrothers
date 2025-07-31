@@ -21,6 +21,7 @@ export interface Category {
   categoryImage?: string; // New field for image URL
   parentId?: number; // Optional, for nested categories
   parentName?: string; // Optional, for parent category name
+  parentIsActive?: boolean; // Optional, for parent category active status
   isActive: boolean; // For visibility control
   position: number; // For display order
   displayOrder: number; // For display order
@@ -375,6 +376,16 @@ export async function deleteBanner(id: number): Promise<void> {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.error || 'Failed to delete banner');
   }
+}
+
+export async function fetchDashboardStats(): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch dashboard stats');
+  }
+  return await res.json();
 }
 
 export async function fetchOrders(status?: string, page: number = 0, size: number = 10): Promise<Page<OrderListItem>> {

@@ -45,14 +45,24 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
     @Override
     @Transactional
     public void deleteCategory(Integer id) {
-        // Soft-delete all products associated with this category first
-        List<com.vijaybrothers.store.model.Product> productsToUpdate = productRepository.findByCategory_CategoryId(id);
-        for (com.vijaybrothers.store.model.Product product : productsToUpdate) {
-            product.setDeleted(true);
-            product.setCategory(null); // Unlink product from category
+        // Check for any ACTIVE products associated with this category.
+        List<Product> activeProducts = productRepository.findByCategory_CategoryIdAndDeletedFalse(id);
+        if (!activeProducts.isEmpty()) {
+            // If there are active products, prevent deletion.
+            throw new IllegalArgumentException("Cannot delete category with associated products. Please delete the products first.");
+        }
+
+        // If we are here, it means there are no ACTIVE products.
+        // Now, we need to handle the soft-deleted products that still have the foreign key.
+        // We will unlink them from the category before deleting the category.
+        List<Product> softDeletedProducts = productRepository.findByCategory_CategoryId(id);
+        for (Product product : softDeletedProducts) {
+            product.setCategory(null);
             productRepository.save(product);
         }
 
+        // Now that all associated products (which are all soft-deleted) are unlinked,
+        // we can safely delete the category.
         categoryRepository.deleteById(id);
     }
 
@@ -79,8 +89,10 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
                 cat.setParentCategory(null);
             }
             cat.setIsActive(req.getIsActive());
-            cat.setPosition(req.getPosition());
-            cat.setDisplayOrder(req.getDisplayOrder());
+
+            // Ensure position and displayOrder are not null
+            cat.setPosition(req.getPosition() != null ? req.getPosition() : 0);
+            cat.setDisplayOrder(req.getDisplayOrder() != null ? req.getDisplayOrder() : 0);
 
             // Parse displayTypes JSON string
             if (req.getDisplayTypes() != null && !req.getDisplayTypes().isEmpty()) {

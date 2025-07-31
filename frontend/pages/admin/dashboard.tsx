@@ -6,7 +6,15 @@ import { useRouter } from 'next/navigation';
 import Sidebar from '../../components/ui/Sidebar';
 import StatCard from '../../components/StatCard';
 import OrdersTable from '../../components/admin-components/OrdersTable';
-import { fetchOrders, OrderListItem, Page } from '../../lib/api';
+
+import { fetchOrders, OrderListItem, Page, fetchDashboardStats } from '../../lib/api';
+
+interface DashboardStats {
+  totalOrders: number;
+  monthlyRevenue: number;
+  productsInStock: number;
+}
+
 
 interface Order {
   id: number;
@@ -32,6 +40,8 @@ const DashboardOverview = () => {
   const [hasMore, setHasMore] = useState(true);
   const observer = useRef<IntersectionObserver | null>(null);
 
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+
   const mapOrderListItemToOrder = (item: OrderListItem): Order => {
     return {
       id: item.orderId, // Using orderId from OrderListItem as id for Order
@@ -42,6 +52,18 @@ const DashboardOverview = () => {
       orderDate: new Date(item.createdAt),
     };
   };
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const stats = await fetchDashboardStats();
+        setDashboardStats(stats);
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats", error);
+      }
+    };
+    loadStats();
+  }, []);
 
   const loadMoreOrders = useCallback(async () => {
     if (loading || !hasMore) return;
@@ -109,23 +131,22 @@ const DashboardOverview = () => {
 
   const t = translations[currentLanguage];
 
-  // Dashboard Statistics matching the reference image
-  const dashboardStats = [
+  const dashboardStatsData = [
     {
       title: t.totalOrders,
-      value: '1,250',
+      value: dashboardStats ? dashboardStats.totalOrders.toLocaleString() : '...',
       icon: 'ShoppingCart' as const,
       color: 'primary' as const
     },
     {
       title: t.monthlyRevenue,
-      value: '₹4,80,000',
+      value: dashboardStats ? `₹${dashboardStats.monthlyRevenue.toLocaleString()}` : '...',
       icon: 'TrendingUp' as const,
       color: 'success' as const
     },
     {
       title: t.productsInStock,
-      value: '320',
+      value: dashboardStats ? dashboardStats.productsInStock.toLocaleString() : '...',
       icon: 'Package' as const,
       color: 'warning' as const
     }
@@ -216,7 +237,7 @@ const DashboardOverview = () => {
 
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {dashboardStats.map((stat, index) => (
+            {dashboardStatsData.map((stat, index) => (
               <StatCard key={index} {...stat} />
             ))}
           </div>

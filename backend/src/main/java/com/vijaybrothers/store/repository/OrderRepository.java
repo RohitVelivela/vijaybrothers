@@ -12,8 +12,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Page<Order> findByOrderStatus(OrderStatus orderStatus, Pageable pageable);
 
-    @Query("SELECT SUM(o.totalAmount) FROM Order o")
-    java.math.BigDecimal sumTotalAmount();
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE FUNCTION('MONTH', o.createdAt) = FUNCTION('MONTH', CURRENT_DATE) AND FUNCTION('YEAR', o.createdAt) = FUNCTION('YEAR', CURRENT_DATE)")
+    java.util.Optional<Double> findTotalRevenueOfCurrentMonth();
     
     /**
      * Find all orders belonging to a guest using Spring Data JPA derived query.

@@ -1,20 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Menu, X, Instagram, Youtube } from 'lucide-react';
-import { useCart } from '../context/CartContext'; // Import useCart hook
-import Link from 'next/link'; // Import Link for navigation
-import { Category, fetchPublicCategories, fetchCategoriesByDisplayType } from '../lib/api'; // Import Category interface and fetchPublicCategories
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { useCart } from '../context/CartContext';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { Category, fetchCategoriesByDisplayType } from '../lib/api';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { getCartItemCount } = useCart(); // Use the useCart hook
+  const { getCartItemCount } = useCart();
   const [categories, setCategories] = useState<Category[]>([]);
+  const router = useRouter();
+
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [clickedIndex, setClickedIndex] = useState<number | null>(null);
+  const menuRef = useRef<HTMLElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const loadCategories = async () => {
       try {
         const fetchedCategories = await fetchCategoriesByDisplayType('Navigation Menu');
-        setCategories(fetchedCategories);
+        const parentCategories = fetchedCategories.filter(c => !c.parentId);
+        setCategories(parentCategories);
       } catch (error) {
         console.error('Failed to fetch public categories:', error);
       }
@@ -22,38 +29,46 @@ const Header: React.FC = () => {
     loadCategories();
   }, []);
 
-  const renderCategoryLinks = (categoryList: Category[]) => {
-    return categoryList.map((category) => (
-      <li key={category.categoryId} className="relative group">
-        {category.subCategories && category.subCategories.length > 0 ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger className="hover:text-gray-900 transition-colors cursor-pointer">
-              {category.name}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {category.subCategories.map((subCategory) => (
-                <DropdownMenuItem key={subCategory.categoryId} asChild>
-                  <Link href={`/category/${subCategory.slug}`}>
-                    {subCategory.name}
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <Link href={`/category/${category.slug}`} className="hover:text-gray-900 transition-colors">
-            {category.name}
-          </Link>
-        )}
-      </li>
-    ));
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setClickedIndex(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleMouseEnter = (index: number) => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setActiveIndex(index);
+  };
+
+  const handleMouseLeave = () => {
+    timerRef.current = setTimeout(() => {
+      setActiveIndex(null);
+    }, 200);
+  };
+
+  const handleNavClick = (category: Category, index: number) => {
+    const hasSubcategories = category.subCategories && category.subCategories.length > 0;
+    if (hasSubcategories) {
+      setClickedIndex(clickedIndex === index ? null : index);
+    } else {
+      router.push(`/category/${category.slug}`);
+    }
   };
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-24">
-          {/* Logo - Moved to the left and slightly increased height */}
+          {/* Logo */}
           <div className="flex-shrink-0 mr-6">
             <Link href="/">
               <img
@@ -64,7 +79,7 @@ const Header: React.FC = () => {
             </Link>
           </div>
 
-          {/* Search Bar - Increased size and updated placeholder */}
+          {/* Search Bar */}
           <div className="hidden md:flex flex-1 justify-center px-8">
             <div className="relative w-full max-w-3xl">
               <input
@@ -78,7 +93,7 @@ const Header: React.FC = () => {
             </div>
           </div>
 
-          {/* Cart Icon */}
+          {/* Icons */}
           <div className="flex items-center space-x-7 md:mr-10  ">
             <a href="https://www.instagram.com/vijaybrothers_sarees" target="_blank" rel="noopener noreferrer" className="relative flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors">
               <Instagram className="w-8 h-8" />
@@ -104,10 +119,53 @@ const Header: React.FC = () => {
         </div>
 
         {/* Categories Navigation */}
-        <nav className="hidden md:block py-3 border-t border-gray-200">
-          <ul className="flex justify-center space-x-8 text-black">
-            {renderCategoryLinks(categories.slice(0, 8))}
-            <li><Link href="/aboutus" className="hover:text-gray-900 transition-colors">About Us</Link></li>
+        <nav ref={menuRef} className="hidden md:block py-3 border-t border-gray-200">
+          <ul className="flex justify-center items-center space-x-8 text-black">
+            {categories.slice(0, 8).map((category, index) => {
+              const isActive = activeIndex === index || clickedIndex === index;
+              const hasSubcategories = category.subCategories && category.subCategories.length > 0;
+
+              return (
+                <li
+                  key={category.categoryId}
+                  className="relative"
+                  onMouseEnter={() => handleMouseEnter(index)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <button
+                    onClick={() => handleNavClick(category, index)}
+                    className="px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-all duration-200 ease-in-out"
+                  >
+                    {category.name}
+                  </button>
+
+                  {hasSubcategories && isActive && (
+                    <div
+                      className={`absolute left-0 mt-2 w-64 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 transition-all duration-300 ease-in-out transform ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+                      <div className="p-2">
+                        {category.subCategories.map((subCategory) => (
+                          <Link
+                            key={subCategory.categoryId}
+                            href={`/category/${subCategory.slug}`}
+                            className="block w-full text-left px-4 py-2 text-base text-gray-800 rounded-md hover:bg-rose-50 hover:text-rose-700 transition-all duration-200 ease-in-out hover:pl-5"
+                          >
+                            {subCategory.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+            <li>
+              <button 
+                onClick={() => router.push('/aboutus')}
+                className="px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-all duration-200 ease-in-out"
+              >
+                About Us
+              </button>
+            </li>
           </ul>
         </nav>
 
