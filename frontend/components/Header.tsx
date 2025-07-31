@@ -120,7 +120,7 @@ const Header: React.FC = () => {
 
         {/* Categories Navigation */}
         <nav ref={menuRef} className="hidden md:block py-3 border-t border-gray-200">
-          <ul className="flex justify-center items-center space-x-8 text-black">
+          <ul className="flex justify-center items-center space-x-4 text-black">
             {categories.slice(0, 8).map((category, index) => {
               const isActive = activeIndex === index || clickedIndex === index;
               const hasSubcategories = category.subCategories && category.subCategories.length > 0;
@@ -134,14 +134,14 @@ const Header: React.FC = () => {
                 >
                   <button
                     onClick={() => handleNavClick(category, index)}
-                    className="px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-all duration-200 ease-in-out"
+                    className={`px-1 py-0.5 rounded-md text-[14px] md:text-[16px] font-work-sans font-medium text-nav-text-color hover:bg-transparent hover:text-nav-hover-color transition-all duration-200 ease-in-out whitespace-nowrap leading-normal tracking-[0.2px] capitalize ${isActive ? 'font-semibold text-nav-hover-color' : ''}`}
                   >
                     {category.name}
                   </button>
 
                   {hasSubcategories && isActive && (
                     <div
-                      className={`absolute left-0 mt-2 w-64 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 transition-all duration-300 ease-in-out transform ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+                      className={`absolute left-0 mt-2 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 transition-all duration-300 ease-in-out transform min-w-max ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
                       <div className="p-2">
                         {category.subCategories.map((subCategory) => (
                           <Link
@@ -161,7 +161,7 @@ const Header: React.FC = () => {
             <li>
               <button 
                 onClick={() => router.push('/aboutus')}
-                className="px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-all duration-200 ease-in-out"
+                className="px-1 py-0.5 rounded-md text-[14px] md:text-[16px] font-work-sans font-medium text-nav-text-color hover:bg-transparent hover:text-nav-hover-color transition-all duration-200 ease-in-out whitespace-nowrap leading-normal tracking-[0.2px] capitalize"
               >
                 About Us
               </button>

@@ -5,9 +5,10 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Roboto', 'sans-serif'],
-        'playfair': ['Playfair Display', 'serif'],
+        serif: ['Playfair Display', 'serif'],
         'cinzel': ['Cinzel', 'serif'],
         'lora': ['Lora', 'serif'],
+        'work-sans': ['Work Sans', 'sans-serif'],
       },
       colors: {
         'zari-gold': {
@@ -67,6 +68,8 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        'nav-text-color': '#242424',
+        'nav-hover-color': '#c62828',
       },
       backgroundSize: {
         'silk': '20px 20px',
