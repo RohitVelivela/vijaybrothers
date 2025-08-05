@@ -12,6 +12,7 @@ public record CartView(
     public record CartLine(
         Integer cartItemId,
         Integer productId,
+        String productCode,
         String name,
         String mainImageUrl,
         BigDecimal price,

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import ProgressBar from './ProgressBar'; // Import ProgressBar
-import { useCart } from '../context/CartContext'; // Import useCart hook
+import ProgressBar from './ProgressBar';
+import { useCart } from '../context/CartContext';
+import { useToast } from '../hooks/use-toast';
 import dynamic from 'next/dynamic';
 
 const User = dynamic(() => import('lucide-react').then(mod => mod.User), { ssr: false });
@@ -15,38 +16,110 @@ const Truck = dynamic(() => import('lucide-react').then(mod => mod.Truck), { ssr
 
 const AddressPage: React.FC = () => {
   const router = useRouter();
-  const { cartItems } = useCart();
+  const { cartItems, cartView } = useCart();
+  const { toast } = useToast();
 
   const [subtotal, setSubtotal] = useState(0);
-  const [shipping, setShipping] = useState(50); // Example shipping cost
+  const [shipping, setShipping] = useState(50);
   const [total, setTotal] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     email: '',
     phone: '',
-    landmark: '',
-    address1: '',
-    address2: '',
+    address: '',
     city: '',
     state: 'Andhra Pradesh',
-    zip: '',
+    postalCode: '',
   });
 
   useEffect(() => {
-    const newSubtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const newSubtotal = cartView?.subtotal || 0;
     setSubtotal(newSubtotal);
     setTotal(newSubtotal + shipping);
-  }, [cartItems, shipping]);
+  }, [cartView, shipping]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = 'Phone number must be 10 digits';
+    }
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.city.trim()) newErrors.city = 'City is required';
+    if (!formData.postalCode.trim()) {
+      newErrors.postalCode = 'Postal code is required';
+    } else if (!/^\d{6}$/.test(formData.postalCode)) {
+      newErrors.postalCode = 'Postal code must be 6 digits';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleContinue = () => {
-    router.push({
-      pathname: '/shipment',
-      query: formData,
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
+    }
+  };
+
+  const handleContinue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast({
+        title: "❌ Validation Error",
+        description: "Please fill in all required fields correctly.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!cartView?.cartId) {
+      toast({
+        title: "❌ Error",
+        description: "Cart not found. Please go back to cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Skip backend call for now and just navigate with data
+    console.log('Skipping guest creation, navigating directly with form data');
+    
+    toast({
+      title: "✅ Address Ready",
+      description: "Proceeding to payment with your address details.",
+      variant: "default",
     });
+
+    // Navigate to payment page with address data
+    router.push({
+      pathname: '/shipping-payment',
+      query: { 
+        ...formData,
+        cartId: cartView.cartId,
+        subtotal: subtotal.toString(),
+        total: total.toString()
+      }
+    });
+
+    setIsSubmitting(false);
   };
 
   return (
@@ -58,83 +131,138 @@ const AddressPage: React.FC = () => {
       </h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-screen-xl mx-auto">
         <div className="lg:col-span-2 bg-white shadow-lg rounded-xl p-8">
-          <form>
+          <form onSubmit={handleContinue}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label htmlFor="fullName" className="block text-gray-700 text-xs font-bold mb-1">Full Name</label>
+                <label htmlFor="name" className="block text-gray-700 text-xs font-bold mb-1">Full Name *</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input type="text" id="fullName" value={formData.fullName} onChange={handleChange} className="border border-gray-300 rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" placeholder="John Doe" />
+                  <input 
+                    type="text" 
+                    id="name" 
+                    name="name"
+                    value={formData.name} 
+                    onChange={handleChange} 
+                    className={`border rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="John Doe" 
+                  />
                 </div>
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
               </div>
               <div>
-                <label htmlFor="email" className="block text-gray-700 text-xs font-bold mb-1">Email</label>
+                <label htmlFor="email" className="block text-gray-700 text-xs font-bold mb-1">Email *</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input type="email" id="email" value={formData.email} onChange={handleChange} className="border border-gray-300 rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" placeholder="john.doe@example.com" />
+                  <input 
+                    type="email" 
+                    id="email" 
+                    name="email"
+                    value={formData.email} 
+                    onChange={handleChange} 
+                    className={`border rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="john.doe@example.com" 
+                  />
                 </div>
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label htmlFor="phone" className="block text-gray-700 text-xs font-bold mb-1">Phone Number</label>
+                <label htmlFor="phone" className="block text-gray-700 text-xs font-bold mb-1">Phone Number *</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input type="tel" id="phone" value={formData.phone} onChange={handleChange} className="border border-gray-300 rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" placeholder="+91 9876543210" />
+                  <input 
+                    type="tel" 
+                    id="phone" 
+                    name="phone"
+                    value={formData.phone} 
+                    onChange={handleChange} 
+                    className={`border rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="9876543210" 
+                  />
                 </div>
-              </div>
-              <div>
-                <label htmlFor="landmark" className="block text-gray-700 text-xs font-bold mb-1">Landmark (Optional)</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input type="text" id="landmark" value={formData.landmark} onChange={handleChange} className="border border-gray-300 rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" placeholder="Near ABC Hospital" />
-                </div>
+                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
               </div>
             </div>
             <div className="mb-4">
-              <label htmlFor="address1" className="block text-gray-700 text-xs font-bold mb-1">Address Line 1</label>
+              <label htmlFor="address" className="block text-gray-700 text-xs font-bold mb-1">Complete Address *</label>
               <div className="relative">
-                <Home className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input type="text" id="address1" value={formData.address1} onChange={handleChange} className="border border-gray-300 rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" placeholder="House No., Building Name" />
-                </div>
+                <Home className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+                <textarea 
+                  id="address" 
+                  name="address"
+                  value={formData.address} 
+                  onChange={handleChange} 
+                  rows={3}
+                  className={`border rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="House No., Building Name, Street, Area, Landmark" 
+                />
               </div>
-            <div className="mb-4">
-              <label htmlFor="address2" className="block text-gray-700 text-xs font-bold mb-1">Address Line 2 (Optional)</label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input type="text" id="address2" value={formData.address2} onChange={handleChange} className="border border-gray-300 rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" placeholder="Street, Locality" />
-              </div>
+              {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
-                <label htmlFor="city" className="block text-gray-700 text-xs font-bold mb-1">City</label>
+                <label htmlFor="city" className="block text-gray-700 text-xs font-bold mb-1">City *</label>
                 <div className="relative">
                   <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input type="text" id="city" value={formData.city} onChange={handleChange} className="border border-gray-300 rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" placeholder="Hyderabad" />
+                  <input 
+                    type="text" 
+                    id="city" 
+                    name="city"
+                    value={formData.city} 
+                    onChange={handleChange} 
+                    className={`border rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="Hyderabad" 
+                  />
                 </div>
+                {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
               </div>
               <div>
-                <label htmlFor="state" className="block text-gray-700 text-xs font-bold mb-1">State</label>
+                <label htmlFor="state" className="block text-gray-700 text-xs font-bold mb-1">State *</label>
                 <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select id="state" value={formData.state} onChange={handleChange} className="border border-gray-300 rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm appearance-none bg-white pr-8">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                  <select 
+                    id="state" 
+                    name="state"
+                    value={formData.state} 
+                    onChange={handleChange} 
+                    className="border border-gray-300 rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm appearance-none bg-white"
+                  >
                     <option value="Andhra Pradesh">Andhra Pradesh</option>
                     <option value="Telangana">Telangana</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    <svg className="fill-current h-4 w-4 transform rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                    </svg>
                   </div>
                 </div>
               </div>
               <div>
-                <label htmlFor="zip" className="block text-gray-700 text-xs font-bold mb-1">Zip Code</label>
+                <label htmlFor="postalCode" className="block text-gray-700 text-xs font-bold mb-1">Postal Code *</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input type="text" id="zip" value={formData.zip} onChange={handleChange} className="border border-gray-300 rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" placeholder="500001" />
+                  <input 
+                    type="text" 
+                    id="postalCode" 
+                    name="postalCode"
+                    value={formData.postalCode} 
+                    onChange={handleChange} 
+                    className={`border rounded-md w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm ${errors.postalCode ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="500001" 
+                  />
                 </div>
+                {errors.postalCode && <p className="text-red-500 text-xs mt-1">{errors.postalCode}</p>}
               </div>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={() => router.push('/cart')}
+                className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105"
+              >
+                Back to Cart
+              </button>
               <button
                 type="button"
                 onClick={handleContinue}

@@ -15,5 +15,6 @@ public record OrderDetailDto(
     String shippingEmail,
     String shippingPhone,
     String shippingAddress,
-    List<OrderItemDto> items
+    String paymentMethod,
+    List<OrderItemDto> orderItems
 ) {}

@@ -1,0 +1,36 @@
+/* Custom scrollbar styles for search dropdown */
+.search-dropdown-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+/* For Webkit browsers (Chrome, Safari, Edge) */
+.search-dropdown-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-dropdown-scroll::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.search-dropdown-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.search-dropdown-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* For Firefox */
+.search-dropdown-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+/* Ensure smooth scrolling */
+.search-dropdown-scroll {
+  scroll-behavior: smooth;
+}

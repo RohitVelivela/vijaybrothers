@@ -52,4 +52,27 @@ public class AdminOrderController {
                 .body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PutMapping("/{orderId}/order-status")
+    public ResponseEntity<?> updateOrderStatusOnly(
+            @PathVariable Integer orderId,
+            @RequestBody Map<String, String> request
+    ) {
+        try {
+            String status = request.get("status");
+            if (status == null || status.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Status is required"));
+            }
+            
+            svc.updateOrderStatusOnly(orderId, status);
+            return ResponseEntity.ok(Map.of("message", "Order status updated successfully"));
+            
+        } catch (IllegalArgumentException e) {
+            boolean isNotFound = e.getMessage().equals("Order not found");
+            return ResponseEntity
+                .status(isNotFound ? 404 : 400)
+                .body(Map.of("error", e.getMessage()));
+        }
+    }
 }

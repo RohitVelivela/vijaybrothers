@@ -39,10 +39,10 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000") // You should restrict this in production
+                        .allowedOrigins("http://localhost:3000", "http://localhost:3001") // You should restrict this in production
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
-                        .allowCredentials(false).maxAge(3600);
+                        .allowCredentials(true).maxAge(3600);
             }
         };
     }
@@ -86,10 +86,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));  // You should restrict this in production
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));  // Specific origin for credentials
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
+        configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token", "*"));
         configuration.setExposedHeaders(Arrays.asList("x-auth-token"));
+        configuration.setAllowCredentials(true); // Enable credentials
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -110,9 +111,13 @@ public class SecurityConfig {
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/banners").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/cart/**").permitAll()
                 .requestMatchers("/api/checkout/guest/**").permitAll()
-                .requestMatchers("/api/payments/webhook").permitAll()
+                .requestMatchers("/api/checkout/smart-order").permitAll()
+                .requestMatchers("/api/checkout/simple-order").permitAll()
+                .requestMatchers("/api/checkout/order/**").permitAll()
+                .requestMatchers("/api/payments/**").permitAll()
 
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

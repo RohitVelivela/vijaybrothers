@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import ProductGrid from '../../components/ProductGrid';
-import { fetchCategories, fetchProductsByCategoryId, Category, Product } from '../../lib/api';
+import { fetchPublicCategories, fetchProductsByCategoryId, Category, Product } from '../../lib/api';
 
 const CategoryPage: React.FC = () => {
   const router = useRouter();
@@ -19,7 +19,7 @@ const CategoryPage: React.FC = () => {
       setError(null);
       try {
         // Fetch all categories to find the one matching the slug
-        const allCategories = await fetchCategories();
+        const allCategories = await fetchPublicCategories();
         const foundCategory = allCategories.find(cat => cat.slug === categoryName);
 
         if (foundCategory) {

@@ -69,7 +69,7 @@ public class AdminProductService {
         if (req.getProductImages() != null && !req.getProductImages().isEmpty()) {
             for (int i = 0; i < req.getProductImages().size(); i++) {
                 MultipartFile imageFile = req.getProductImages().get(i);
-                String imageUrl = storageService.store(imageFile, "products", req.getName()); // Store in 'products' subfolder
+                String imageUrl = storageService.storeProductImage(imageFile, req.getName()); // Use new method
                 ProductImage productImage = ProductImage.builder()
                         .imageUrl(imageUrl)
                         .product(p)
@@ -113,7 +113,7 @@ public class AdminProductService {
                 p.getProductCode(),
                 p.getName(),
                 p.getImages().stream()
-                    .map(img -> new ProductImageDto(img.getId().intValue(), img.getImageUrl(), img.isMain()))
+                    .map(img -> new ProductImageDto(img.getId(), img.getImageUrl(), img.isMain()))
                     .collect(Collectors.toList()),
                 p.getPrice(),
                 p.getInStock(),
@@ -165,12 +165,12 @@ public class AdminProductService {
         // Handle product images
         if (req.getProductImages() != null && !req.getProductImages().isEmpty()) {
             // Clear existing images if new ones are provided (optional, depending on desired behavior)
-            p.getImages().forEach(productImageRepo::delete);
+            p.getImages().forEach(productImage -> storageService.deleteProductImage(productImage.getImageUrl())); // Use new method
             p.getImages().clear();
 
             for (int i = 0; i < req.getProductImages().size(); i++) {
                 MultipartFile imageFile = req.getProductImages().get(i);
-                String imageUrl = storageService.store(imageFile, "products", p.getName()); // Store in 'products' subfolder
+                String imageUrl = storageService.storeProductImage(imageFile, p.getName()); // Use new method
                 ProductImage productImage = ProductImage.builder()
                         .imageUrl(imageUrl)
                         .product(p)

@@ -55,4 +55,43 @@ public class CheckoutController {
         OrderCheckoutResponse response = checkoutService.guestCheckout(cartId, request);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * POST /api/checkout/order/{guestId}
+     * Create an order using existing guest details.
+     */
+    @PostMapping("/order/{guestId}")
+    public ResponseEntity<OrderCheckoutResponse> createOrderFromGuest(
+            @PathVariable Integer guestId,
+            @RequestParam Integer cartId
+    ) {
+        OrderCheckoutResponse response = checkoutService.createOrderFromGuest(guestId, cartId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * POST /api/checkout/smart-order
+     * Create an order intelligently - use existing guest details if available, otherwise create new ones.
+     */
+    @PostMapping("/smart-order")
+    public ResponseEntity<OrderCheckoutResponse> smartCheckout(
+            @RequestParam Integer cartId,
+            @Valid @RequestBody GuestCheckoutRequest request
+    ) {
+        OrderCheckoutResponse response = checkoutService.smartCheckout(cartId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * POST /api/checkout/simple-order
+     * Create an order directly without guest complexity.
+     */
+    @PostMapping("/simple-order")
+    public ResponseEntity<OrderCheckoutResponse> simpleCheckout(
+            @RequestParam Integer cartId,
+            @Valid @RequestBody GuestCheckoutRequest request
+    ) {
+        OrderCheckoutResponse response = checkoutService.simpleCheckout(cartId, request);
+        return ResponseEntity.ok(response);
+    }
 }

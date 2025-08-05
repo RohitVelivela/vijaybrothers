@@ -1,16 +1,13 @@
 import React from 'react';
+import { Product } from '../lib/api'; // Assuming you have product data
 import { useRouter } from 'next/router';
-import { allProducts } from '../data/products'; // Assuming you have product data
 
-const ProductDetailsPage: React.FC = () => {
+interface ProductDetailsPageProps {
+  product: Product;
+}
+
+const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({ product }) => {
   const router = useRouter();
-  const { id } = router.query;
-  const productId = typeof id === 'string' ? parseInt(id, 10) : undefined;
-  const product = allProducts.find(p => p.id === productId);
-
-  if (!product) {
-    return <div className="text-center py-10">Product not found.</div>;
-  }
 
   const handleBuyNow = () => {
     // In a real application, you would add the product to a cart state
@@ -24,13 +21,13 @@ const ProductDetailsPage: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-8">
         {/* Product Image */}
         <div className="md:w-1/2">
-          <img src={product.image} alt={product.title} className="w-full h-auto object-cover rounded-lg shadow-lg" />
+          <img src={product.images[0]?.imageUrl} alt={product.name} className="w-full h-auto object-cover rounded-lg shadow-lg" />
           {/* Add thumbnail images here if needed */}
         </div>
 
         {/* Product Details */}
         <div className="md:w-1/2">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.title}</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
           <p className="text-xl text-red-600 font-semibold mb-4">₹{product.price.toLocaleString()}</p>
 
           <div className="mb-6">
@@ -58,7 +55,7 @@ const ProductDetailsPage: React.FC = () => {
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Product Details</h2>
             <p className="text-gray-600 leading-relaxed">
-              No description available.
+              {product.description}
             </p>
             {/* Add more details like blouse, length, washing instructions */}
           </div>
@@ -67,8 +64,9 @@ const ProductDetailsPage: React.FC = () => {
           <div>
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Specifications</h2>
             <ul className="list-disc list-inside text-gray-600">
-              <li>Featured: {product.category}</li>
-              <li>Media: Instagram</li> {/* Placeholder */}
+              <li>Category: {product.category?.name}</li>
+              <li>Color: {product.color}</li>
+              <li>Fabric: {product.fabric}</li>
             </ul>
           </div>
         </div>

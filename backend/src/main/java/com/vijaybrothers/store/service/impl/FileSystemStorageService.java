@@ -66,4 +66,21 @@ public class FileSystemStorageService implements StorageService {
         }
     }
 
+    @Override
+    public void deleteProductImage(String imageUrl) {
+        try {
+            // Assuming imageUrl is in the format "/uploads/images/some-image.jpg"
+            String filePath = imageUrl.substring("/uploads/".length());
+            java.nio.file.Path file = this.rootLocation.resolve(filePath);
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete product image: " + imageUrl, e);
+        }
+    }
+
+    @Override
+    public String storeProductImage(MultipartFile file, String productName) {
+        return store(file, "images", productName);
+    }
+
 }

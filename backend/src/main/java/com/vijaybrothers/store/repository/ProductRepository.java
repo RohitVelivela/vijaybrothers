@@ -16,6 +16,7 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Integer> {
     Optional<Product> findBySlug(String slug);
     List<Product> findByNameContainingIgnoreCase(String name);
+    @EntityGraph(attributePaths = "images")
     List<Product> findByCategory_CategoryIdAndDeletedFalse(Integer categoryId);
     List<Product> findByCategory_CategoryId(Integer categoryId);
     List<Product> findByStockQuantityLessThanEqual(Integer stockQuantity);
@@ -34,7 +35,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.images WHERE p.productId = :productId AND p.deleted = false")
     Optional<Product> findByIdWithCategoryAndImages(@Param("productId") Integer productId);
 
-    @Query("SELECT p FROM Product p WHERE (:categoryId IS NULL OR p.category.categoryId = :categoryId) AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR p.productCode LIKE CONCAT('%', :query, '%')) AND p.deleted = false")
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.images WHERE (:categoryId IS NULL OR p.category.categoryId = :categoryId) AND LOWER(p.name) LIKE LOWER(:query) AND p.deleted = false")
     Page<Product> search(@Param("categoryId") Integer categoryId, @Param("query") String query, Pageable pageable);
 
     List<Product> findByInStock(boolean inStock);
@@ -43,6 +44,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
            "AND (:color IS NULL OR p.color = :color) " +
            "AND (:fabric IS NULL OR p.fabric = :fabric) " +
            "AND (:inStock IS NULL OR p.inStock = :inStock) AND p.deleted = false")
+    @EntityGraph(attributePaths = "images")
     List<Product> filterProducts(
         @Param("categoryId") Integer categoryId,
         @Param("color") String color,

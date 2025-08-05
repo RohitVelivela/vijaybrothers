@@ -1,147 +1,121 @@
 import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { ShoppingCart, Check, AlertCircle } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 interface ProductCardProps {
   id: number;
   title: string;
   price: string;
-  originalPrice?: string;
   image: string;
-  badge?: string;
-  badgeColor?: string;
-  category: string;
-  fabric: string;
-  color: string;
-  rating: number;
-  reviews: number;
   inStock: boolean;
+  className?: string;
+  category?: string;
+  fabric?: string;
+  color?: string;
   onClick?: () => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ 
-  id, 
-  title, 
-  price, 
-  originalPrice,
-  image, 
-  badge, 
-  badgeColor = 'bg-red-500',
+const ProductCard: React.FC<ProductCardProps> = ({
+  id,
+  title,
+  price,
+  image,
+  inStock,
+  className,
   category,
   fabric,
   color,
-  rating,
-  reviews,
-  inStock,
-  onClick
+  onClick,
 }) => {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { addToCart, loading } = useCart();
+  const [isAdding, setIsAdding] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const router = useRouter();
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Prevent click if clicking on action buttons
-    if ((e.target as HTMLElement).closest('.action-button')) {
-      return;
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!inStock || isAdding) return;
+    
+    try {
+      setIsAdding(true);
+      setError(null);
+      await addToCart(id, 1);
+      setIsAdded(true);
+      setTimeout(() => setIsAdded(false), 2000); // Reset after 2 seconds
+    } catch (error) {
+      console.error('Failed to add product to cart:', error);
+      setError('Failed to add to cart');
+      setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
+    } finally {
+      setIsAdding(false);
     }
-    router.push(`/product/${id}`);
   };
 
-  return (
-    <div 
-      className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col flex-grow"
-      onClick={handleCardClick}
-    >
-      <div className="relative aspect-[3/4] overflow-hidden">
-        {badge && (
-          <div className={`absolute top-3 left-3 ${badgeColor} text-white px-3 py-1 rounded-full text-xs font-semibold z-10`}>
-            {badge}
-          </div>
-        )}
-        
-        {!inStock && (
-          <div className="absolute top-3 right-3 bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
-            Out of Stock
-          </div>
-        )}
-        
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300" />
-        
-        {/* Action buttons */}
-        <div className="absolute top-3 right-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsWishlisted(!isWishlisted);
-            }}
-            className="action-button bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-all duration-300"
-          >
-            <Heart 
-              className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} 
-            />
-          </button>
-          <button 
-            onClick={(e) => e.stopPropagation()}
-            className="action-button bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-all duration-300"
-          >
-            <Eye className="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
+  const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
 
-        {/* Quick add to cart */}
-        <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button 
-            onClick={(e) => e.stopPropagation()}
-            className={`action-button w-full py-2 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 ${
-              inStock 
-                ? 'bg-red-600 hover:bg-red-700 text-white' 
-                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-            }`}
-            disabled={!inStock}
-          >
-            <ShoppingCart className="w-4 h-4" />
-            <span>{inStock ? 'Add to Cart' : 'Out of Stock'}</span>
-          </button>
-        </div>
-      </div>
-      
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded">
-            {category}
-          </span>
-          <div className="flex items-center space-x-1">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm text-gray-600">{rating}</span>
-            <span className="text-xs text-gray-400">({reviews})</span>
-          </div>
-        </div>
-        
-        <h3 className="text-gray-800 text-sm font-medium mb-2 line-clamp-2 group-hover:text-red-600 transition-colors">
-          {title}
-        </h3>
-        
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
-            <span className="text-lg font-bold text-gray-900">{price}</span>
-            {originalPrice && (
-              <span className="text-sm text-gray-500 line-through">{originalPrice}</span>
+  return (
+    <Link href={`/p/${slug}/${id}`} passHref legacyBehavior>
+      <a className={`group relative cursor-pointer border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow ${className}`}>
+        {/* Image Container */}
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2/3' }}>
+          <Image
+            src={image}
+            alt={title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            style={{ objectFit: "contain" }}
+          />
+          {/* "Add to Cart" Button Overlay */}
+          <div className="absolute inset-0 flex items-end justify-center pb-4">
+            {inStock && (
+              <button
+                onClick={handleAddToCart}
+                disabled={isAdding || loading}
+                className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 ${
+                  error
+                    ? 'bg-red-600 text-white'
+                    : isAdded 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-gray-800 text-white hover:bg-gray-700'
+                } ${(isAdding || loading) ? 'cursor-not-allowed opacity-50' : ''}`}
+              >
+                {isAdding ? (
+                  <>
+                    <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Adding...
+                  </>
+                ) : error ? (
+                  <>
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    Failed
+                  </>
+                ) : isAdded ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Added!
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Add to Cart
+                  </>
+                )}
+              </button>
             )}
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>Fabric: {fabric}</span>
-          <span>Color: {color}</span>
+        {/* Product Info */}
+        <div className="pt-3 text-left">
+          <h3 className="text-sm text-gray-800 line-clamp-2">{title}</h3>
+          <p className="mt-1 text-md font-semibold text-gray-900">₹{price}</p>
         </div>
-      </div>
-    </div>
+      </a>
+    </Link>
   );
 };
 

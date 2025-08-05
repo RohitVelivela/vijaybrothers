@@ -3,6 +3,9 @@ package com.vijaybrothers.store.dto;
 import com.vijaybrothers.store.model.Product;
 import java.math.BigDecimal;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public record ProductListItem(
         Integer productId,
         String  productCode,
@@ -12,7 +15,8 @@ public record ProductListItem(
         String  youtubeLink,
         String  categoryName,
         String  color,
-        String  fabric
+        String  fabric,
+        List<ProductImageDto> images
 ) {
     public static ProductListItem from(Product p) {
         return new ProductListItem(
@@ -24,7 +28,8 @@ public record ProductListItem(
             p.getYoutubeLink(),
             p.getCategory() != null ? p.getCategory().getName() : null,
             p.getColor(),
-            p.getFabric()
+            p.getFabric(),
+            p.getImages().stream().map(ProductImageDto::from).collect(Collectors.toList())
         );
     }
 }

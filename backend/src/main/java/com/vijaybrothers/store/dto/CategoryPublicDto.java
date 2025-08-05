@@ -13,17 +13,19 @@ public class CategoryPublicDto {
     private String name;
     private String slug;
     private String description;
+    private String categoryImage; // Added categoryImage field
     private Integer parentId;
     private String parentName;
     private List<String> displayTypes; // New field
     private List<CategoryPublicDto> subCategories = new ArrayList<>();
 
     // Constructor for mapping from Category entity
-    public CategoryPublicDto(Integer categoryId, String name, String slug, String description) {
+    public CategoryPublicDto(Integer categoryId, String name, String slug, String description, String categoryImage) {
         this.categoryId = categoryId;
         this.name = name;
         this.slug = slug;
         this.description = description;
+        this.categoryImage = categoryImage; // Initialize categoryImage
     }
 
     public static CategoryPublicDto fromEntity(com.vijaybrothers.store.model.Category category) {
@@ -31,7 +33,8 @@ public class CategoryPublicDto {
                 category.getCategoryId(),
                 category.getName(),
                 category.getSlug(),
-                category.getDescription()
+                category.getDescription(),
+                category.getCategoryImage() // Pass categoryImage to constructor
         );
         dto.setDisplayTypes(category.getDisplayTypes());
         if (category.getParentCategory() != null) {

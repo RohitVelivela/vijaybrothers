@@ -6,6 +6,8 @@ import com.vijaybrothers.store.service.OrderService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -22,27 +24,31 @@ public class PaymentController {
     }
 
    @PostMapping("/create")
-    public ResponseEntity<PlaceOrderResponse> createOrder(@RequestBody PaymentCreateRequest req) {
+    public ResponseEntity<Map<String, String>> createOrder(@RequestBody PaymentCreateRequest req) {
     try {
-        // Convert PaymentCreateRequest to OrderCreateRequest
-        OrderCreateRequest orderCreateRequest = new OrderCreateRequest(
-            1, // guestId: Placeholder, replace with actual guest ID logic
-            java.util.Collections.emptyList(), // items: Placeholder, replace with actual order items
-            "Dummy Name", // shippingName: Placeholder
-            "dummy@example.com", // shippingEmail: Placeholder
-            "1234567890", // shippingPhone: Placeholder
-            "Dummy Address", // shippingAddress: Placeholder
-            "Dummy City", // shippingCity: Placeholder
-            "12345", // shippingPostalCode: Placeholder
-            "Dummy State", // shippingState: Placeholder
-            req.getAmount().doubleValue()
-        );
-
-        PlaceOrderResponse response = orderService.placeOrder(orderCreateRequest);
+        System.out.println("Creating payment order with amount: " + req.getAmount());
+        
+        // Create Razorpay order directly
+        PaymentRequestDto paymentRequest = new PaymentRequestDto();
+        paymentRequest.setAmount(req.getAmount().longValue() * 100); // Convert to paise
+        paymentRequest.setReceipt(req.getReceipt());
+        
+        String razorpayOrderId = paymentService.createPaymentOrder(paymentRequest);
+        
+        System.out.println("Razorpay order created: " + razorpayOrderId);
+        
+        // Return the order ID for frontend
+        Map<String, String> response = new HashMap<>();
+        response.put("orderId", razorpayOrderId);
+        response.put("razorpayOrderId", razorpayOrderId);
+        response.put("currency", req.getCurrency());
+        response.put("amount", req.getAmount().toString());
+        
         return ResponseEntity.ok(response);
     } catch (Exception e) {
         e.printStackTrace();  // TEMP: Log error
-        return ResponseEntity.badRequest().body(null);
+        System.err.println("Error creating payment order: " + e.getMessage());
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }
 
@@ -55,5 +61,16 @@ public class PaymentController {
     @GetMapping("/key")
     public ResponseEntity<String> getKey() {
         return ResponseEntity.ok(razorpayKeyId);
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<PaymentVerifyResponse> verifyPayment(@RequestBody PaymentVerifyRequest request) {
+        try {
+            PaymentVerifyResponse response = paymentService.verifyAndSave(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace(); // TEMP: Log error
+            return ResponseEntity.badRequest().body(new PaymentVerifyResponse("Payment verification failed: " + e.getMessage(), null));
+        }
     }
 }

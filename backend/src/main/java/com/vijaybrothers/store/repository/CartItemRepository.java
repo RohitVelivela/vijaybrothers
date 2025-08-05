@@ -17,4 +17,12 @@ public interface CartItemRepository extends JpaRepository<CartItem, Integer> {
     @Transactional
     @Query("UPDATE CartItem c SET c.guestId = :guestId WHERE c.cart.cartId = :cartId")
     void assignGuestToCartItems(Integer cartId, Integer guestId);
+    
+    @Query("SELECT DISTINCT c.guestId FROM CartItem c WHERE c.cart.cartId = :cartId AND c.guestId IS NOT NULL")
+    Optional<Integer> findGuestIdByCartId(Integer cartId);
+    
+    @Modifying
+    @Transactional  
+    @Query("UPDATE CartItem c SET c.guestId = NULL WHERE c.cart.cartId = :cartId")
+    void clearGuestAssignments(Integer cartId);
 }

@@ -4,18 +4,20 @@ import { useRouter } from 'next/router';
 interface BanarasiCategoryCardProps {
   title: string;
   image: string;
+  slug: string; // Add slug prop
   className?: string;
 }
 
 const BanarasiCategoryCard: React.FC<BanarasiCategoryCardProps> = ({ 
   title, 
   image, 
+  slug, // Destructure slug
   className = '' 
 }) => {
   const router = useRouter();
 
   const handleCardClick = () => {
-    router.push(`/category/${encodeURIComponent(title)}`); 
+    router.push(`/category/${slug}`); // Use slug for navigation
   };
 
   return (
@@ -177,7 +179,7 @@ const BanarasiCategoryCard: React.FC<BanarasiCategoryCardProps> = ({
                 }}>
               {title}
             </h3>
-            
+
             {/* Decorative Divider */}
             <div className="flex items-center justify-center mb-6">
               <div className="w-8 h-px bg-gradient-to-r from-transparent to-amber-300"></div>
@@ -191,11 +193,11 @@ const BanarasiCategoryCard: React.FC<BanarasiCategoryCardProps> = ({
                       textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)'
                     }}>
               {/* Button glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-red-400/20 rounded-full opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500"></div>
-              
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 via-transparent to-red-400/20 rounded-full opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500"></div>
+
               {/* Button shimmer effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 rounded-full"></div>
-              
+
               <span className="relative z-10">View</span>
             </button>
           </div>
@@ -203,7 +205,7 @@ const BanarasiCategoryCard: React.FC<BanarasiCategoryCardProps> = ({
 
         {/* Royal Glow Effect on Hover */}
         <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 via-transparent to-red-400/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none"></div>
-        
+
         {/* Outer Glow */}
         <div className="absolute -inset-1 bg-gradient-to-br from-amber-400/20 to-red-400/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-700 blur-xl pointer-events-none"></div>
       </div>

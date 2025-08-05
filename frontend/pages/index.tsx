@@ -3,14 +3,12 @@ import { useState, useEffect } from 'react';
 import HeroBanner from '../components/HeroBanner'; // Adjust path as needed
 import CategoryGrid from '../components/CategoryGrid'; // Adjust path as needed
 import ProductGrid from '../components/ProductGrid'; // Adjust path as needed
-import { categories } from '../data/categories'; // Adjust path as needed
-import { allProducts } from '../data/products'; // Adjust path as needed
+import PromotionalSection from '../components/PromotionalSection';
 import { useAuth } from '../context/AuthContext'; // Adjust path as needed
 import { fetchCategoriesByDisplayType, Category, fetchProductsByCategoryId, Product } from '../lib/api'; // Import fetchCategoriesByDisplayType and Category interface
 
 const LandingPage = () => {
   const { isAuthenticated, logout } = useAuth();
-  const [filteredProducts, setFilteredProducts] = useState(allProducts.filter(p => !p.deleted));
   const [topCategories, setTopCategories] = useState<Category[]>([]);
   const [promotionalSections, setPromotionalSections] = useState<{
     category: Category;
@@ -35,6 +33,7 @@ const LandingPage = () => {
           return { category: cat, products };
         }));
         setPromotionalSections(sectionsData);
+        console.log('Promotional Sections Data:', JSON.stringify(sectionsData, null, 2));
       } catch (error) {
         console.error('Failed to fetch promotional sections:', error);
       }
@@ -44,29 +43,18 @@ const LandingPage = () => {
     loadPromotionalSections();
   }, []);
 
-  const handleShowDeletedChange = (showDeleted: boolean) => {
-    if (showDeleted) {
-      setFilteredProducts(allProducts);
-    } else {
-      setFilteredProducts(allProducts.filter(p => !p.deleted));
-    }
-  };
   return (
     <>
       <HeroBanner />
       <CategoryGrid categories={topCategories} title="Shop by Category" />
 
-      <div className="my-16">
-        <ProductGrid products={filteredProducts} />
-      </div>
-
       {promotionalSections.map((section) => (
-        <div key={section.category.categoryId} className="my-16">
-          <h2 className="text-3xl font-serif font-bold text-gray-800 text-center mb-8">
-            {section.category.name}
-          </h2>
-          <ProductGrid products={section.products} />
-        </div>
+        <PromotionalSection
+          key={section.category.categoryId}
+          title={section.category.name}
+          products={section.products}
+          categorySlug={section.category.slug || section.category.name.toLowerCase().replace(/\s+/g, '-')}
+        />
       ))}
       
     </>

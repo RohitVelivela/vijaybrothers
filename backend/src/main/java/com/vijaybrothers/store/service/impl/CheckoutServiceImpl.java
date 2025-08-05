@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,6 +34,9 @@ public class CheckoutServiceImpl implements CheckoutService {
 
     @Override
     public GuestCheckoutResponse createGuest(Integer cartId, GuestCheckoutRequest request) {
+        // Clear any existing guest assignments to avoid conflicts
+        cartItemRepo.clearGuestAssignments(cartId);
+        
         GuestCheckoutDetails entity = new GuestCheckoutDetails();
         entity.setName(request.name());
         entity.setEmail(request.email());
@@ -59,6 +63,9 @@ public class CheckoutServiceImpl implements CheckoutService {
         if (cart.lines().isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");
         }
+
+        // Clear any existing guest assignments to avoid conflicts
+        cartItemRepo.clearGuestAssignments(cartId);
 
         GuestCheckoutDetails guestDetails = new GuestCheckoutDetails();
         guestDetails.setName(req.name());
@@ -110,6 +117,197 @@ public class CheckoutServiceImpl implements CheckoutService {
         var entity = guestRepo.findById(guestId)
                 .orElseThrow(() -> new IllegalArgumentException("Guest not found: " + guestId));
         return GuestCheckoutResponse.fromEntity(entity);
+    }
+
+    @Override
+    @Transactional
+    public OrderCheckoutResponse createOrderFromGuest(Integer guestId, Integer cartId) {
+        if (guestId == null) {
+            throw new IllegalArgumentException("guestId is required");
+        }
+        if (cartId == null) {
+            throw new IllegalArgumentException("cartId is required");
+        }
+
+        // Get existing guest details
+        GuestCheckoutDetails guestDetails = guestRepo.findById(guestId)
+                .orElseThrow(() -> new IllegalArgumentException("Guest not found: " + guestId));
+
+        CartView cart = cartService.buildView(cartId);
+        if (cart.lines().isEmpty()) {
+            throw new IllegalArgumentException("Cart is empty");
+        }
+
+        String orderNumber = generateOrderNumber();
+        String fullAddress = String.format("%s, %s, %s %s", 
+                guestDetails.getAddress(), 
+                guestDetails.getCity(), 
+                guestDetails.getState(), 
+                guestDetails.getPostalCode());
+
+        Order order = Order.builder()
+                .orderNumber(orderNumber)
+                .guestCheckoutDetails(guestDetails)
+                .customerEmail(guestDetails.getEmail())
+                .shippingName(guestDetails.getName())
+                .shippingEmail(guestDetails.getEmail())
+                .shippingPhone(guestDetails.getPhone())
+                .shippingAddress(fullAddress)
+                .totalAmount(cart.grandTotal())
+                .paymentStatus(PaymentStatus.PENDING)
+                .orderStatus(OrderStatus.PENDING)
+                .createdAt(java.time.ZonedDateTime.now())
+                .build();
+
+        order = orderRepo.save(order);
+
+        for (var line : cart.lines()) {
+            OrderItem item = OrderItem.builder()
+                    .order(order)
+                    .product(productRepo.findById(line.productId())
+                            .orElseThrow(() -> new IllegalArgumentException("Product not found")))
+                    .quantity(line.quantity())
+                    .unitPrice(line.price())
+                    .build();
+            orderItemRepo.save(item);
+        }
+
+        PlaceOrderResponse orderResponse = paymentService.createPaymentSession(order.getOrderId(), cart.grandTotal());
+        return new OrderCheckoutResponse(order.getOrderId().intValue(), orderNumber, orderResponse.getOrderId().toString());
+    }
+
+    @Override
+    @Transactional
+    public OrderCheckoutResponse smartCheckout(Integer cartId, GuestCheckoutRequest request) {
+        if (cartId == null) {
+            throw new IllegalArgumentException("cartId is required");
+        }
+
+        CartView cart = cartService.buildView(cartId);
+        if (cart.lines().isEmpty()) {
+            throw new IllegalArgumentException("Cart is empty");
+        }
+
+        // Check if there are existing guest details for this cart
+        Optional<Integer> existingGuestId = cartItemRepo.findGuestIdByCartId(cartId);
+        
+        GuestCheckoutDetails guestDetails;
+        
+        if (existingGuestId.isPresent()) {
+            // Update existing guest details
+            guestDetails = guestRepo.findById(existingGuestId.get())
+                .orElseThrow(() -> new IllegalArgumentException("Guest not found: " + existingGuestId.get()));
+            
+            // Update with new information
+            guestDetails.setName(request.name());
+            guestDetails.setEmail(request.email());
+            guestDetails.setPhone(request.phone());
+            guestDetails.setAddress(request.address());
+            guestDetails.setCity(request.city());
+            guestDetails.setState(request.state());
+            guestDetails.setPostalCode(request.postalCode());
+            guestDetails = guestRepo.save(guestDetails);
+        } else {
+            // Create new guest details
+            guestDetails = new GuestCheckoutDetails();
+            guestDetails.setName(request.name());
+            guestDetails.setEmail(request.email());
+            guestDetails.setPhone(request.phone());
+            guestDetails.setAddress(request.address());
+            guestDetails.setCity(request.city());
+            guestDetails.setState(request.state());
+            guestDetails.setPostalCode(request.postalCode());
+            guestDetails.setCreatedAt(OffsetDateTime.now());
+            guestDetails = guestRepo.save(guestDetails);
+            
+            // Assign cart items to this guest
+            cartItemRepo.assignGuestToCartItems(cartId, guestDetails.getGuestId());
+        }
+
+        String orderNumber = generateOrderNumber();
+        String fullAddress = String.format("%s, %s, %s %s", 
+                guestDetails.getAddress(), 
+                guestDetails.getCity(), 
+                guestDetails.getState(), 
+                guestDetails.getPostalCode());
+
+        Order order = Order.builder()
+                .orderNumber(orderNumber)
+                .guestCheckoutDetails(guestDetails)
+                .customerEmail(guestDetails.getEmail())
+                .shippingName(guestDetails.getName())
+                .shippingEmail(guestDetails.getEmail())
+                .shippingPhone(guestDetails.getPhone())
+                .shippingAddress(fullAddress)
+                .totalAmount(cart.grandTotal())
+                .paymentStatus(PaymentStatus.PENDING)
+                .orderStatus(OrderStatus.PENDING)
+                .createdAt(java.time.ZonedDateTime.now())
+                .build();
+
+        order = orderRepo.save(order);
+
+        for (var line : cart.lines()) {
+            OrderItem item = OrderItem.builder()
+                    .order(order)
+                    .product(productRepo.findById(line.productId())
+                            .orElseThrow(() -> new IllegalArgumentException("Product not found")))
+                    .quantity(line.quantity())
+                    .unitPrice(line.price())
+                    .build();
+            orderItemRepo.save(item);
+        }
+
+        PlaceOrderResponse orderResponse = paymentService.createPaymentSession(order.getOrderId(), cart.grandTotal());
+        return new OrderCheckoutResponse(order.getOrderId().intValue(), orderNumber, orderResponse.getOrderId().toString());
+    }
+
+    @Override
+    @Transactional
+    public OrderCheckoutResponse simpleCheckout(Integer cartId, GuestCheckoutRequest request) {
+        if (cartId == null) {
+            throw new IllegalArgumentException("cartId is required");
+        }
+
+        CartView cart = cartService.buildView(cartId);
+        if (cart.lines().isEmpty()) {
+            throw new IllegalArgumentException("Cart is empty");
+        }
+
+        String orderNumber = generateOrderNumber();
+        String fullAddress = String.format("%s, %s, %s %s", 
+                request.address(), request.city(), request.state(), request.postalCode());
+
+        // Create order directly without guest details to avoid constraints
+        Order order = Order.builder()
+                .orderNumber(orderNumber)
+                .guestCheckoutDetails(null) // No guest details to avoid conflicts
+                .customerEmail(request.email())
+                .shippingName(request.name())
+                .shippingEmail(request.email())
+                .shippingPhone(request.phone())
+                .shippingAddress(fullAddress)
+                .totalAmount(cart.grandTotal())
+                .paymentStatus(PaymentStatus.PENDING)
+                .orderStatus(OrderStatus.PENDING)
+                .createdAt(java.time.ZonedDateTime.now())
+                .build();
+
+        order = orderRepo.save(order);
+
+        for (var line : cart.lines()) {
+            OrderItem item = OrderItem.builder()
+                    .order(order)
+                    .product(productRepo.findById(line.productId())
+                            .orElseThrow(() -> new IllegalArgumentException("Product not found")))
+                    .quantity(line.quantity())
+                    .unitPrice(line.price())
+                    .build();
+            orderItemRepo.save(item);
+        }
+
+        PlaceOrderResponse orderResponse = paymentService.createPaymentSession(order.getOrderId(), cart.grandTotal());
+        return new OrderCheckoutResponse(order.getOrderId().intValue(), orderNumber, orderResponse.getOrderId().toString());
     }
 
     private String generateOrderNumber() {

@@ -79,6 +79,7 @@ export default function ProductsPage() {
   const [newFabric, setNewFabric] = useState(''); // New state for fabric
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategoryId, setNewCategoryId] = useState<number | undefined>(undefined);
+  const [newDisplayTypes, setNewDisplayTypes] = useState<string[]>([]);
 
   const loadProducts = useCallback(async (page: number) => {
     setLoading(true);
@@ -103,7 +104,7 @@ export default function ProductsPage() {
       setTotalElements(data.totalElements);
     } catch (err) {
       
-      Swal.fire('Error!', 'Failed to load products.', 'error');
+      Swal.fire('Error!', (err as Error).message, 'error');
       setProducts([]);
       setTotalPages(0);
       setTotalElements(0);
@@ -113,8 +114,12 @@ export default function ProductsPage() {
   }, [productsPerPage, showDeleted, filterCategory, searchTerm, sortColumn, sortDirection, categories]);
 
   useEffect(() => {
+    loadProducts(1); // Reset to first page when the filter changes
+  }, [showDeleted, filterCategory, searchTerm, sortColumn, sortDirection]);
+
+  useEffect(() => {
     loadProducts(currentPage);
-  }, [currentPage, showDeleted, loadProducts]);
+  }, [currentPage, loadProducts]);
 
   const loadCategories = async () => {
     try {
@@ -138,7 +143,7 @@ export default function ProductsPage() {
   };
 
   const filteredProducts = useMemo(() => {
-    let filtered = products;
+    let filtered = showDeleted ? products.filter(p => p.deleted) : products.filter(p => !p.deleted);
 
     if (searchTerm) {
       filtered = filtered.filter(prod =>
@@ -147,7 +152,10 @@ export default function ProductsPage() {
     }
 
     if (filterCategory !== 'All') {
-      filtered = filtered.filter(prod => prod.category?.name === filterCategory);
+      const categoryId = categories.find(cat => cat.name === filterCategory)?.categoryId;
+      if (categoryId) {
+        filtered = filtered.filter(prod => prod.categoryId === categoryId);
+      }
     }
 
     return filtered.sort((a, b) => {
@@ -166,7 +174,7 @@ export default function ProductsPage() {
 
       return 0;
     });
-  }, [products, searchTerm, filterCategory, sortColumn, sortDirection]);
+  }, [products, searchTerm, filterCategory, sortColumn, sortDirection, showDeleted, categories]);
 
   const paginate = (pageNumber: number) => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
@@ -211,6 +219,7 @@ export default function ProductsPage() {
     setDeletedImageIds([]); // Clear deleted image IDs when opening for edit
     setNewColor(productToEdit.color || ''); // Populate newColor
     setNewFabric(productToEdit.fabric || ''); // Populate newFabric
+    setNewDisplayTypes(productToEdit.displayTypes || []);
     setIsModalOpen(true);
   };
 
@@ -283,7 +292,19 @@ export default function ProductsPage() {
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      Array.from(files).forEach(file => {
+      const currentImageCount = newImages.length;
+      const filesToUpload = Array.from(files);
+
+      if (currentImageCount + filesToUpload.length > 3) {
+        Swal.fire(
+          'Error!',
+          'You can upload a maximum of 3 images.',
+          'error'
+        );
+        return;
+      }
+
+      filesToUpload.forEach(file => {
         const img = new Image();
         img.onload = () => {
           if (img.width === 1500 && img.height === 2250) {
@@ -334,6 +355,7 @@ export default function ProductsPage() {
       formData.append('youtubeLink', newYoutubeLink);
       formData.append('color', newColor);
       formData.append('fabric', newFabric);
+      formData.append('displayTypes', JSON.stringify(newDisplayTypes));
 
       let mainImageIdToSend: number | undefined = undefined;
 
@@ -708,6 +730,33 @@ export default function ProductsPage() {
                     </div>
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Category Display Type</label>
+                    <div className="space-y-2">
+                      {[
+                          { value: 'Navigation Menu', label: 'Navigation Menu' },
+                          { value: 'Top Category', label: 'Top Category' },
+                          { value: 'Promotional Sections', label: 'Promotional Sections' }
+                      ].map(type => (
+                        <div key={type.value} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                id={`displayType-${type.value}`}
+                                value={type.value}
+                                checked={newDisplayTypes.includes(type.value)}
+                                onChange={(e) => {
+                                  const { value, checked } = e.target;
+                                  setNewDisplayTypes(prev =>
+                                    checked ? [...prev, value] : prev.filter(item => item !== value)
+                                  );
+                                }}
+                                className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded"
+                              />
+                              <label htmlFor={`displayType-${type.value}`} className="ml-2 text-sm text-gray-700">{type.label}</label>
+                            </div>
+                          ))}
+                        </div>
+                  </div>
+                  <div>
                     <label htmlFor="productCategory" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -716,8 +765,13 @@ export default function ProductsPage() {
                           <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-full">
-                        {categories.map(category => (
+                      <DropdownMenuContent className="w-full max-h-60 overflow-y-auto">
+                        {categories.filter(category => {
+                          if (newDisplayTypes.length === 0) {
+                            return true; // Show all categories if no display types are selected
+                          }
+                          return newDisplayTypes.some(type => category.displayTypes?.includes(type));
+                        }).map(category => (
                           <DropdownMenuItem key={category.categoryId} onClick={() => setNewCategoryId(category.categoryId)}>
                             {category.name}
                           </DropdownMenuItem>

@@ -6,6 +6,7 @@ import com.vijaybrothers.store.model.Product;
 import com.vijaybrothers.store.repository.CategoryRepository;
 import com.vijaybrothers.store.repository.ProductRepository;
 import com.vijaybrothers.store.service.AdminCategoryService;
+import com.vijaybrothers.store.service.StorageService; // Import StorageService
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +28,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
-
-    private final String UPLOAD_DIR = System.getProperty("user.home") + "/uploads/images/categories/";
+    private final StorageService storageService; // Inject StorageService
 
     @Override
     @Transactional
@@ -59,6 +59,15 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
         for (Product product : softDeletedProducts) {
             product.setCategory(null);
             productRepository.save(product);
+        }
+
+        // Get the category to delete to retrieve its image path
+        Category categoryToDelete = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+
+        // Delete the associated image file using StorageService
+        if (categoryToDelete.getCategoryImage() != null && !categoryToDelete.getCategoryImage().isEmpty()) {
+            storageService.deleteFile(categoryToDelete.getCategoryImage());
         }
 
         // Now that all associated products (which are all soft-deleted) are unlinked,
@@ -104,42 +113,25 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
             }
 
             if (image != null && !image.isEmpty()) {
-                String imageUrl = saveImage(image);
+                // New image provided, save it using StorageService
+                String imageUrl = storageService.store(image, "images/categories", req.getName());
                 cat.setCategoryImage(imageUrl);
-            } else if (cat.getCategoryImage() != null && (image == null || image.isEmpty())) {
-                // If no new image and categoryImage is explicitly set to null/empty in request, delete old image
-                deleteImage(cat.getCategoryImage());
+            } else if (req.getCategoryImage() != null && !req.getCategoryImage().isEmpty()) {
+                // No new image, but frontend sent an existing image URL, so keep it
+                cat.setCategoryImage(req.getCategoryImage());
+            } else {
+                // No new image, and no existing image URL sent from frontend, so clear it
+                // This covers cases where the image was explicitly removed in the UI
+                // or was never set.
+                if (cat.getCategoryImage() != null) { // Only delete if there was an old image
+                    storageService.deleteFile(cat.getCategoryImage());
+                }
                 cat.setCategoryImage(null);
             }
 
             categoryRepository.save(cat);
         } catch (IOException e) {
             throw new RuntimeException("Failed to save category image", e);
-        }
-    }
-
-    private String saveImage(MultipartFile image) throws IOException {
-        Path uploadPath = Paths.get(UPLOAD_DIR);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-        String fileName = UUID.randomUUID().toString() + "-" + image.getOriginalFilename();
-        Path filePath = uploadPath.resolve(fileName);
-        Files.copy(image.getInputStream(), filePath);
-        return "/uploads/images/categories/" + fileName; // Return relative path for URL
-    }
-
-    private void deleteImage(String imageUrl) {
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            // Extract filename from URL (e.g., /images/categories/uuid-filename.jpg)
-            String fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
-            Path filePath = Paths.get(UPLOAD_DIR + fileName);
-            try {
-                Files.deleteIfExists(filePath);
-            } catch (IOException e) {
-                // Log the error, but don't throw, as it shouldn't prevent category deletion
-                System.err.println("Failed to delete image file: " + filePath + ", Error: " + e.getMessage());
-            }
         }
     }
 }

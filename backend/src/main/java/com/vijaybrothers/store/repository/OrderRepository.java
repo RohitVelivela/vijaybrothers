@@ -12,7 +12,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Page<Order> findByOrderStatus(OrderStatus orderStatus, Pageable pageable);
 
-    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE FUNCTION('MONTH', o.createdAt) = FUNCTION('MONTH', CURRENT_DATE) AND FUNCTION('YEAR', o.createdAt) = FUNCTION('YEAR', CURRENT_DATE)")
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE EXTRACT(MONTH FROM o.createdAt) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM o.createdAt) = EXTRACT(YEAR FROM CURRENT_DATE)")
     java.util.Optional<Double> findTotalRevenueOfCurrentMonth();
     
     /**

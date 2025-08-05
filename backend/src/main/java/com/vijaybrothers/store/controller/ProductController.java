@@ -1,6 +1,8 @@
 package com.vijaybrothers.store.controller;
 
 import com.vijaybrothers.store.dto.ProductDto;
+import com.vijaybrothers.store.dto.ProductResponseDto;
+import com.vijaybrothers.store.dto.ProductDetailDto;
 import com.vijaybrothers.store.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
@@ -38,7 +40,9 @@ public class ProductController {
         @RequestParam(defaultValue="20") int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
-        return service.search(null, q, pageable);
+        // Add wildcards for partial matching
+        String searchQuery = "%" + q.trim() + "%";
+        return service.search(null, searchQuery, pageable);
     }
 
     /**
@@ -58,5 +62,10 @@ public class ProductController {
     @GetMapping("/low-stock")
     public List<ProductDto> lowStock() {
         return service.lowStock();
+    }
+
+    @GetMapping("/{id}")
+    public ProductDetailDto getProductById(@PathVariable Integer id) {
+        return service.getProductDetailById(id);
     }
 }

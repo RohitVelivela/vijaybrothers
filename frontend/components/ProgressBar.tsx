@@ -6,9 +6,9 @@ interface ProgressBarProps {
 
 const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep }) => {
   const steps = [
-    { id: 'cart', name: 'My Cart' },
-    { id: 'address', name: 'Delivery Address' },
-    { id: 'shipment', name: 'Shipment & Payment' },
+    { id: 'cart', name: 'Shopping Cart' },
+    { id: 'address', name: 'Address' },
+    { id: 'shipment', name: 'Shipping & Payment Options' },
     { id: 'complete', name: 'Complete' },
   ];
 
@@ -16,9 +16,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep }) => {
     const currentIndex = steps.findIndex(step => step.id === currentStep);
     const stepIndex = steps.findIndex(step => step.id === stepId);
 
-    if (stepIndex < currentIndex) {
-      return 'completed';
-    } else if (stepIndex === currentIndex) {
+    if (stepIndex === currentIndex) {
       return 'current';
     } else {
       return 'upcoming';
@@ -26,38 +24,46 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep }) => {
   };
 
   return (
-    <div className="flex justify-center items-center space-x-2 md:space-x-4 mb-8">
-      {steps.map((step, index) => (
-        <React.Fragment key={step.id}>
-          <div className="flex flex-col items-center">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
-                ${getStepStatus(step.id) === 'completed' ? 'bg-purple-600 text-white' : ''}
-                ${getStepStatus(step.id) === 'current' ? 'bg-purple-500 text-white ring-2 ring-purple-300' : ''}
-                ${getStepStatus(step.id) === 'upcoming' ? 'bg-gray-300 text-gray-600' : ''}
-              `}
-            >
-              {index + 1}
-            </div>
-            <span
-              className={`mt-2 text-center text-sm font-medium whitespace-nowrap
-                ${getStepStatus(step.id) === 'completed' ? 'text-purple-700' : ''}
-                ${getStepStatus(step.id) === 'current' ? 'text-purple-600' : ''}
-                ${getStepStatus(step.id) === 'upcoming' ? 'text-gray-500' : ''}
-              `}
-            >
-              {step.name}
-            </span>
-          </div>
-          {index < steps.length - 1 && (
-            <div
-              className={`flex-1 h-1 rounded-full
-                ${getStepStatus(steps[index + 1].id) === 'completed' || getStepStatus(steps[index + 1].id) === 'current' ? 'bg-purple-400' : 'bg-gray-300'}
-              `}
-            ></div>
-          )}
-        </React.Fragment>
-      ))}
+    <div className="w-full bg-white py-6 px-4 mb-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center justify-between relative">
+          {steps.map((step, index) => {
+            const status = getStepStatus(step.id);
+            return (
+              <div key={step.id} className="flex items-center flex-1 relative">
+                <div className="flex items-center">
+                  {/* Step Number Circle */}
+                  <div
+                    className={`
+                      w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm z-10 relative
+                      ${status === 'current' ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-500'}
+                    `}
+                  >
+                    {index + 1}
+                  </div>
+                  
+                  {/* Step Name */}
+                  <span
+                    className={`
+                      ml-3 text-sm font-medium whitespace-nowrap
+                      ${status === 'current' ? 'text-gray-900' : 'text-gray-500'}
+                    `}
+                  >
+                    {step.name}
+                  </span>
+                </div>
+
+                {/* Connecting Line */}
+                {index < steps.length - 1 && (
+                  <div className="flex-1 mx-3">
+                    <div className="h-0.5 w-full border-t-2 border-dotted border-gray-300" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };

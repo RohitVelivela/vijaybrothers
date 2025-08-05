@@ -69,7 +69,7 @@ public class ProductDto {
         dto.setPrice(product.getPrice());
         dto.setCategoryId(product.getCategory() != null ? product.getCategory().getCategoryId() : null);
         dto.setImages(product.getImages().stream()
-                .map(img -> new ProductImageDto(img.getId().intValue(), img.getImageUrl(), img.isMain()))
+                .map(img -> new ProductImageDto(img.getId(), img.getImageUrl(), img.isMain()))
                 .collect(Collectors.toList()));
         dto.setStockQuantity(product.getStockQuantity());
         dto.setInStock(product.getInStock());

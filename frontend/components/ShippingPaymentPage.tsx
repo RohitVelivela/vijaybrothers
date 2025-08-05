@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Truck, CreditCard, Headphones, Package } from 'lucide-react';
-import Header from './Header';
-import Footer from './Footer';
+import { useRouter } from 'next/router';
+import RazorpayPayment from './RazorpayPayment';
+import { useCart } from '../context/CartContext';
 
 interface ShippingPaymentPageProps {
   onBack: () => void;
@@ -12,10 +13,45 @@ const ShippingPaymentPage: React.FC<ShippingPaymentPageProps> = ({ onBack, onNex
   const [selectedShipping, setSelectedShipping] = useState('standard');
   const [selectedPayment, setSelectedPayment] = useState('online');
   const [currentStep, setCurrentStep] = useState(3);
+  const [showPayment, setShowPayment] = useState(false);
+  const router = useRouter();
+  const { cartView } = useCart();
+
+  // Get customer details from router query (passed from address page)
+  const customerDetails = {
+    name: (router.query.name as string) || 'Customer',
+    email: (router.query.email as string) || 'customer@email.com',
+    phone: (router.query.phone as string) || '9999999999'
+  };
+
+  // Get cart and guest IDs from router query
+  const cartId = router.query.cartId as string;
+  const guestId = router.query.guestId as string;
+
+  console.log('ShippingPaymentPage - Router query:', router.query);
+  console.log('ShippingPaymentPage - Customer details:', customerDetails);
+  console.log('ShippingPaymentPage - Cart ID:', cartId);
+  console.log('ShippingPaymentPage - Guest ID:', guestId);
+
+  // Check if we have the required data
+  if (!cartId && cartView?.cartId) {
+    console.log('Using cartId from cartView:', cartView.cartId);
+  }
+
+  // Check if user has proper address details
+  const hasAddressDetails = router.query.name && router.query.email && router.query.address;
+  console.log('Has address details:', hasAddressDetails);
+
+  React.useEffect(() => {
+    if (!hasAddressDetails) {
+      console.warn('No address details found. Redirecting to address page.');
+      router.push('/address');
+    }
+  }, [hasAddressDetails, router]);
 
   const steps = [
-    { number: 1, title: 'Shopping Cart', active: true },
-    { number: 2, title: 'Address', active: true },
+    { number: 1, title: 'Shopping Cart', active: false },
+    { number: 2, title: 'Address', active: false },
     { number: 3, title: 'Shipping & Payment Options', active: true },
     { number: 4, title: 'Complete', active: false }
   ];
@@ -47,23 +83,35 @@ const ShippingPaymentPage: React.FC<ShippingPaymentPageProps> = ({ onBack, onNex
       name: 'Online Payment',
       description: 'Pay securely using UPI, Cards, Net Banking',
       icon: CreditCard
-    },
-    {
-      id: 'cod',
-      name: 'Cash on Delivery',
-      description: 'Pay when you receive your order',
-      icon: Package
     }
   ];
 
-  const baseTotal = 1130;
+  const baseTotal = cartView?.subtotal || 0;
   const shippingCharge = shippingOptions.find(option => option.id === selectedShipping)?.price || 100;
   const finalTotal = baseTotal + shippingCharge;
 
+  const handlePaymentSuccess = (paymentData: any) => {
+    console.log('Payment successful:', paymentData);
+    // You can add order completion logic here
+    router.push('/order-success?payment_id=' + paymentData.razorpay_payment_id);
+  };
+
+  const handlePaymentFailure = (error: any) => {
+    console.error('Payment failed:', error);
+    setShowPayment(false);
+    // Show error message to user
+  };
+
+  const handleProceedToPay = () => {
+    console.log('Proceed to Pay clicked');
+    console.log('Current showPayment state:', showPayment);
+    console.log('Cart total:', finalTotal);
+    setShowPayment(true);
+    console.log('ShowPayment set to true');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
       {/* Breadcrumb */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-3">
@@ -88,10 +136,8 @@ const ShippingPaymentPage: React.FC<ShippingPaymentPageProps> = ({ onBack, onNex
               <div key={step.number} className="flex items-center">
                 <div className="flex items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                    step.number === currentStep
-                      ? 'bg-orange-500 text-white'
-                      : step.active
-                      ? 'bg-gray-400 text-white'
+                    step.active
+                      ? 'bg-purple-500 text-white'
                       : 'bg-gray-200 text-gray-500'
                   }`}>
                     {step.number}
@@ -103,9 +149,7 @@ const ShippingPaymentPage: React.FC<ShippingPaymentPageProps> = ({ onBack, onNex
                   </span>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`w-16 h-px mx-4 ${
-                    step.active ? 'bg-gray-300' : 'bg-gray-200'
-                  }`} />
+                  <div className="w-16 h-px mx-4 bg-gray-200" />
                 )}
               </div>
             ))}
@@ -129,7 +173,7 @@ const ShippingPaymentPage: React.FC<ShippingPaymentPageProps> = ({ onBack, onNex
               <div className="p-6">
                 <div className="space-y-4">
                   {shippingOptions.map((option) => (
-                    <label key={option.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-orange-300 transition-colors">
+                    <label key={option.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-300 transition-colors">
                       <div className="flex items-center space-x-3">
                         <input
                           type="radio"
@@ -137,7 +181,7 @@ const ShippingPaymentPage: React.FC<ShippingPaymentPageProps> = ({ onBack, onNex
                           value={option.id}
                           checked={selectedShipping === option.id}
                           onChange={(e) => setSelectedShipping(e.target.value)}
-                          className="w-4 h-4 text-orange-500 border-gray-300 focus:ring-orange-500"
+                          className="w-4 h-4 text-purple-500 border-gray-300 focus:ring-purple-500"
                         />
                         <div>
                           <div className="font-medium text-gray-800">{option.name}</div>
@@ -165,14 +209,14 @@ const ShippingPaymentPage: React.FC<ShippingPaymentPageProps> = ({ onBack, onNex
               <div className="p-6">
                 <div className="space-y-4">
                   {paymentOptions.map((option) => (
-                    <label key={option.id} className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-orange-300 transition-colors">
+                    <label key={option.id} className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-300 transition-colors">
                       <input
                         type="radio"
                         name="payment"
                         value={option.id}
                         checked={selectedPayment === option.id}
                         onChange={(e) => setSelectedPayment(e.target.value)}
-                        className="w-4 h-4 text-orange-500 border-gray-300 focus:ring-orange-500"
+                        className="w-4 h-4 text-purple-500 border-gray-300 focus:ring-purple-500"
                       />
                       <div className="ml-3 flex items-center space-x-3">
                         <option.icon className="w-5 h-5 text-gray-600" />
@@ -191,7 +235,7 @@ const ShippingPaymentPage: React.FC<ShippingPaymentPageProps> = ({ onBack, onNex
             <div>
               <button
                 onClick={onBack}
-                className="flex items-center space-x-2 text-orange-600 hover:text-orange-700 transition-colors"
+                className="flex items-center space-x-2 text-purple-600 hover:text-purple-700 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back</span>
@@ -223,63 +267,34 @@ const ShippingPaymentPage: React.FC<ShippingPaymentPageProps> = ({ onBack, onNex
                 </div>
               </div>
 
-              <button 
-                onClick={onNext}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-semibold transition-colors"
-              >
-                Next to Pay
-              </button>
+              {showPayment ? (
+                <RazorpayPayment
+                  amount={finalTotal}
+                  onSuccess={handlePaymentSuccess}
+                  onFailure={handlePaymentFailure}
+                  customerDetails={customerDetails}
+                  cartId={cartId || cartView?.cartId}
+                  guestId={guestId}
+                  otherDetails={{
+                    address: router.query.address as string || '',
+                    city: router.query.city as string || '',
+                    state: router.query.state as string || 'Andhra Pradesh',
+                    postalCode: router.query.postalCode as string || ''
+                  }}
+                />
+              ) : (
+                <button 
+                  onClick={handleProceedToPay}
+                  className="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold transition-colors"
+                >
+                  Proceed to Pay
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Features Section */}
-        <div className="mt-16 bg-white rounded-lg shadow-sm p-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Truck className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-800">Fast Delivery</h4>
-                <p className="text-sm text-gray-600">Delivery within 3-5 days</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-800">Quick Payment</h4>
-                <p className="text-sm text-gray-600">100% secure payment</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <Headphones className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-800">Customer Support</h4>
-                <p className="text-sm text-gray-600">Support with a quick response</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <Package className="w-6 h-6 text-orange-600" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-800">Material Quality</h4>
-                <p className="text-sm text-gray-600">Best quality is our motto</p>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
-
-      <Footer />
     </div>
   );
 };

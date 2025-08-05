@@ -67,6 +67,7 @@ public class AdminOrderService {
             order.getShippingEmail(),
             order.getShippingPhone(),
             order.getShippingAddress(),
+            "Razorpay", // Default payment method since all payments are via Razorpay
             order.getOrderItems().stream()
                 .map(this::toItemDto)
                 .collect(Collectors.toList())
@@ -178,6 +179,61 @@ public class AdminOrderService {
         }
         return orderRepo.findAll(pageable)
             .map(this::toListItem);
+    }
+
+    /**
+     * Updates only the order status for an existing order
+     * 
+     * @param orderId ID of the order to update
+     * @param status New order status
+     * @throws IllegalArgumentException if order not found or status invalid
+     */
+    @Transactional
+    public void updateOrderStatusOnly(Integer orderId, String status) {
+        // 1. Find and validate order exists
+        Order order = orderRepo.findById(orderId.longValue())
+            .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        // 2. Validate new status
+        try {
+            OrderStatus newOrderStatus = OrderStatus.valueOf(status.toUpperCase());
+            
+            // 3. Validate status transition
+            validateOrderStatusTransition(order.getOrderStatus(), newOrderStatus);
+
+            // 4. Update the order
+            order.setOrderStatus(newOrderStatus);
+            order.setUpdatedAt(Instant.now());
+
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid order status: " + status);
+        }
+
+        // 5. Save changes
+        orderRepo.save(order);
+    }
+
+    /**
+     * Validates if the order status transition is allowed
+     */
+    private void validateOrderStatusTransition(OrderStatus oldStatus, OrderStatus newStatus) {
+        // Cannot update a cancelled order
+        if (oldStatus == OrderStatus.CANCELLED) {
+            throw new IllegalArgumentException("Cannot update a cancelled order");
+        }
+
+        // Cannot move back from DELIVERED status
+        if (oldStatus == OrderStatus.DELIVERED 
+            && newStatus != OrderStatus.DELIVERED
+            && newStatus != OrderStatus.CANCELLED) {
+            throw new IllegalArgumentException("Cannot change status of delivered order");
+        }
+
+        // Cannot mark as delivered if not shipped
+        if (newStatus == OrderStatus.DELIVERED 
+            && oldStatus != OrderStatus.SHIPPED) {
+            throw new IllegalArgumentException("Order must be shipped before delivery");
+        }
     }
 
     /**

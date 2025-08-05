@@ -30,7 +30,7 @@ export default function CategoriesPage() {
   // ─── State ─────────────────────────────────────────────────────────────
   const [searchTerm, setSearchTerm]       = useState<string>('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [filterCategory, setFilterCategory] = useState('All');
+  const [filterDisplayType, setFilterDisplayType] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
   const [sortColumn, setSortColumn] = useState<keyof Category>('name');
 
@@ -86,8 +86,8 @@ export default function CategoriesPage() {
       );
     }
 
-    if (filterCategory !== 'All') {
-      filtered = filtered.filter(cat => cat.name === filterCategory);
+    if (filterDisplayType !== 'All') {
+      filtered = filtered.filter(cat => cat.displayTypes?.includes(filterDisplayType));
     }
 
     return filtered.sort((a, b) => {
@@ -106,7 +106,7 @@ export default function CategoriesPage() {
 
       return 0;
     });
-  }, [categories, searchTerm, filterCategory, sortColumn, sortDirection]);
+  }, [categories, searchTerm, filterDisplayType, sortColumn, sortDirection]);
 
   const totalPages = Math.ceil(filteredCategories.length / categoriesPerPage);
   const indexOfLastCategory = currentPage * categoriesPerPage;
@@ -249,6 +249,62 @@ export default function CategoriesPage() {
         return;
       }
 
+      // --- Validation: Limit Top Categories to 8 ---
+      const isTopCategory = newDisplayTypes.includes('Top Category');
+      if (isTopCategory) {
+        const currentTopCategories = categories.filter(cat =>
+          cat.displayTypes?.includes('Top Category')
+        );
+
+        // If adding a new category and the limit is reached
+        if (!editingCategory && currentTopCategories.length >= 8) {
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Limit Reached',
+            text: 'Only 8 categories can be marked as "Top Category". Please unselect "Top Category" or remove an existing one.',
+          });
+          return;
+        }
+
+        // If editing an existing category and it was not a top category, but now it is, and the limit is reached
+        if (editingCategory && !editingCategory.displayTypes?.includes('Top Category') && currentTopCategories.length >= 8) {
+            await Swal.fire({
+                icon: 'warning',
+                title: 'Limit Reached',
+                text: 'Only 8 categories can be marked as "Top Category". Please unselect "Top Category" or remove an existing one.',
+            });
+            return;
+        }
+      }
+
+      // --- Validation: Limit parent categories in Navigation Menu to 8 ---
+      const isParentAndNavigationMenu = !newParentId && newDisplayTypes.includes('Navigation Menu');
+      if (isParentAndNavigationMenu) {
+        const currentNavigationParentCategories = categories.filter(cat =>
+          !cat.parentId && cat.displayTypes?.includes('Navigation Menu')
+        );
+
+        // If we are adding a new category and the limit is reached
+        if (!editingCategory && currentNavigationParentCategories.length >= 8) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Limit Reached',
+            text: 'Only 8 parent categories can be displayed in the Navigation Menu. Please unselect "Navigation Menu" or remove an existing parent category from the navigation menu.',
+          });
+          return;
+        }
+
+        // If we are editing an existing category and it was not a navigation parent, but now it is, and the limit is reached
+        if (editingCategory && !editingCategory.displayTypes?.includes('Navigation Menu') && currentNavigationParentCategories.length >= 8) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Limit Reached',
+                text: 'Only 8 parent categories can be displayed in the Navigation Menu. Please unselect "Navigation Menu" or remove an existing parent category from the navigation menu.',
+            });
+            return;
+        }
+      }
+
       // --- Validation: Check for unique Position and Display Order for sub-categories ---
       if (newParentId) {
         const parentIdNum = parseInt(String(newParentId), 10);
@@ -376,16 +432,23 @@ export default function CategoriesPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full md:w-auto justify-between md:justify-start">
-                  Category: {filterCategory}
+                  Display Type: {filterDisplayType}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                {uniqueCategoryNames.map(name => (
-                  <DropdownMenuItem key={name} onClick={() => setFilterCategory(name)}>
-                    {name}
-                  </DropdownMenuItem>
-                ))}
+                <DropdownMenuItem onClick={() => setFilterDisplayType('All')}>
+                  All
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterDisplayType('Navigation Menu')}>
+                  Navigation Menu
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterDisplayType('Top Category')}>
+                  Top Category
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFilterDisplayType('Promotional Sections')}>
+                  Promotional Sections
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -561,43 +624,48 @@ export default function CategoriesPage() {
                   )}
                 </div>
               )}
-              <div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="isParentCategory"
-                    checked={isParentCategory}
-                    onChange={(e) => {
-                      const isChecked = e.target.checked;
-                      setIsParentCategory(isChecked);
-                      setNewIsActive(isChecked); // Set isActive based on checkbox state
-                      if (isChecked) {
-                        setNewParentId(undefined);
-                      }
-                    }}
-                    className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="isParentCategory" className="ml-2 block text-sm font-medium text-gray-700">Is Parent Category</label>
+              {/* Conditional rendering for "Is Parent Category" checkbox */}
+              {!newDisplayTypes.includes('Top Category') && !newDisplayTypes.includes('Promotional Sections') && (
+                <div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="isParentCategory"
+                      checked={isParentCategory}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        setIsParentCategory(isChecked);
+                        setNewIsActive(isChecked); // Set isActive based on checkbox state
+                        if (isChecked) {
+                          setNewParentId(undefined);
+                        }
+                      }}
+                      className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="isParentCategory" className="ml-2 block text-sm font-medium text-gray-700">Is Parent Category</label>
+                  </div>
                 </div>
-              </div>
-              {!isParentCategory && (
-              <div>
-                <label htmlFor="parentCategory" className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
-                <select
-                  id="parentCategory"
-                  value={newParentId === undefined ? '' : newParentId}
-                  onChange={(e) => setNewParentId(e.target.value === '' ? undefined : Number(e.target.value))}
-                  className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-800"
-                  disabled={isParentCategory}
-                >
-                  <option value="">-- Select Parent Category --</option>
-                  {categories.filter(cat => !cat.parentId && cat.categoryId !== editingCategory?.categoryId).map(cat => (
-                    <option key={cat.categoryId} value={cat.categoryId}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              )}
+
+              {/* Conditional rendering for "Parent Category" dropdown */}
+              {!isParentCategory && !newDisplayTypes.includes('Top Category') && !newDisplayTypes.includes('Promotional Sections') && (
+                <div>
+                  <label htmlFor="parentCategory" className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
+                  <select
+                    id="parentCategory"
+                    value={newParentId === undefined ? '' : newParentId}
+                    onChange={(e) => setNewParentId(e.target.value === '' ? undefined : Number(e.target.value))}
+                    className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-800"
+                    disabled={isParentCategory}
+                  >
+                    <option value="">-- Select Parent Category --</option>
+                    {categories.filter(cat => !cat.parentId && cat.categoryId !== editingCategory?.categoryId).map(cat => (
+                      <option key={cat.categoryId} value={cat.categoryId}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Display Type</label>
@@ -627,7 +695,7 @@ export default function CategoriesPage() {
                       <p><strong className="text-rose-600">Promotional Sections:</strong> For special campaigns like handpicked, deals, etc.</p>
                     </div>
                   </div>
-              {!isParentCategory && newDisplayTypes.includes('Navigation Menu') && (
+              {!isParentCategory && newDisplayTypes.includes('Navigation Menu') && !newDisplayTypes.includes('Promotional Sections') && (
                 <>
                   <div className="flex items-center space-x-2">
                     <input

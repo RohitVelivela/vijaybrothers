@@ -4,6 +4,7 @@ import com.vijaybrothers.store.dto.*;
 import com.vijaybrothers.store.model.Payment;
 import com.vijaybrothers.store.model.PaymentStatus;
 import com.vijaybrothers.store.model.Order;
+import com.vijaybrothers.store.model.OrderStatus;
 import com.vijaybrothers.store.repository.PaymentRepository;
 import com.vijaybrothers.store.repository.OrderRepository;
 import com.razorpay.RazorpayClient;
@@ -95,11 +96,19 @@ public class PaymentService {
             p.setOrder(order);
             p.setGateway("razorpay");
             p.setMethod(method);
-            p.setStatus("captured".equalsIgnoreCase(status) ? PaymentStatus.PAID : PaymentStatus.FAILED);
+            
+            PaymentStatus paymentStatus = "captured".equalsIgnoreCase(status) ? PaymentStatus.PAID : PaymentStatus.FAILED;
+            p.setStatus(paymentStatus);
             p.setTransactionId(req.getRazorpayPaymentId());
             p.setAmount(amount);
             p.setPaidAt(OffsetDateTime.ofInstant(Instant.ofEpochSecond(ts), ZoneOffset.UTC));
             paymentRepository.save(p);
+
+            // Update order status based on payment status
+            if (paymentStatus == PaymentStatus.PAID) {
+                order.setOrderStatus(OrderStatus.CONFIRMED);
+                orderRepository.save(order);
+            }
 
             return new PaymentVerifyResponse("Payment verified successfully", req.getRazorpayPaymentId());
         } catch (RazorpayException ex) {
@@ -148,11 +157,19 @@ public class PaymentService {
             p.setOrder(order);
             p.setGateway("razorpay");
             p.setMethod(method);
-            p.setStatus("captured".equalsIgnoreCase(status) ? PaymentStatus.PAID : PaymentStatus.FAILED);
+            
+            PaymentStatus paymentStatus = "captured".equalsIgnoreCase(status) ? PaymentStatus.PAID : PaymentStatus.FAILED;
+            p.setStatus(paymentStatus);
             p.setTransactionId(req.getRazorpayPaymentId());
             p.setAmount(amount);
             p.setPaidAt(OffsetDateTime.ofInstant(Instant.ofEpochSecond(ts), ZoneOffset.UTC));
             paymentRepository.save(p);
+
+            // Update order status based on payment status
+            if (paymentStatus == PaymentStatus.PAID) {
+                order.setOrderStatus(OrderStatus.CONFIRMED);
+                orderRepository.save(order);
+            }
 
             return req.getRazorpayPaymentId();
         } catch (RazorpayException ex) {

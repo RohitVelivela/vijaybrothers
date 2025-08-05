@@ -1,10 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import BanarasiCategoryCard from './BanarasiCategoryCard';
-import { Category } from '../data/categories';
-import ProductGrid from './ProductGrid';
-import { topHandpickedSarees, newArrivalSarees } from '../data/products';
-
+import { Category } from '../lib/api'; // Changed import path for Category
 
 interface CategoryGridProps {
   categories: Category[];
@@ -14,42 +11,7 @@ interface CategoryGridProps {
 
 const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll = false }) => {
   const displayCategories = showAll ? categories : categories.slice(0, 8);
-  const router = useRouter(); // Added this line
-
-  const ornateCategories = [
-    { 
-      title: "Banarasi Kora Saree", 
-      image: "/images/categories/banaris kora saree.jpg",
-    },
-    { 
-      title: "Soft Silk Sarees", 
-      image: "/images/categories/soft silk saree.webp",
-    },
-    { 
-      title: "Fancy Sarees", 
-      image: "/images/categories/fancy sareess.jpeg",
-    },
-    { 
-      title: "Tissue Silk Sarees", 
-      image: "/images/categories/tiissue silk sarees.jpeg",
-    },
-    { 
-      title: "Kuppadam Sico Sarees", 
-      image: "/images/categories/kuppadam sarees.jpeg",
-    },
-    { 
-      title: "Chiniya Silk Sarees", 
-      image: "/images/categories/chinaya silk sarees.jpeg",
-    },
-    { 
-      title: "Office Wear Sarees", 
-      image: "/images/categories/office wear sarees.jpeg",
-    },
-    { 
-      title: "Kalanjali Silk Sarees", 
-      image: "/images/categories/kalanajal slik saress.jpeg",
-    }
-  ];
+  const router = useRouter();
 
   return (
     <section className="py-20 bg-white relative overflow-hidden min-h-screen">
@@ -85,54 +47,26 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll 
           </p>
         </div>
 
-        {/* Banarasi Category Cards Grid */}
+        {/* Category Cards Grid */}
         <div className="grid grid-cols-4 gap-6 lg:gap-8">
-          {ornateCategories.map((category, index) => {
+          {displayCategories.map((category, index) => {
             let spanClass = '';
+            // Apply specific styling for the first category to make it larger
             if (index === 0) spanClass = 'col-span-2 row-span-2';
-            else if (index === 1) spanClass = 'col-span-1 row-span-1';
-            else if (index === 2) spanClass = 'col-span-1 row-span-1';
-            else if (index === 3) spanClass = 'col-span-1 row-span-1';
-            else if (index === 4) spanClass = 'col-span-1 row-span-1';
-            else if (index === 5) spanClass = 'col-span-1 row-span-1';
-            else if (index === 6) spanClass = 'col-span-1 row-span-1';
-            else if (index === 7) spanClass = 'col-span-2 row-span-1';
+            else if (index === 7) spanClass = 'col-span-2 row-span-1'; // Apply specific styling for the last category
+            else spanClass = 'col-span-1 row-span-1'; // Default for others
+
             return (
               <BanarasiCategoryCard
-                key={category.title}
-                title={category.title}
-                image={category.image}
+                key={category.categoryId}
+                title={category.name}
+                image={category.categoryImage ? `http://localhost:8080${category.categoryImage}` : '/images/placeholder.jpg'} // Use actual image or placeholder
+                slug={category.slug}
                 className={`h-full min-h-[250px] transform hover:scale-105 transition-all duration-500 ${spanClass}`}
               />
             );
           })}
         </div>
-
-        {/* Hand Picked Sarees */}
-        <div className="text-center mt-16">
-          <h3 className="font-cinzel text-2xl md:text-3xl font-bold text-gray-800 mb-4 tracking-wide">Hand Picked Sarees</h3>
-          <div className="text-center mt-4 mb-8">
-            <button onClick={() => router.push('/products/handpicked')} className="group relative bg-gradient-to-r from-red-600 to-amber-600 text-white px-4 py-2 rounded-full font-playfair font-bold text-sm hover:from-red-700 hover:to-amber-700 transition-all duration-500 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 overflow-hidden">
-              <span className="relative z-10">View All &gt;&gt;</span>
-            </button>
-          </div>
-          <ProductGrid products={topHandpickedSarees.slice(0, 3)} cardClassName="h-64" />
-        </div>
-
-        {/* Managalgiri Sarees */}
-        <div className="text-center mt-16">
-          <h3 className="font-cinzel text-2xl md:text-3xl font-bold text-gray-800 mb-4 tracking-wide">Managalgiri sarees</h3>
-          <div className="text-center mt-4 mb-8">
-            <button onClick={() => router.push('/products/managalgiri')} className="group relative bg-gradient-to-r from-red-600 to-amber-600 text-white px-4 py-2 rounded-full font-playfair font-bold text-sm hover:from-red-700 hover:to-amber-700 transition-all duration-500 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 overflow-hidden">
-              <span className="relative z-10">View All &gt;&gt;</span>
-            </button>
-          </div>
-          <ProductGrid products={newArrivalSarees.slice(0, 3)} cardClassName="h-64" />
-        </div>
-
-        
-
-        
       </div>
     </section>
   );

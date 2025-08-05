@@ -10,8 +10,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // serve files under ./uploads/** at URL /uploads/**
-        String uploadPath = Paths.get("uploads").toAbsolutePath().toUri().toString();
+        // serve files under /uploads/** at URL /uploads/** from the absolute path
+        String uploadPath = "file:///C:/Users/rohit/Documents/Personal/vijaybrothers/frontend/public/uploads/";
         registry
           .addResourceHandler("/uploads/**")
           .addResourceLocations(uploadPath);

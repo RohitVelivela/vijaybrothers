@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+import com.vijaybrothers.store.dto.ProductImageDto;
 
 @Service
 public class ProductQueryService {
@@ -77,7 +79,8 @@ public class ProductQueryService {
                 p.getYoutubeLink(),
                 p.getCategory() != null ? p.getCategory().getName() : null,
                 p.getColor(),
-                p.getFabric()
+                p.getFabric(),
+                p.getImages().stream().map(ProductImageDto::from).collect(Collectors.toList())
         );
     }
 }

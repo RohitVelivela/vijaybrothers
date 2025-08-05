@@ -23,4 +23,19 @@ public interface CheckoutService {
      * Create an order from guest checkout details.
      */
     OrderCheckoutResponse guestCheckout(Integer cartId, GuestCheckoutRequest req);
+    
+    /**
+     * Create an order using existing guest details.
+     */
+    OrderCheckoutResponse createOrderFromGuest(Integer guestId, Integer cartId);
+    
+    /**
+     * Smart checkout - use existing guest details if available, otherwise create new ones.
+     */
+    OrderCheckoutResponse smartCheckout(Integer cartId, GuestCheckoutRequest request);
+    
+    /**
+     * Simple checkout - create order directly without guest complexity.
+     */
+    OrderCheckoutResponse simpleCheckout(Integer cartId, GuestCheckoutRequest request);
 }

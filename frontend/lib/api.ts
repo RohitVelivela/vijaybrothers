@@ -172,6 +172,23 @@ export async function markMessageAsRead(id: number): Promise<ContactMessage> {
   return await res.json();
 }
 
+const processProductData = (product: Product): Product => {
+  const baseUrl = API_BASE_URL.replace('/api', '');
+  if (product.images) {
+    product.images = product.images.map(image => {
+      // Handle cases where imageUrl might be null or undefined
+      if (image && image.imageUrl) {
+        const newImageUrl = image.imageUrl.startsWith('http')
+          ? image.imageUrl
+          : `${baseUrl}${image.imageUrl}`;
+        return { ...image, imageUrl: newImageUrl };
+      }
+      return image; // Return the original image object if imageUrl is missing
+    });
+  }
+  return product;
+};
+
 export async function fetchProducts(page: number = 0, size: number = 10, categoryId?: number, q?: string, sort?: string, includeDeleted: boolean = false): Promise<Page<Product>> {
   const params = new URLSearchParams();
   params.append('page', page.toString());
@@ -196,22 +213,47 @@ export async function fetchProducts(page: number = 0, size: number = 10, categor
   
   console.log('fetchProducts: Raw response status:', res.status);
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
-    throw new Error(errorData.error || errorData.message || 'Failed to fetch products');
+    const errorText = await res.text();
+    throw new Error(`Failed to fetch products: ${res.status} ${res.statusText} - ${errorText}`);
   }
-  const data = await res.json();
+  const data: Page<Product> = await res.json();
   console.log('fetchProducts: Parsed JSON data:', data);
-  return data;
+  
+  const processedContent = data.content.map(processProductData);
+  
+  return { ...data, content: processedContent };
+}
+
+function processProductDetailData(data: any): Product {
+    return {
+        productId: data.productId,
+        productCode: data.productCode,
+        name: data.name,
+        slug: data.name.toLowerCase().replace(/\s+/g, '-'),
+        description: data.description,
+        price: data.price,
+        categoryId: data.categoryId,
+        images: data.imageUrls ? data.imageUrls.map((url: string, index: number) => ({
+            id: index,
+            imageUrl: url,
+            isMain: index === 0
+        })) : [],
+        stockQuantity: data.stockQuantity,
+        inStock: data.inStock,
+        youtubeLink: data.youtubeLink || '',
+        color: data.color,
+        fabric: data.fabric,
+        deleted: false
+    };
 }
 
 export async function fetchProductById(id: number): Promise<Product> {
-    const res = await fetch(`${API_BASE_URL}/admin/products/${id}`, {
-        headers: getAuthHeaders(),
-    });
+    const res = await fetch(`${API_BASE_URL}/products/${id}`);
     if (!res.ok) {
         throw new Error('Failed to fetch product');
     }
-    return await res.json();
+    const product = await res.json();
+    return processProductDetailData(product);
 }
 
 export async function fetchProductsByCategoryId(categoryId: number): Promise<Product[]> {
@@ -219,7 +261,48 @@ export async function fetchProductsByCategoryId(categoryId: number): Promise<Pro
   if (!res.ok) {
     throw new Error(`Failed to fetch products for category ${categoryId}`);
   }
-  return await res.json();
+  const products = await res.json();
+  return products.map(processProductData);
+}
+
+export async function searchProducts(query: string, categoryId?: number, page: number = 0, size: number = 20): Promise<Product[]> {
+  const params = new URLSearchParams();
+  params.append('q', query);
+  if (categoryId) {
+    params.append('categoryId', categoryId.toString());
+  }
+  params.append('page', page.toString());
+  params.append('size', size.toString());
+
+  const res = await fetch(`${API_BASE_URL}/products/search?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`Failed to search products: ${res.status} ${res.statusText}`);
+  }
+  const data = await res.json();
+  // Handle Page response from admin endpoint and convert to ProductListItem format
+  const products = data.content ? data.content : data;
+  
+  // Convert admin ProductDto to Product format expected by frontend
+  return products.map((product: any) => ({
+    productId: product.productId,
+    productCode: product.productCode,
+    name: product.name,
+    slug: product.name.toLowerCase().replace(/\s+/g, '-'),
+    description: product.description || '',
+    price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
+    categoryId: product.categoryId,
+    images: product.images || [],
+    stockQuantity: product.stockQuantity || 0,
+    inStock: product.inStock || false,
+    youtubeLink: product.youtubeLink || '',
+    color: product.color,
+    fabric: product.fabric,
+    deleted: product.deleted || false,
+    createdAt: product.createdAt || '',
+    createdBy: product.createdBy || '',
+    updatedAt: product.updatedAt || '',
+    updatedBy: product.updatedBy || ''
+  }));
 }
 
 export async function createProduct(productData: FormData): Promise<void> {
@@ -281,7 +364,7 @@ export async function fetchLowStockProducts(): Promise<Product[]> {
 export interface OrderListItem {
   orderId: number;
   orderNumber: string;
-  shippingName: string;
+  customerName: string;
   totalAmount: number;
   paymentStatus: string;
   orderStatus: string;
@@ -304,8 +387,8 @@ export interface OrderDetailDto {
     productId: number;
     productName: string;
     quantity: number;
-    price: number;
-    subtotal: number;
+    unitPrice: number;
+    subTotal: number;
   }>;
 }
 
@@ -416,7 +499,7 @@ export async function fetchOrderDetail(orderId: number): Promise<OrderDetailDto>
 }
 
 export async function updateOrderStatus(orderId: number, status: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
+  const res = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/order-status`, {
     method: 'PUT',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
@@ -425,4 +508,255 @@ export async function updateOrderStatus(orderId: number, status: string): Promis
     const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
     throw new Error(errorData.error || errorData.message || 'Failed to update order status');
   }
+}
+
+// Cart API Functions
+export interface CartItem {
+  cartItemId: number;
+  productId: number;
+  productCode: string;
+  name: string;
+  mainImageUrl: string;
+  price: number;
+  quantity: number;
+  lineTotal: number;
+}
+
+export interface CartView {
+  cartId: string;
+  lines: CartItem[];
+  subtotal: number;
+  grandTotal: number;
+}
+
+// Backend response types (for raw API responses)
+interface BackendCartLine {
+  cartItemId: number;
+  productId: number;
+  name: string;
+  mainImageUrl: string;
+  price: number | string; // Can be BigDecimal from backend
+  quantity: number;
+  lineTotal: number | string; // Can be BigDecimal from backend
+}
+
+interface BackendCartView {
+  cartId: string;
+  lines: BackendCartLine[];
+  subtotal: number | string; // Can be BigDecimal from backend
+  grandTotal: number | string; // Can be BigDecimal from backend
+}
+
+// Helper function to convert backend response to frontend types
+function convertBackendCartView(backendCart: BackendCartView): CartView {
+  return {
+    cartId: backendCart.cartId,
+    lines: backendCart.lines.map((line): CartItem => ({
+      cartItemId: line.cartItemId,
+      productId: line.productId,
+      name: line.name,
+      mainImageUrl: line.mainImageUrl,
+      price: typeof line.price === 'string' ? parseFloat(line.price) : line.price,
+      quantity: line.quantity,
+      lineTotal: typeof line.lineTotal === 'string' ? parseFloat(line.lineTotal) : line.lineTotal
+    })),
+    subtotal: typeof backendCart.subtotal === 'string' ? parseFloat(backendCart.subtotal) : backendCart.subtotal,
+    grandTotal: typeof backendCart.grandTotal === 'string' ? parseFloat(backendCart.grandTotal) : backendCart.grandTotal
+  };
+}
+
+export interface CartItemRequest {
+  productId: number;
+  quantity: number;
+}
+
+export interface CartUpdateRequest {
+  quantity: number;
+}
+
+function getCartHeaders(): Record<string, string> {
+  return {
+    'Content-Type': 'application/json'
+  };
+}
+
+export async function addToCart(request: CartItemRequest): Promise<CartView> {
+  const res = await fetch(`${API_BASE_URL}/cart/items`, {
+    method: 'POST',
+    headers: getCartHeaders(),
+    credentials: 'include', // Include cookies
+    body: JSON.stringify(request)
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to add item to cart');
+  }
+  const backendResponse: BackendCartView = await res.json();
+  return convertBackendCartView(backendResponse);
+}
+
+export async function getCart(): Promise<CartView> {
+  const res = await fetch(`${API_BASE_URL}/cart`, {
+    method: 'GET',
+    headers: getCartHeaders(),
+    credentials: 'include' // Include cookies
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch cart');
+  }
+  const backendResponse: BackendCartView = await res.json();
+  return convertBackendCartView(backendResponse);
+}
+
+export async function updateCartItemByProductId(productId: number, quantity: number): Promise<CartView> {
+  const res = await fetch(`${API_BASE_URL}/cart/items/by-product/${productId}`, {
+    method: 'PUT',
+    headers: getCartHeaders(),
+    credentials: 'include', // Include cookies
+    body: JSON.stringify({ quantity })
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to update cart item');
+  }
+  const backendResponse: BackendCartView = await res.json();
+  return convertBackendCartView(backendResponse);
+}
+
+export async function removeCartItemByProductId(productId: number): Promise<CartView> {
+  const res = await fetch(`${API_BASE_URL}/cart/items/by-product/${productId}`, {
+    method: 'DELETE',
+    headers: getCartHeaders(),
+    credentials: 'include' // Include cookies
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to remove cart item');
+  }
+  const backendResponse: BackendCartView = await res.json();
+  return convertBackendCartView(backendResponse);
+}
+
+export async function getCartItemByProductId(productId: number): Promise<CartItem | null> {
+  const res = await fetch(`${API_BASE_URL}/cart/items/by-product/${productId}`, {
+    method: 'GET',
+    headers: getCartHeaders(),
+    credentials: 'include' // Include cookies
+  });
+  if (!res.ok) {
+    return null;
+  }
+  return await res.json();
+}
+
+export async function getCartItemCount(): Promise<number> {
+  const res = await fetch(`${API_BASE_URL}/cart/count`, {
+    method: 'GET',
+    headers: getCartHeaders(),
+    credentials: 'include' // Include cookies
+  });
+  if (!res.ok) {
+    return 0;
+  }
+  const data = await res.json();
+  return data.count || 0;
+}
+
+// Order creation and management API Functions
+export interface OrderCreateRequest {
+  guestId: number;
+  items: OrderItemRequest[];
+  shippingName: string;
+  shippingEmail: string;
+  shippingPhone: string;
+  shippingAddress: string;
+  shippingCity: string;
+  shippingPostalCode: string;
+  shippingState: string;
+  totalAmount: number;
+}
+
+export interface OrderItemRequest {
+  productId: number;
+  quantity: number;
+  price: number;
+}
+
+export interface PlaceOrderResponse {
+  orderId: number;
+  orderNumber: string;
+  message: string;
+}
+
+export interface OrderSummaryDto {
+  orderId: number;
+  orderNumber: string;
+  totalAmount: number;
+  orderStatus: string;
+  paymentStatus: string;
+  createdAt: string;
+}
+
+export interface OrderTrackDto {
+  orderId: number;
+  orderNumber: string;
+  orderStatus: string;
+  paymentStatus: string;
+  createdAt: string;
+  shippingName: string;
+  shippingAddress: string;
+  totalAmount: number;
+  orderItems: Array<{
+    productId: number;
+    productName: string;
+    quantity: number;
+    price: number;
+  }>;
+}
+
+export async function placeOrder(request: OrderCreateRequest): Promise<PlaceOrderResponse> {
+  const res = await fetch(`${API_BASE_URL}/orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include', // Include cookies for session management
+    body: JSON.stringify(request)
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to place order');
+  }
+  return await res.json();
+}
+
+export async function getGuestOrders(guestId: number, page: number = 0, size: number = 10): Promise<Page<OrderSummaryDto>> {
+  const params = new URLSearchParams();
+  params.append('page', page.toString());
+  params.append('size', size.toString());
+
+  const res = await fetch(`${API_BASE_URL}/orders/guest/${guestId}?${params.toString()}`, {
+    method: 'GET',
+    headers: getCartHeaders(),
+    credentials: 'include'
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch guest orders');
+  }
+  return await res.json();
+}
+
+export async function trackOrder(orderId: number): Promise<OrderTrackDto> {
+  const res = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+    method: 'GET',
+    headers: getCartHeaders(),
+    credentials: 'include'
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to track order');
+  }
+  return await res.json();
 }

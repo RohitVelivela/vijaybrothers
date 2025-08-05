@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchUserProfile = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/admin/profile', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -74,6 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (response.ok) {
         const userData = await response.json();
         setUser({
+          id: userData.id,
           name: userData.userName,
           email: userData.email,
           profileImageUrl: userData.profileImageUrl, // Include profileImageUrl
@@ -102,7 +103,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const token = getCookie('token');
     if (token) {
       try {
-        await fetch('/api/admin/logout', {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

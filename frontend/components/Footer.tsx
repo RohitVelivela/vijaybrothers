@@ -1,7 +1,24 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { fetchPublicCategories, Category } from '../lib/api';
 
 const Footer: React.FC = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const fetchedCategories = await fetchPublicCategories();
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error('Failed to fetch public categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="container mx-auto px-4 py-10">
@@ -43,9 +60,9 @@ const Footer: React.FC = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-lg font-semibold mb-3">Quick Links</h4>
+            <h4 className="text-lg font-semibold mb-3">Useful Links</h4>
             <ul className="space-y-2">
-              {['About Us', 'Contact Us', 'Shipping Policy', 'Return Policy', 'Privacy Policy', 'Terms of Service'].map((link) => (
+              {['About Us', 'Contact Us'].map((link) => (
                 <li key={link}>
                   <a href={link === 'About Us' ? '/aboutus' : link === 'Contact Us' ? '/contactus' : '#'} className="text-gray-300 hover:text-orange-400 transition-colors text-base">
                     {link}
@@ -55,14 +72,21 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Categories */}
+          
+
           <div>
-            <h4 className="text-lg font-semibold mb-3">Categories</h4>
+            <h4 className="text-lg font-semibold mb-3">Our Policies</h4>
             <ul className="space-y-2">
-              {['Silk Sarees', 'Cotton Sarees', 'Designer Sarees', 'Bridal Sarees', 'Office Wear', 'Casual Sarees'].map((category) => (
-                <li key={category}>
-                  <a href="#" className="text-gray-300 hover:text-orange-400 transition-colors text-base">
-                    {category}
+              {[
+                { name: 'Privacy Policy', href: '#' },
+                { name: 'Terms and Conditions', href: '#' },
+                { name: 'Shipping Policy', href: '#' },
+                { name: 'Cancellation and Refund Policy', href: '#' },
+                { name: 'Disclaimer', href: '#' },
+              ].map((policy) => (
+                <li key={policy.name}>
+                  <a href={policy.href} className="text-gray-300 hover:text-orange-400 transition-colors text-base">
+                    {policy.name}
                   </a>
                 </li>
               ))}
@@ -94,14 +118,7 @@ const Footer: React.FC = () => {
             <p className="text-gray-400 text-base mb-4 md:mb-0">
               © 2025 Vijay Brothers. All rights reserved.
             </p>
-            <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-orange-400 text-base transition-colors">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-gray-400 hover:text-orange-400 text-base transition-colors">
-                Terms of Service
-              </a>
-            </div>
+            
           </div>
         </div>
       </div>

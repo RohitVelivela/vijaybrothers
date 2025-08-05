@@ -147,7 +147,7 @@ const Orders = () => {
   const filteredOrdersContent = useMemo(() => {
     if (!ordersPage.content) return [];
     return ordersPage.content.filter(order =>
-      (order.shippingName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (order.customerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       order.orderId.toString().includes(searchTerm.toLowerCase())
     );
   }, [ordersPage.content, searchTerm]);
@@ -252,7 +252,7 @@ const Orders = () => {
                     <TableRow key={order.orderId} className="hover:bg-gray-50">
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.orderId}</TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.orderNumber}</TableCell>
-                      <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.shippingName}</TableCell>
+                      <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customerName}</TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{order.totalAmount.toLocaleString()}</TableCell>
                       <TableCell className="px-6 py-4 whitespace-nowrap">

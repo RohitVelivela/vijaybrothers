@@ -1,6 +1,6 @@
 import React from 'react';
 import ProductCard from './ProductCard';
-import { Product } from '../data/products';
+import { Product } from '../lib/api';
 
 interface ProductGridProps {
   products: Product[];
@@ -20,21 +20,16 @@ const ProductGrid: React.FC<ProductGridProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-8">
         {products.map((product) => (
           <ProductCard
-            key={product.id}
-            id={product.id}
-            title={product.title}
-            price={product.price}
-            originalPrice={product.originalPrice}
-            image={product.image}
-            badge={product.badge}
-            badgeColor={product.badgeColor}
-            category={product.category}
-            fabric={product.fabric}
-            color={product.color}
-            rating={product.rating}
-            reviews={product.reviews}
+            key={product.productId}
+            id={product.productId}
+            title={product.name}
+            price={product.price.toString()}
+            image={product.images && product.images.length > 0 ? product.images[0].imageUrl : '/images/default-avatar.png'}
+            category={product.category?.name || ''}
+            fabric={product.fabric || ''}
+            color={product.color || ''}
             inStock={product.inStock}
-            onClick={() => onProductClick?.(product.id)}
+            onClick={() => onProductClick?.(product.productId)}
             className={cardClassName}
           />
         ))}

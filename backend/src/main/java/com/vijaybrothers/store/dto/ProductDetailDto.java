@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class ProductDetailDto {
     private Integer productId;
+    private String productCode;
     private String name;
     private String description;
     private BigDecimal price;
@@ -31,6 +32,7 @@ public class ProductDetailDto {
 
     // Getters
     public Integer getProductId() { return productId; }
+    public String getProductCode() { return productCode; }
     public String getName() { return name; }
     public String getDescription() { return description; }
     public BigDecimal getPrice() { return price; }
@@ -45,6 +47,7 @@ public class ProductDetailDto {
 
     // Setters
     public void setProductId(Integer productId) { this.productId = productId; }
+    public void setProductCode(String productCode) { this.productCode = productCode; }
     public void setName(String name) { this.name = name; }
     public void setDescription(String description) { this.description = description; }
     public void setPrice(BigDecimal price) { this.price = price; }
@@ -60,6 +63,7 @@ public class ProductDetailDto {
     public static ProductDetailDto fromEntity(Product product) {
         ProductDetailDto dto = new ProductDetailDto();
         dto.setProductId(product.getProductId());
+        dto.setProductCode(product.getProductCode());
         dto.setName(product.getName());
         dto.setDescription(product.getDescription());
         dto.setPrice(product.getPrice());
