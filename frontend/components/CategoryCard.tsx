@@ -26,9 +26,6 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ title, image, className = '
         </div>
         
         <div className="absolute bottom-6 left-6 right-6 text-center">
-          <h3 className="text-white text-xl font-bold mb-3 drop-shadow-lg">
-            {title}
-          </h3>
           <button className="bg-white bg-opacity-20 border border-white text-white px-6 py-2 rounded hover:bg-white hover:text-gray-800 transition-all duration-300 font-medium">
             View
           </button>
