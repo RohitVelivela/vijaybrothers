@@ -28,6 +28,15 @@ public class Banner {
 
     @Column(name = "description")
     private String description;
+    
+    @Column(name = "banner_type")
+    private String bannerType; // HERO or PROMOTIONAL
+    
+    @Column(name = "section_name")
+    private String sectionName; // For promotional banners - which section to display under
+    
+    @Column(name = "display_order")
+    private Integer displayOrder; // Order of display within the section
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -48,6 +57,12 @@ public class Banner {
     public void setLinkTo(String linkTo) { this.linkTo = linkTo; }
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+    public String getBannerType() { return bannerType; }
+    public void setBannerType(String bannerType) { this.bannerType = bannerType; }
+    public String getSectionName() { return sectionName; }
+    public void setSectionName(String sectionName) { this.sectionName = sectionName; }
+    public Integer getDisplayOrder() { return displayOrder; }
+    public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
     public BannerStatus getStatus() { return status; }
     public void setStatus(BannerStatus status) { this.status = status; }
     public Instant getCreatedAt() { return createdAt; }

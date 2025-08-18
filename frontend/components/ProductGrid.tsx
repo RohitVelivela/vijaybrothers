@@ -15,6 +15,17 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   onProductClick,
   cardClassName
 }) => {
+  // Helper function to check if a product is new (created within last 90 days)
+  const isProductNew = (product: Product): boolean => {
+    if (!product.createdAt) return false;
+    
+    const createdDate = new Date(product.createdAt);
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    
+    return createdDate > ninetyDaysAgo;
+  };
+
   return (
     <div className="relative px-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-8">
@@ -29,6 +40,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
             fabric={product.fabric || ''}
             color={product.color || ''}
             inStock={product.inStock}
+            isNew={isProductNew(product)}
             onClick={() => onProductClick?.(product.productId)}
             className={cardClassName}
           />

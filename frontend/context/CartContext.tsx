@@ -120,7 +120,18 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useCart = () => {
   const context = useContext(CartContext);
   if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
+    // Return a default empty cart context for admin routes or when provider is missing
+    return {
+      cartView: null,
+      cartItems: [],
+      cartCount: 0,
+      loading: false,
+      addToCart: async () => {},
+      removeFromCart: async () => {},
+      updateQuantity: async () => {},
+      refreshCart: async () => {},
+      getCartItemCount: () => 0,
+    } as CartContextType;
   }
   return context;
 };

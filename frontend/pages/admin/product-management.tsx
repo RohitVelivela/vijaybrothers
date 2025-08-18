@@ -219,7 +219,7 @@ export default function ProductsPage() {
     setDeletedImageIds([]); // Clear deleted image IDs when opening for edit
     setNewColor(productToEdit.color || ''); // Populate newColor
     setNewFabric(productToEdit.fabric || ''); // Populate newFabric
-    setNewDisplayTypes(productToEdit.displayTypes || []);
+    setNewDisplayTypes([]); // Reset display types when editing
     setIsModalOpen(true);
   };
 
@@ -292,32 +292,11 @@ export default function ProductsPage() {
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const currentImageCount = newImages.length;
       const filesToUpload = Array.from(files);
 
-      if (currentImageCount + filesToUpload.length > 3) {
-        Swal.fire(
-          'Error!',
-          'You can upload a maximum of 3 images.',
-          'error'
-        );
-        return;
-      }
-
+      // No restrictions - accept all images
       filesToUpload.forEach(file => {
-        const img = new Image();
-        img.onload = () => {
-          if (img.width === 1500 && img.height === 2250) {
-            setNewImages(prevImages => [...prevImages, file]);
-          } else {
-            Swal.fire(
-              'Error!',
-              `Image ${file.name} has dimensions ${img.width}x${img.height}. Required: 1500x2250.`, 
-              'error'
-            );
-          }
-        };
-        img.src = URL.createObjectURL(file);
+        setNewImages(prevImages => [...prevImages, file]);
       });
     }
   };
@@ -369,8 +348,8 @@ export default function ProductsPage() {
         }
       });
 
-      if (mainImageIdToSend !== undefined) {
-        formData.append('mainImageId', mainImageIdToSend.toString());
+      if (mainImageIdToSend !== undefined && mainImageIdToSend !== null) {
+        formData.append('mainImageId', String(mainImageIdToSend));
       }
 
       if (editingProduct) {
@@ -610,7 +589,7 @@ export default function ProductsPage() {
           </div>
 
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[85vh] overflow-y-auto mt-8">
                 <DialogHeader>
                   <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
                   <DialogDescription>

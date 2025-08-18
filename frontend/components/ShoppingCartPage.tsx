@@ -51,7 +51,7 @@ const ShoppingCartPage: React.FC = () => {
       setLoadingItems(prev => ({ ...prev, [productId]: true }));
       await removeFromCart(productId);
     } catch (error) {
-      console.error('Failed to remove item:', error);
+
       setLoadingItems(prev => ({ ...prev, [productId]: false }));
     }
   };

@@ -4,8 +4,9 @@ import HeroBanner from '../components/HeroBanner'; // Adjust path as needed
 import CategoryGrid from '../components/CategoryGrid'; // Adjust path as needed
 import ProductGrid from '../components/ProductGrid'; // Adjust path as needed
 import PromotionalSection from '../components/PromotionalSection';
+import PromotionalBanner from '../components/PromotionalBanner';
 import { useAuth } from '../context/AuthContext'; // Adjust path as needed
-import { fetchCategoriesByDisplayType, Category, fetchProductsByCategoryId, Product } from '../lib/api'; // Import fetchCategoriesByDisplayType and Category interface
+import { fetchCategoriesByDisplayType, Category, fetchProductsByCategoryId, Product, fetchPublicBanners, Banner } from '../lib/api'; // Import fetchCategoriesByDisplayType and Category interface
 
 const LandingPage = () => {
   const { isAuthenticated, logout } = useAuth();
@@ -14,6 +15,7 @@ const LandingPage = () => {
     category: Category;
     products: Product[];
   }[]>([]);
+  const [promotionalBanners, setPromotionalBanners] = useState<Banner[]>([]);
 
   useEffect(() => {
     const loadTopCategories = async () => {
@@ -39,8 +41,20 @@ const LandingPage = () => {
       }
     };
 
+    const loadPromotionalBanners = async () => {
+      try {
+        const allBanners = await fetchPublicBanners();
+        // Filter only promotional banners (we'll need to add bannerType to the API response)
+        const promoBanners = allBanners.filter((banner: any) => banner.bannerType === 'PROMOTIONAL');
+        setPromotionalBanners(promoBanners);
+      } catch (error) {
+        console.error('Failed to fetch promotional banners:', error);
+      }
+    };
+
     loadTopCategories();
     loadPromotionalSections();
+    loadPromotionalBanners();
   }, []);
 
   return (
@@ -48,14 +62,31 @@ const LandingPage = () => {
       <HeroBanner />
       <CategoryGrid categories={topCategories} title="Shop by Category" />
 
-      {promotionalSections.map((section) => (
-        <PromotionalSection
-          key={section.category.categoryId}
-          title={section.category.name}
-          products={section.products}
-          categorySlug={section.category.slug || section.category.name.toLowerCase().replace(/\s+/g, '-')}
-        />
-      ))}
+      {promotionalSections.map((section, index) => {
+        // Find promotional banners for this section
+        const sectionBanners = promotionalBanners.filter(
+          (banner: any) => banner.sectionName === section.category.name
+        ).sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+        return (
+          <div key={section.category.categoryId}>
+            <PromotionalSection
+              title={section.category.name}
+              products={section.products}
+              categorySlug={section.category.slug || section.category.name.toLowerCase().replace(/\s+/g, '-')}
+            />
+            
+            {/* Display promotional banners after this section */}
+            {sectionBanners.map((banner: any) => (
+              <PromotionalBanner
+                key={banner.id || banner.bannerId}
+                image={banner.image}
+                name={banner.name}
+              />
+            ))}
+          </div>
+        );
+      })}
       
     </>
   );

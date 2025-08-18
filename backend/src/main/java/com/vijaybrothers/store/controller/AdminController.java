@@ -98,6 +98,24 @@ public class AdminController {
         return ResponseEntity.ok(currentAdmin);
     }
 
+    @Operation(
+        summary = "Update current admin profile",
+        security = { @SecurityRequirement(name = "bearer-jwt") },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated"),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+        }
+    )
+    @PutMapping(value = "/profile", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<ProfileUpdateResponse> updateProfile(
+            @AuthenticationPrincipal Admin currentAdmin,
+            @ModelAttribute AdminProfileUpdateDTO request
+    ) {
+        ProfileUpdateResponse resp = adminService.updateProfile(currentAdmin, request);
+        return ResponseEntity.ok(resp);
+    }
+
     
     @Operation(
         summary = "Update admin user details by ID",

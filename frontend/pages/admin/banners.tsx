@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { fetchBanners, createBanner, updateBanner, deleteBanner, Banner } from '@/lib/api';
+import { fetchBanners, createBanner, updateBanner, deleteBanner, Banner, fetchCategoriesByDisplayType, Category } from '@/lib/api';
 import AdminHeader from '@/components/AdminHeader';
 import { Switch } from '@/components/ui/switch';
 
@@ -48,12 +48,16 @@ const BannersPage = () => {
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [bannerName, setBannerName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [linkTo, setLinkTo] = useState('');
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
   const [isActiveState, setIsActiveState] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+  const [bannerType, setBannerType] = useState<'HERO' | 'PROMOTIONAL'>('HERO');
+  const [sectionName, setSectionName] = useState('');
+  const [displayOrder, setDisplayOrder] = useState(1);
+  const [promotionalSections, setPromotionalSections] = useState<Category[]>([]);
 
   const handleMenuToggle = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -63,7 +67,11 @@ const BannersPage = () => {
     let data = banners;
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      data = data.filter(b => b.image.toLowerCase().includes(term) || b.linkTo.toLowerCase().includes(term));
+      data = data.filter(b => 
+        b.name.toLowerCase().includes(term) || 
+        b.image.toLowerCase().includes(term) ||
+        ((b as any).sectionName && (b as any).sectionName.toLowerCase().includes(term))
+      );
     }
     if (filterStatus !== 'ALL') {
       data = data.filter(b => b.status === filterStatus);
@@ -113,8 +121,19 @@ const BannersPage = () => {
     }
   };
 
+  const loadPromotionalSections = async () => {
+    try {
+      const sections = await fetchCategoriesByDisplayType('Promotional Sections');
+      setPromotionalSections(sections);
+    } catch (error) {
+      console.error('Failed to load promotional sections:', error);
+      toast.error("Failed to load promotional sections.");
+    }
+  };
+
   useEffect(() => {
     loadBanners();
+    loadPromotionalSections();
   }, []);
 
   const handleToggleStatus = async (id: number) => {
@@ -266,8 +285,10 @@ const BannersPage = () => {
             <Button variant="default" size="default" onClick={() => {
               setEditingBanner(null);
               setImageUrl('');
-              setLinkTo('');
               setStatus('ACTIVE');
+              setBannerType('HERO');
+              setSectionName('');
+              setDisplayOrder(1);
               setIsModalOpen(true);
             }}>
               <Plus className="h-5 w-5 mr-2" /> Add Banner
@@ -300,7 +321,8 @@ const BannersPage = () => {
                 <TableRow>
                   <TableHead className="w-[80px]">ID</TableHead>
                   <TableHead className="w-[200px]">Image</TableHead>
-                  <TableHead className="w-[400px]">Target Page</TableHead>
+                  <TableHead className="w-[150px]">Type</TableHead>
+                  <TableHead className="w-[200px]">Section</TableHead>
                   <TableHead className="w-[140px]">Status</TableHead>
                   <TableHead className="text-right w-[140px]">Actions</TableHead>
                 </TableRow>
@@ -310,7 +332,8 @@ const BannersPage = () => {
                   <TableRow key={b.id}>
                     <TableCell>{b.id}</TableCell>
                     <TableCell className="text-left"><img src={b.image} alt="Banner" className="w-48 h-20 object-cover rounded-md" /></TableCell>
-                    <TableCell className="truncate max-w-[320px]">{b.linkTo}</TableCell>
+                    <TableCell>{(b as any).bannerType || 'HERO'}</TableCell>
+                    <TableCell className="truncate max-w-[180px]">{(b as any).sectionName || 'N/A'}</TableCell>
                     <TableCell>
                       <Switch
                         checked={b.status === 'ACTIVE'}
@@ -324,9 +347,11 @@ const BannersPage = () => {
                           setEditingBanner(b);
                           setBannerName(b.name);
                           setImageUrl(b.image);
-                          setLinkTo(b.linkTo);
                           setStatus(b.status);
                           setIsActiveState(b.isActive);
+                          setBannerType((b as any).bannerType || 'HERO');
+                          setSectionName((b as any).sectionName || '');
+                          setDisplayOrder((b as any).displayOrder || 1);
                           setIsModalOpen(true);
                         }}>
                           <Edit className="h-4 w-4 text-blue-600" />
@@ -351,6 +376,84 @@ const BannersPage = () => {
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
+                {/* Banner Type Selection */}
+                <div>
+                  <Label htmlFor="bannerType" className="block text-sm font-medium text-gray-700 mb-1">Banner Type</Label>
+                  <Select value={bannerType} onValueChange={(value) => setBannerType(value as 'HERO' | 'PROMOTIONAL')}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select banner type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="HERO">Hero Banner (Main Homepage Banner)</SelectItem>
+                      <SelectItem value="PROMOTIONAL">Promotional Banner (Between Sections)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Conditional Section Selection for Promotional Banners */}
+                {bannerType === 'PROMOTIONAL' && (
+                  <>
+                    <div>
+                      <Label htmlFor="sectionName" className="block text-sm font-medium text-gray-700 mb-1">Display Under Section</Label>
+                      <Select value={sectionName} onValueChange={setSectionName}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select section to display banner under" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {promotionalSections.map((section) => (
+                            <SelectItem key={section.categoryId} value={section.name}>{section.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="displayOrder" className="block text-sm font-medium text-gray-700 mb-1">Display Order</Label>
+                      <Input 
+                        id="displayOrder" 
+                        type="number" 
+                        min="1" 
+                        value={displayOrder} 
+                        onChange={e => setDisplayOrder(parseInt(e.target.value))} 
+                        className="w-full px-4 py-1.5 border rounded-md"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Dimension Guidelines based on Banner Type */}
+                <div className={`border-l-4 p-4 mb-4 ${bannerType === 'HERO' ? 'bg-blue-50 border-blue-400' : 'bg-green-50 border-green-400'}`}>
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className={`h-5 w-5 ${bannerType === 'HERO' ? 'text-blue-400' : 'text-green-400'}`} viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className={`text-sm ${bannerType === 'HERO' ? 'text-blue-700' : 'text-green-700'}`}>
+                        <strong>Image Dimension Guidelines for {bannerType === 'HERO' ? 'Hero' : 'Promotional'} Banner</strong>
+                      </p>
+                      <ul className={`mt-2 text-sm ${bannerType === 'HERO' ? 'text-blue-700' : 'text-green-700'} list-disc list-inside`}>
+                        {bannerType === 'HERO' ? (
+                          <>
+                            <li><strong>Recommended Size:</strong> 1440px width × 450px height</li>
+                            <li><strong>Aspect Ratio:</strong> 3.2:1 (wide banner)</li>
+                            <li><strong>File Format:</strong> JPG or PNG</li>
+                            <li><strong>File Size:</strong> Keep under 500KB</li>
+                          </>
+                        ) : (
+                          <>
+                            <li><strong>Recommended Size:</strong> 600px width × 600px height</li>
+                            <li><strong>Aspect Ratio:</strong> 1:1 (square)</li>
+                            <li><strong>Alternative Size:</strong> 800px width × 400px height (2:1 ratio)</li>
+                            <li><strong>File Format:</strong> JPG or PNG</li>
+                            <li><strong>File Size:</strong> Keep under 300KB</li>
+                          </>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <Label htmlFor="bannerName" className="block text-sm font-medium text-gray-700 mb-1">Banner Name</Label>
                   <Input id="bannerName" value={bannerName} onChange={e => setBannerName(e.target.value)} placeholder="e.g., Summer Sale Banner" className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800" />
@@ -392,10 +495,6 @@ const BannersPage = () => {
                     <img src={imageUrl} alt="Banner Preview" className="w-full h-auto max-h-96 object-contain mx-auto rounded-md" />
                   </div>
                 )}
-                <div>
-                  <Label htmlFor="linkTo" className="block text-sm font-medium text-gray-700 mb-1">Target Page Link</Label>
-                  <Input id="linkTo" value={linkTo} onChange={e => setLinkTo(e.target.value)} placeholder="e.g., /collections/new-arrivals" className="w-full px-4 py-1.5 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 text-gray-800" />
-                </div>
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="isActiveState"

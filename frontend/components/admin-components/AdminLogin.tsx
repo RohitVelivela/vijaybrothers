@@ -38,9 +38,10 @@ const AdminLogin: React.FC = () => {
 
       if (response.status === 200 && response.data.token) {
         setSuccess(response.data.message || 'User login successfully!');
-        // Set the token in a cookie
-        document.cookie = `token=${response.data.token}; path=/; max-age=3600`; // Example: token valid for 1 hour
-        // localStorage.setItem('token', response.data.token); // Store the token in localStorage
+        // Store the token in localStorage for admin pages
+        localStorage.setItem('adminToken', response.data.token);
+        // Also set as cookie for backwards compatibility
+        document.cookie = `token=${response.data.token}; path=/; max-age=3600`;
         setTimeout(() => {
           setSuccess(null);
           router.push('/admin/dashboard');

@@ -22,6 +22,16 @@ interface RazorpayOptions {
   modal: {
     ondismiss: () => void;
   };
+  method?: {
+    upi?: boolean;
+    card?: boolean;
+    netbanking?: boolean;
+    wallet?: boolean;
+  };
+  notes?: {
+    merchant_order_id?: string;
+    merchant_name?: string;
+  };
 }
 
 interface RazorpayResponse {
@@ -64,62 +74,54 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
   guestId,
   otherDetails
 }) => {
-  console.log('RazorpayPayment component rendered');
-  console.log('Amount:', amount);
-  console.log('Customer details:', customerDetails);
-  console.log('Cart ID prop:', cartId);
-  console.log('Guest ID prop:', guestId);
-  console.log('Other details prop:', otherDetails);
-  
   // Check if we have actual customer details (not defaults)
   const hasRealCustomerDetails = customerDetails.name !== 'Customer' && 
                                 customerDetails.email !== 'customer@email.com';
-  console.log('Has real customer details:', hasRealCustomerDetails);
   
   const [isLoading, setIsLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'failed'>('idle');
   const [razorpayKey, setRazorpayKey] = useState<string>('');
+  const [paymentConfig, setPaymentConfig] = useState<any>(null);
+  const [isPaymentInProgress, setIsPaymentInProgress] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Fetch Razorpay key from backend
-    const fetchRazorpayKey = async () => {
+    // Fetch Razorpay configuration (key + UPI settings) from backend
+    const fetchPaymentConfig = async () => {
       try {
-        console.log('Fetching Razorpay key from backend...');
-        const response = await fetch('http://localhost:8080/api/payments/key');
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        // Try new config endpoint first
+        const configResponse = await fetch('/api/payments/config');
+        if (configResponse.ok) {
+          const config = await configResponse.json();
+          console.log('Payment config fetched:', config);
+          setRazorpayKey(config.razorpayKeyId);
+          setPaymentConfig(config);
+          return;
         }
         
-        const key = await response.text();
-        console.log('Razorpay key received:', key ? 'Key loaded successfully' : 'Key is empty');
-        setRazorpayKey(key);
+        // Fallback to old key endpoint
+        const keyResponse = await fetch('http://localhost:8080/api/payments/key');
+        if (keyResponse.ok) {
+          const key = await keyResponse.text();
+          setRazorpayKey(key);
+          setPaymentConfig({ razorpayKeyId: key, upiEnabled: false });
+        }
       } catch (error) {
-        console.error('Failed to fetch Razorpay key:', error);
+        console.error('Failed to fetch payment configuration:', error);
+        // Payment config fetch failed
       }
     };
 
-    fetchRazorpayKey();
+    fetchPaymentConfig();
   }, []);
 
   const createRazorpayOrder = async () => {
     try {
-      console.log('Creating order through guest checkout with amount:', amount);
-      console.log('Cart ID from props:', cartId);
-      console.log('Guest ID from props:', guestId);
-      console.log('Customer details:', customerDetails);
-      console.log('Other details:', otherDetails);
-      
       if (!cartId) {
         throw new Error('Cart ID not found');
       }
 
       let checkoutResponse;
-
-      // Always use smart checkout - it handles all scenarios correctly
-      console.log('Using smart checkout for all cases');
       
       // Use real customer details or prompt for them
       let finalCustomerDetails = customerDetails;
@@ -136,10 +138,8 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
         finalCustomerDetails = { name, email, phone };
       }
 
-      // Just create a payment order directly with Razorpay - bypass all checkout complexity
-      console.log('Bypassing checkout entirely, creating payment order directly');
-      
-      const paymentOrderResponse = await fetch('http://localhost:8080/api/payments/create', {
+      // Create SINGLE Razorpay payment order
+      const paymentResponse = await fetch('http://localhost:8080/api/payments/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,17 +147,15 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
         credentials: 'include',
         body: JSON.stringify({
           amount: amount,
-          currency: 'INR',
-          receipt: `PAYMENT_${Date.now()}`
+          currency: 'INR'
         })
       });
 
-      if (!paymentOrderResponse.ok) {
+      if (!paymentResponse.ok) {
         throw new Error('Failed to create payment order');
       }
 
-      const paymentOrderData = await paymentOrderResponse.json();
-      console.log('Payment order created:', paymentOrderData);
+      const paymentData = await paymentResponse.json();
       
       // Store customer details for later use (when payment succeeds)
       localStorage.setItem('pendingOrderCustomer', JSON.stringify({
@@ -168,69 +166,24 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
         cartId: cartId
       }));
       
-      // Return fake checkout response to proceed with payment
-      const fakeCheckoutData = {
-        orderId: paymentOrderData.orderId || Date.now(),
-        orderNumber: paymentOrderData.razorpayOrderId || `TEMP_${Date.now()}`,
-        razorpayOrderId: paymentOrderData.razorpayOrderId || paymentOrderData.orderId
-      };
-      
-      checkoutResponse = {
-        ok: true,
-        json: async () => fakeCheckoutData
-      };
-
-      console.log('Checkout response status:', checkoutResponse.status);
-      
-      if (!checkoutResponse.ok) {
-        let errorText = '';
-        try {
-          errorText = await checkoutResponse.text();
-        } catch (e) {
-          errorText = 'Unable to read error response';
-        }
-        console.error('Server error response:', errorText);
-        throw new Error(`Failed to create order: ${checkoutResponse.status} - ${errorText}`);
-      }
-
-      const checkoutData = await checkoutResponse.json();
-      console.log('Order created successfully:', checkoutData);
-
-      // Now create Razorpay payment order
-      const paymentResponse = await fetch('http://localhost:8080/api/payments/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          amount: amount,
-          currency: 'INR',
-          receipt: checkoutData.orderNumber
-        })
-      });
-
-      if (!paymentResponse.ok) {
-        throw new Error('Failed to create payment order');
-      }
-
-      const paymentData = await paymentResponse.json();
-      console.log('Payment order created:', paymentData);
-      
+      // Return the payment order data
       return {
-        ...checkoutData,
-        razorpayOrderId: paymentData.razorpayOrderId || paymentData.orderId
+        orderId: paymentData.orderId,
+        razorpayOrderId: paymentData.orderId
       };
     } catch (error) {
-      console.error('Error creating order:', error);
       throw error;
     }
   };
 
   const handlePayment = async () => {
-    console.log('handlePayment called');
-    console.log('Razorpay SDK loaded:', !!window.Razorpay);
-    console.log('Razorpay key:', razorpayKey);
+    // Prevent double-clicks
+    if (isPaymentInProgress) {
+      console.log('Payment already in progress, ignoring click');
+      return;
+    }
+    
+    console.log('=== FRONTEND PAYMENT DEBUG START ===');
     
     if (!window.Razorpay) {
       alert('Razorpay SDK failed to load. Please check your internet connection.');
@@ -242,23 +195,26 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
       return;
     }
 
+    console.log('Razorpay Key:', razorpayKey);
+    console.log('Amount:', amount);
+
     setIsLoading(true);
     setPaymentStatus('processing');
+    setIsPaymentInProgress(true);
 
     try {
       // Create order on backend
-      console.log('About to create Razorpay order...');
+      console.log('Creating Razorpay order...');
       const orderData = await createRazorpayOrder();
       console.log('Order data received:', orderData);
       
       const options: RazorpayOptions = {
         key: razorpayKey,
-        amount: amount * 100, // Amount in paise
-        currency: 'INR',
+        order_id: orderData.razorpayOrderId,
         name: 'Vijay Brothers',
         description: 'Purchase from Vijay Brothers Store',
-        order_id: orderData.razorpayOrderId,
         handler: async (response: RazorpayResponse) => {
+          console.log('Payment success response:', response);
           try {
             // Verify payment with backend
             const verificationResponse = await fetch('http://localhost:8080/api/payments/verify', {
@@ -297,25 +253,61 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
           ondismiss: () => {
             setIsLoading(false);
             setPaymentStatus('idle');
+            setIsPaymentInProgress(false);
           }
+        },
+        method: {
+          upi: true,
+          card: true,
+          netbanking: true,
+          wallet: true
+        },
+        notes: {
+          merchant_order_id: orderData.orderNumber || `ORDER_${Date.now()}`,
+          merchant_name: 'Vijay Brothers'
         }
       };
 
+      console.log('Razorpay options:', {
+        ...options,
+        key: razorpayKey.substring(0, 15) + '***' // Hide sensitive key in logs
+      });
+
       const razorpayInstance = new window.Razorpay(options);
+      console.log('Razorpay instance created successfully');
       
       razorpayInstance.on('payment.failed', (response: any) => {
+        console.error('❌ PAYMENT FAILED EVENT ❌');
+        console.error('Full error response:', response);
+        console.error('Error details:', response.error);
+        
+        // Handle UPI-specific errors
+        if (response.error && response.error.description) {
+          console.error('Error description:', response.error.description);
+          if (response.error.description.includes('UPI')) {
+            alert('UPI payment failed. Please check your UPI ID and try again, or use an alternative payment method.');
+          } else if (response.error.description.includes('invalid')) {
+            alert('Payment details are invalid. Please try again.');
+          } else if (response.error.description.includes('merchant')) {
+            alert('Merchant configuration issue. Please contact support.');
+          }
+        }
+        
         setPaymentStatus('failed');
         onFailure(response.error);
         setIsLoading(false);
+        setIsPaymentInProgress(false);
       });
 
+      console.log('Opening Razorpay payment dialog...');
       razorpayInstance.open();
       setIsLoading(false);
+      console.log('=== FRONTEND PAYMENT DEBUG END ===');
 
     } catch (error) {
-      console.error('Payment initialization failed:', error);
       setPaymentStatus('failed');
       setIsLoading(false);
+      setIsPaymentInProgress(false);
       onFailure(error);
     }
   };
@@ -359,9 +351,6 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
 
   return (
     <div className="w-full">
-      <div className="text-xs mb-2 text-gray-600">
-        Debug: Key Status: {razorpayKey ? '✅ Loaded' : '❌ Not Loaded'}
-      </div>
       <button
         onClick={handlePayment}
         disabled={isLoading || paymentStatus === 'success' || !razorpayKey}

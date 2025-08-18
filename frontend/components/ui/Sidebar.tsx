@@ -3,7 +3,7 @@ import Link from 'next/link';
 import ImageNext from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext'; // Import useAuth
-import { LayoutDashboard, Package, ShoppingCart, Settings, ChevronLeft, ChevronRight, ListFilter, Image as LucideImage, PanelLeft, PanelRight, Menu, ChevronsLeft } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Settings, ChevronLeft, ChevronRight, ListFilter, Image as LucideImage, PanelLeft, PanelRight, Menu, ChevronsLeft, Truck } from 'lucide-react';
 
 interface MenuItem {
   name: string;
@@ -27,6 +27,7 @@ const iconMap: { [key: string]: React.ReactNode } = {
   ChevronLeft: <ChevronLeft className="h-5 w-5 mr-3" />,
   ChevronRight: <ChevronRight className="h-5 w-5 mr-3" />,
   ImageSquare: <LucideImage className="h-5 w-5 mr-3" />, // banners icon replaced with Image
+  Truck: <Truck className="h-5 w-5 mr-3" />, // shipping icon
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, activeLink, toggleCollapse }) => {
@@ -37,6 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, activeLink, togg
     { name: 'Categories', icon: 'Package', link: '/admin/categories' },
     { name: 'Products', icon: 'ListFilter', link: '/admin/product-management' },
     { name: 'Orders', icon: 'ShoppingCart', link: '/admin/orders' },
+    { name: 'Shipping', icon: 'Truck', link: '/admin/shipping' },
     { name: 'Banners', icon: 'ImageSquare', link: '/admin/banners' },
   ];
 

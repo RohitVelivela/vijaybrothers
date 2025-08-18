@@ -18,7 +18,7 @@ const AdminHeader: React.FC = () => {
         const unread = await fetchContactMessages(true);
         setUnreadCount(unread.length);
       } catch (error) {
-        console.error(error);
+
       }
     };
     fetchUnread();
@@ -32,7 +32,7 @@ const AdminHeader: React.FC = () => {
       setMessages(allMessages);
       setShowPopup(true);
     } catch (error) {
-      console.error(error);
+
     }
   };
 
@@ -42,7 +42,7 @@ const AdminHeader: React.FC = () => {
       setMessages(prev => prev.map(msg => msg.id === id ? { ...msg, isRead: true } : msg));
       setUnreadCount(prev => prev - 1);
     } catch (error) {
-      console.error(error);
+
     }
   };
 

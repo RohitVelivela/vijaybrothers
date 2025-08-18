@@ -14,6 +14,7 @@ interface ProductCardProps {
   category?: string;
   fabric?: string;
   color?: string;
+  isNew?: boolean;
   onClick?: () => void;
 }
 
@@ -27,6 +28,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   category,
   fabric,
   color,
+  isNew,
   onClick,
 }) => {
   const { addToCart, loading } = useCart();
@@ -47,7 +49,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       setIsAdded(true);
       setTimeout(() => setIsAdded(false), 2000); // Reset after 2 seconds
     } catch (error) {
-      console.error('Failed to add product to cart:', error);
+
       setError('Failed to add to cart');
       setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
     } finally {
@@ -57,31 +59,57 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
 
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
-    <Link href={`/p/${slug}/${id}`} passHref legacyBehavior>
-      <a className={`group relative cursor-pointer border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow ${className}`}>
-        {/* Image Container */}
-        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '2/3' }}>
-          <Image
-            src={image}
-            alt={title}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            style={{ objectFit: "contain" }}
-          />
-          {/* "Add to Cart" Button Overlay */}
-          <div className="absolute inset-0 flex items-end justify-center pb-4">
-            {inStock && (
-              <button
-                onClick={handleAddToCart}
-                disabled={isAdding || loading}
-                className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 ${
-                  error
-                    ? 'bg-red-600 text-white'
-                    : isAdded 
-                    ? 'bg-green-600 text-white' 
-                    : 'bg-gray-800 text-white hover:bg-gray-700'
-                } ${(isAdding || loading) ? 'cursor-not-allowed opacity-50' : ''}`}
+    <div 
+      className={`relative border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow ${className}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Image Container - Clickable Link */}
+      <div className="relative w-full overflow-hidden rounded-md" style={{ aspectRatio: '2/3' }}>
+        <Link href={`/p/${slug}/${id}`} passHref legacyBehavior>
+          <a className="block absolute inset-0 z-0">
+            <Image
+              src={image}
+              alt={title}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              style={{ objectFit: "contain" }}
+            />
+          </a>
+        </Link>
+        
+        {/* New Badge */}
+        {isNew && (
+          <div className="absolute top-2 left-2 z-20">
+            <span className="bg-gradient-to-r from-purple-600 to-purple-700 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg transform hover:scale-105 transition-all duration-200">
+              NEW
+            </span>
+          </div>
+        )}
+        
+        {/* "Add to Cart" Button Overlay - Always visible when hovered */}
+        {inStock && (
+          <div 
+            className="absolute inset-0 flex items-end justify-center pb-4 z-10 pointer-events-none"
+            style={{
+              opacity: isHovered ? 1 : 0,
+              transform: isHovered ? 'translateY(0)' : 'translateY(10px)',
+              transition: 'all 0.3s ease-out'
+            }}
+          >
+            <button
+              onClick={handleAddToCart}
+              disabled={isAdding || loading}
+              className={`flex items-center justify-center px-6 py-3 text-sm font-semibold rounded-lg shadow-lg pointer-events-auto ${
+                error
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : isAdded 
+                  ? 'bg-green-600 text-white hover:bg-green-700' 
+                  : 'bg-orange-600 text-white hover:bg-orange-700'
+              } ${(isAdding || loading) ? 'cursor-not-allowed opacity-50' : ''}`}
               >
                 {isAdding ? (
                   <>
@@ -104,18 +132,19 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     Add to Cart
                   </>
                 )}
-              </button>
-            )}
+            </button>
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* Product Info */}
-        <div className="pt-3 text-left">
-          <h3 className="text-sm text-gray-800 line-clamp-2">{title}</h3>
-          <p className="mt-1 text-md font-semibold text-gray-900">₹{price}</p>
-        </div>
-      </a>
-    </Link>
+      {/* Product Info */}
+      <Link href={`/p/${slug}/${id}`} passHref legacyBehavior>
+        <a className="block pt-4 text-left">
+          <h3 className="text-base font-medium text-gray-800 line-clamp-2 mb-2 hover:text-gray-600 transition-colors">{title}</h3>
+          <p className="text-lg font-semibold text-gray-900">₹{price}</p>
+        </a>
+      </Link>
+    </div>
   );
 };
 

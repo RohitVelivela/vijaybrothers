@@ -220,7 +220,7 @@ const OrderDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminHeader adminEmail="admin@vijaybrothers.com" />
+      <AdminHeader />
       
       <Sidebar
         isOpen={isSidebarOpen}

@@ -9,7 +9,8 @@ import { Category, fetchCategoriesByDisplayType, searchProducts, Product } from 
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { getCartItemCount } = useCart();
+  const cart = useCart();
+  const getCartItemCount = cart?.getCartItemCount || (() => 0);
   const [categories, setCategories] = useState<Category[]>([]);
   const router = useRouter();
 
@@ -33,7 +34,7 @@ const Header: React.FC = () => {
         const parentCategories = fetchedCategories.filter(c => !c.parentId);
         setCategories(parentCategories);
       } catch (error) {
-        console.error('Failed to fetch public categories:', error);
+        // Failed to fetch categories
       }
     };
     loadCategories();
@@ -71,7 +72,6 @@ const Header: React.FC = () => {
           setSearchResults(results);
           setShowSearchResults(true);
         } catch (error) {
-          console.error('Search failed:', error);
           setSearchResults([]);
         } finally {
           setIsSearching(false);
@@ -247,17 +247,44 @@ const Header: React.FC = () => {
 
                   {hasSubcategories && isActive && (
                     <div
-                      className={`absolute left-0 mt-2 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 transition-all duration-300 ease-in-out transform min-w-max ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-                      <div className="p-2">
-                        {category.subCategories.map((subCategory) => (
-                          <Link
-                            key={subCategory.categoryId}
-                            href={`/category/${subCategory.slug}`}
-                            className="block w-full text-left px-4 py-2 text-base text-gray-800 rounded-md hover:bg-rose-50 hover:text-rose-700 transition-all duration-200 ease-in-out hover:pl-5"
-                          >
-                            {subCategory.name}
-                          </Link>
-                        ))}
+                      className={`absolute left-0 mt-2 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 transition-all duration-300 ease-in-out transform ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+                      <div className="p-4">
+                        {(() => {
+                          const subCategories = category.subCategories || [];
+                          const itemsPerColumn = 5;
+                          const numColumns = Math.ceil(subCategories.length / itemsPerColumn);
+                          
+                          // Determine grid columns class based on number of columns
+                          const getGridClass = () => {
+                            if (numColumns === 1) return 'grid-cols-1';
+                            if (numColumns === 2) return 'grid-cols-2';
+                            if (numColumns === 3) return 'grid-cols-3';
+                            return 'grid-cols-4'; // Maximum 4 columns
+                          };
+                          
+                          return (
+                            <div className={`grid ${getGridClass()} gap-6 min-w-max`}>
+                              {Array.from({ length: Math.min(numColumns, 4) }, (_, columnIndex) => {
+                                const startIndex = columnIndex * itemsPerColumn;
+                                const columnItems = subCategories.slice(startIndex, startIndex + itemsPerColumn);
+                                
+                                return (
+                                  <div key={columnIndex} className="flex flex-col space-y-1 min-w-[180px]">
+                                    {columnItems.map((subCategory) => (
+                                      <Link
+                                        key={subCategory.categoryId}
+                                        href={`/category/${subCategory.slug}`}
+                                        className="block w-full text-left px-3 py-2 text-base text-gray-800 rounded-md hover:bg-rose-50 hover:text-rose-700 transition-all duration-200 ease-in-out hover:pl-4 whitespace-nowrap"
+                                      >
+                                        {subCategory.name}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}

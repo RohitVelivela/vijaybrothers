@@ -13,4 +13,5 @@ public class ProfileUpdateResponse {
     private String token;
     private String message;
     private String user_image;
+    private String profileImageUrl;
 }

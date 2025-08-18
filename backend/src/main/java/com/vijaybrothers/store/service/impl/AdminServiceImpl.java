@@ -152,17 +152,104 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
+    public ProfileUpdateResponse updateProfile(Admin currentAdmin, AdminProfileUpdateDTO request) {
+        try {
+            // Update username if provided
+            if (request.getUserName() != null && !request.getUserName().isEmpty()) {
+                // Check if new username is already taken by another admin
+                if (!request.getUserName().equals(currentAdmin.getUserName()) && 
+                    adminRepository.existsByUserName(request.getUserName())) {
+                    return ProfileUpdateResponse.builder().message("Username already taken").build();
+                }
+                currentAdmin.setUserName(request.getUserName());
+            }
+
+            // Update email if provided
+            if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+                // Check if new email is already registered by another admin
+                if (!request.getEmail().equals(currentAdmin.getEmail()) && 
+                    adminRepository.existsByEmail(request.getEmail())) {
+                    return ProfileUpdateResponse.builder().message("Email already registered").build();
+                }
+                currentAdmin.setEmail(request.getEmail());
+            }
+
+            // Handle profile image
+            if (request.isRemoveProfileImage()) {
+                // Remove existing profile image
+                if (currentAdmin.getProfileImageUrl() != null) {
+                    try {
+                        storageService.deleteFile(currentAdmin.getProfileImageUrl());
+                    } catch (Exception e) {
+                        // Log but don't fail the update if image deletion fails
+                        System.err.println("Failed to delete old profile image: " + e.getMessage());
+                    }
+                }
+                currentAdmin.setProfileImageUrl(null);
+            } else if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
+                // Delete old image if exists
+                if (currentAdmin.getProfileImageUrl() != null) {
+                    try {
+                        storageService.deleteFile(currentAdmin.getProfileImageUrl());
+                    } catch (Exception e) {
+                        System.err.println("Failed to delete old profile image: " + e.getMessage());
+                    }
+                }
+                // Store new image
+                String imageUrl = storageService.store(request.getProfileImage(), "profile_images", currentAdmin.getUserName());
+                currentAdmin.setProfileImageUrl(imageUrl);
+            }
+
+            // Handle password change
+            if (request.getOldPassword() != null && !request.getOldPassword().isEmpty() &&
+                request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
+                if (!passwordEncoder.matches(request.getOldPassword(), currentAdmin.getPassword())) {
+                    return ProfileUpdateResponse.builder().message("Invalid old password").build();
+                }
+                currentAdmin.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            }
+
+            currentAdmin.setUpdatedAt(Instant.now());
+            adminRepository.save(currentAdmin);
+
+            // Generate new JWT token to reflect any changes
+            String newToken = jwtService.generateToken(currentAdmin);
+
+            return ProfileUpdateResponse.builder()
+                .token(newToken)
+                .message("Profile updated successfully")
+                .profileImageUrl(currentAdmin.getProfileImageUrl())
+                .build();
+
+        } catch (Exception e) {
+            System.err.println("Error updating admin profile: " + e.getMessage());
+            e.printStackTrace();
+            return ProfileUpdateResponse.builder().message("An unexpected error occurred during profile update.").build();
+        }
+    }
+
+    @Override
+    @Transactional
     public void forgotPassword(String email, String resetLinkBase) {
         Admin admin = adminRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Admin with this email not found."));
 
-        // Invalidate any existing tokens for this admin
-        passwordResetTokenRepository.deleteByAdmin_AdminId(admin.getAdminId());
-
+        // Check if a token already exists for this admin
+        Optional<PasswordResetToken> existingToken = passwordResetTokenRepository.findByAdmin(admin);
+        
         String token = UUID.randomUUID().toString();
         Instant expiryDate = Instant.now().plus(1, ChronoUnit.HOURS); // Token valid for 1 hour
 
-        PasswordResetToken resetToken = new PasswordResetToken(token, admin, expiryDate);
+        PasswordResetToken resetToken;
+        if (existingToken.isPresent()) {
+            // Update existing token
+            resetToken = existingToken.get();
+            resetToken.setToken(token);
+            resetToken.setExpiryDate(expiryDate);
+        } else {
+            // Create new token
+            resetToken = new PasswordResetToken(token, admin, expiryDate);
+        }
         passwordResetTokenRepository.save(resetToken);
 
         String resetLink = resetLinkBase + "?token=" + token;

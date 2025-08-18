@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
         const fetchedCategories = await fetchPublicCategories();
         setCategories(fetchedCategories);
       } catch (error) {
-        console.error('Failed to fetch public categories:', error);
+
       }
     };
     loadCategories();
@@ -78,10 +78,10 @@ const Footer: React.FC = () => {
             <h4 className="text-lg font-semibold mb-3">Our Policies</h4>
             <ul className="space-y-2">
               {[
-                { name: 'Privacy Policy', href: '#' },
-                { name: 'Terms and Conditions', href: '#' },
-                { name: 'Shipping Policy', href: '#' },
-                { name: 'Cancellation and Refund Policy', href: '#' },
+                { name: 'Privacy Policy', href: '/privacy-policy' },
+                { name: 'Terms and Conditions', href: '/terms-and-conditions' },
+                { name: 'Shipping Policy', href: '/shipping-policy' },
+                { name: 'Cancellation and Refund Policy', href: '/cancellation-refund-policy' },
                 { name: 'Disclaimer', href: '#' },
               ].map((policy) => (
                 <li key={policy.name}>

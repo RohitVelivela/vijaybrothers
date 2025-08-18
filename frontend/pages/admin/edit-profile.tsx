@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import { useToast } from '../../components/ui/use-toast';
+import { toast } from 'sonner';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Label } from '../../components/ui/label';
@@ -10,62 +10,48 @@ import { Camera, User, Mail, Lock, Eye, EyeOff, ArrowLeft, Edit3 } from 'lucide-
 import { useAuth, getCookie } from '@/context/AuthContext';
 import imageCompression from 'browser-image-compression';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 
 // Define the type first, based on the expected shape
 interface EditProfileFormInputs {
   username: string;
+  email: string;
   oldPassword?: string;
   newPassword?: string;
   confirmPassword?: string;
 }
 
-// Define the Zod schema for profile editing
-const editProfileSchema: z.ZodSchema<EditProfileFormInputs> = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters').max(50, 'Username must be at most 50 characters'),
-  oldPassword: z.string().optional(),
-  newPassword: z.string().optional(),
-  confirmPassword: z.string().optional(),
-}).refine((data: EditProfileFormInputs) => {
-  if (data.newPassword || data.oldPassword || data.confirmPassword) {
+// Simple validation function
+const validateForm = (data: EditProfileFormInputs, showPasswordForm: boolean) => {
+  const errors: Partial<Record<keyof EditProfileFormInputs, string>> = {};
+  
+  if (!data.username || data.username.length < 3) {
+    errors.username = 'Username must be at least 3 characters';
+  }
+  
+  if (!data.email || !data.email.includes('@')) {
+    errors.email = 'Please enter a valid email address';
+  }
+  
+  if (showPasswordForm) {
     if (!data.oldPassword) {
-      return false; // Old password is required if changing password
+      errors.oldPassword = 'Old password is required';
     }
     if (!data.newPassword || data.newPassword.length < 6) {
-      return false; // New password must be at least 6 characters
+      errors.newPassword = 'New password must be at least 6 characters';
     }
     if (data.newPassword !== data.confirmPassword) {
-      return false; // New password and confirm password must match
+      errors.confirmPassword = 'Passwords do not match';
     }
   }
-  return true;
-}, {
-  message: 'Old password is required if changing password.',
-  path: ['oldPassword'],
-}).refine((data: EditProfileFormInputs) => {
-  if (data.newPassword && data.newPassword.length < 6) {
-    return false;
-  }
-  return true;
-}, {
-  message: 'New password must be at least 6 characters.',
-  path: ['newPassword'],
-}).refine((data: EditProfileFormInputs) => {
-  if (data.newPassword && data.newPassword !== data.confirmPassword) {
-    return false;
-  }
-  return true;
-}, {
-  message: 'New password and confirm password must match.',
-  path: ['confirmPassword'],
-});
+  
+  return errors;
+};
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const EditProfilePage = () => {
   const router = useRouter();
-  const { toast } = useToast();
+  // toast imported directly from sonner
   const { user, logout, setUser } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -74,6 +60,7 @@ const EditProfilePage = () => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [imageError, setImageError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPassword, setShowPassword] = useState({
     old: false,
     new: false,
@@ -88,10 +75,12 @@ const EditProfilePage = () => {
     setValue,
     reset,
     clearErrors,
+    setError,
   } = useForm<EditProfileFormInputs>({
-    resolver: zodResolver(editProfileSchema),
+    mode: 'onSubmit',
     defaultValues: {
       username: user?.name || '',
+      email: user?.email || '',
       oldPassword: '',
       newPassword: '',
       confirmPassword: '',
@@ -122,6 +111,7 @@ const EditProfilePage = () => {
       // Reset form with user data when user object changes
       reset({
         username: user.name,
+        email: user.email,
         oldPassword: '',
         newPassword: '',
         confirmPassword: '',
@@ -135,10 +125,11 @@ const EditProfilePage = () => {
     const subscription = watch((value, { name, type }) => {
       // Check if any relevant field has changed from its initial value
       const usernameChanged = value.username !== user?.name;
+      const emailChanged = value.email !== user?.email;
       const passwordChanged = !!(value.oldPassword || value.newPassword || value.confirmPassword);
       const imageChanged = profileImageFile !== null || removeProfileImage;
 
-      setIsChanged(usernameChanged || passwordChanged || imageChanged);
+      setIsChanged(usernameChanged || emailChanged || passwordChanged || imageChanged);
     });
     return () => subscription.unsubscribe();
   }, [watch, user, profileImageFile, removeProfileImage]);
@@ -203,86 +194,148 @@ const EditProfilePage = () => {
   };
 
   const onSubmit = async (data: EditProfileFormInputs) => {
-    setPasswordError(''); // Clear previous password errors
+    try {
+      console.log('=== onSubmit function called ===');
+      console.log('Form submitted with data:', data);
+      console.log('Current location:', window.location.href);
+      setPasswordError(''); // Clear previous password errors
+      clearErrors(); // Clear previous form errors
 
-    // Validate passwords only if the password change form is open
-    if (showPasswordForm) {
-      if (!data.oldPassword) {
-        setPasswordError('Old password is required.');
+      // Validate form
+      const validationErrors = validateForm(data, showPasswordForm);
+      
+      // Set errors if any
+      if (Object.keys(validationErrors).length > 0) {
+        console.log('Validation errors found:', validationErrors);
+        Object.entries(validationErrors).forEach(([field, message]) => {
+          setError(field as keyof EditProfileFormInputs, { message });
+        });
         return;
       }
-      if (!data.newPassword || data.newPassword.length < 6) {
-        setPasswordError('New password must be at least 6 characters.');
-        return;
+
+      console.log('Building FormData...');
+      const formData = new FormData();
+      formData.append('userName', data.username);
+      formData.append('email', data.email);
+
+      if (profileImageFile) {
+        formData.append('profileImage', profileImageFile);
+      } else if (removeProfileImage) {
+        formData.append('removeProfileImage', String(removeProfileImage));
       }
-      if (data.newPassword !== data.confirmPassword) {
-        setPasswordError('New password and confirm password must match.');
-        return;
+
+      if (showPasswordForm) {
+        if (data.oldPassword) formData.append('oldPassword', data.oldPassword);
+        if (data.newPassword) formData.append('newPassword', data.newPassword);
       }
+      
+      console.log('Calling sendUpdate...');
+      await sendUpdate(formData, data);
+      console.log('sendUpdate completed without error');
+    } catch (error) {
+      console.error('Error in onSubmit:', error);
+      toast.error('An error occurred: ' + (error as Error).message);
     }
-
-    const formData = new FormData();
-    formData.append('userName', data.username);
-    formData.append('email', user?.email || ''); // Use current user email from context
-
-    if (profileImageFile) {
-      formData.append('profileImage', profileImageFile);
-    } else if (removeProfileImage) {
-      formData.append('removeProfileImage', String(removeProfileImage));
-    }
-
-    if (showPasswordForm) {
-      if (data.oldPassword) formData.append('oldPassword', data.oldPassword);
-      if (data.newPassword) formData.append('newPassword', data.newPassword);
-    }
-    await sendUpdate(formData, data);
   };
 
   const sendUpdate = async (formData: FormData, data: EditProfileFormInputs) => {
     try {
+      console.log('sendUpdate called, preparing API request...');
       const token = getCookie('token');
 
       if (!token) {
-        toast.error('Authentication token not found.', {
-          description: 'Please log in again.',
-        });
+        console.error('No token found');
+        toast.error('Authentication token not found. Please log in again.');
         router.push('/admin/login');
         return;
       }
 
-      if (!user || !user.id) {
-        toast.error('User ID not found.', {
-          description: 'Please log in again or refresh the page.',
+      console.log('Token found, making API request...');
+      
+      // First test if backend is reachable
+      try {
+        const testResponse = await fetch('http://localhost:8080/api/admin/profile', {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        router.push('/admin/login');
-        return;
+        console.log('Backend test - GET /api/admin/profile status:', testResponse.status);
+      } catch (error) {
+        console.log('Backend test failed:', error instanceof Error ? error.message : String(error));
       }
 
-      const response = await fetch(`http://localhost:8080/api/admin/users/${user?.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          // 'Content-Type': 'application/json', // Removed: FormData sets its own Content-Type
-        },
-        body: formData,
-      });
+      // Note: We don't need user.id for the profile endpoint since it uses current admin from token
+      console.log('Current user:', user);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(errorData.message || 'Failed to update profile');
+      console.log('Making fetch request to /api/admin/profile...');
+      console.log('Request body FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, ':', value);
+      }
+      
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.log('API request timed out after 10 seconds');
+        controller.abort();
+      }, 10000); // 10 second timeout
+      
+      let response;
+      try {
+        response = await fetch(`http://localhost:8080/api/admin/profile`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log('Response received:', response.status, response.statusText);
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+          throw new Error(errorData.message || 'Failed to update profile');
+        }
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error('Request timed out - please check if the backend server is running');
+        }
+        throw error;
       }
 
       const responseData = await response.json();
-      toast.success('Profile updated successfully!', {
-        description: responseData.message || 'Your profile has been updated.',
-      });
+      console.log('Success response data:', responseData);
+      console.log('Response contains:');
+      console.log('- token:', !!responseData.token);
+      console.log('- message:', responseData.message);
+      console.log('- profileImageUrl:', responseData.profileImageUrl);
+      
+      // If a new token is provided, update it
+      if (responseData.token) {
+        console.log('New token received, updating cookie...');
+        document.cookie = `token=${responseData.token}; path=/; max-age=3600`;
+      } else {
+        console.log('No token in response!');
+      }
+      
+      // Show success message
+      console.log('Showing success toast...');
+      const successMessage = responseData.message || 'Profile updated successfully!';
+      toast.success(successMessage);
+      
+      // Show beautiful success modal
+      setShowSuccessModal(true);
 
       // Update AuthContext user state with new profile information
+      console.log('Updating user context...');
       if (user) {
         setUser({
           ...user,
           name: data.username,
-          email: data.email || user.email,
+          email: data.email,
           profileImageUrl: responseData.profileImageUrl !== undefined ? responseData.profileImageUrl : user.profileImageUrl,
         });
       }
@@ -292,15 +345,16 @@ const EditProfilePage = () => {
       clearErrors(); // Clear form errors
       reset({ // Reset form fields, especially passwords
         username: data.username,
+        email: data.email,
         oldPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
       setPasswordError(''); // Clear password error
+      console.log('Profile update completed successfully!');
     } catch (error: any) {
-      toast.error('Failed to update profile.', {
-        description: error.message || 'An unexpected error occurred.',
-      });
+      console.error('Profile update failed:', error);
+      toast.error('Failed to update profile: ' + (error.message || 'An unexpected error occurred.'));
       if (showPasswordForm) {
         setPasswordError(error.message || 'An unexpected error occurred.');
       }
@@ -336,7 +390,10 @@ const EditProfilePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="md:col-span-2">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Edit Profile</h2>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSubmit(onSubmit)(e);
+                }} className="space-y-6">
                   <div>
                     <Label htmlFor="username">Username</Label>
                     <Input id="username" type="text" {...register('username')} disabled={!isEditing} />
@@ -344,7 +401,14 @@ const EditProfilePage = () => {
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={user?.email || ''} disabled={!isEditing} />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      {...register('email')}
+                      disabled={!isEditing}
+                      placeholder="Enter your email address"
+                    />
+                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                   </div>
                   
                   <div className="flex items-center space-x-2">
@@ -453,6 +517,7 @@ const EditProfilePage = () => {
                             clearErrors();
                             reset({
                               username: user?.name || '',
+                              email: user?.email || '',
                               oldPassword: '',
                               newPassword: '',
                               confirmPassword: '',
@@ -464,8 +529,14 @@ const EditProfilePage = () => {
                           Cancel
                         </Button>
                         <Button 
-                          type="submit"
-                          onClick={handleSubmit(onSubmit)}
+                          type="button"
+                          onClick={(e) => {
+                            console.log('Save Changes button clicked!');
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('About to call handleSubmit...');
+                            handleSubmit(onSubmit)();
+                          }}
                           disabled={!isEditing || !isChanged || !!imageError || (showPasswordForm && (!!errors.oldPassword || !!errors.newPassword || !!errors.confirmPassword || !!passwordError))}
                         >
                           Save Changes
@@ -477,7 +548,7 @@ const EditProfilePage = () => {
               </div>
               <div className="flex flex-col items-center justify-center space-y-4">
                 <div className="relative w-40 h-40 rounded-full overflow-hidden shadow-lg">
-                  <Image src={profileImagePreview || '/images/logo.png'} alt="Profile" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
+                  <Image src={profileImagePreview || '/images/default-avatar.png'} alt="Profile" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
                   <label htmlFor="profileImage" className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white cursor-pointer opacity-0 hover:opacity-100 transition-opacity">
                     <Camera size={32} />
                   </label>
@@ -489,6 +560,48 @@ const EditProfilePage = () => {
           </div>
         </main>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 transform transition-all duration-300 scale-100">
+            {/* Success Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+            </div>
+            
+            {/* Title */}
+            <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">
+              Profile Updated Successfully!
+            </h3>
+            
+            {/* Message */}
+            <p className="text-gray-600 text-center mb-8 leading-relaxed">
+              Your profile information has been updated successfully. All changes have been saved to your account.
+            </p>
+            
+            {/* Action Buttons */}
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  setIsEditing(false);
+                }}
+                className="px-8 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-md hover:shadow-lg"
+              >
+                Continue
+              </button>
+            </div>
+            
+            {/* Decorative elements */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-t-2xl"></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

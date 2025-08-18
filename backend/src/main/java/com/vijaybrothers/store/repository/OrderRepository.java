@@ -6,9 +6,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
     java.util.Optional<Order> findByOrderNumber(String orderNumber);
+    
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.orderItems WHERE o.orderNumber = :orderNumber")
+    java.util.Optional<Order> findByOrderNumberWithItems(@Param("orderNumber") String orderNumber);
 
     Page<Order> findByOrderStatus(OrderStatus orderStatus, Pageable pageable);
 

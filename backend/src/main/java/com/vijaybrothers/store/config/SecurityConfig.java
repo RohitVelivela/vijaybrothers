@@ -118,6 +118,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/checkout/simple-order").permitAll()
                 .requestMatchers("/api/checkout/order/**").permitAll()
                 .requestMatchers("/api/payments/**").permitAll()
+                .requestMatchers("/api/shipping/**").permitAll()
 
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

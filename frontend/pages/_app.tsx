@@ -25,6 +25,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       '/admin/product-management',
       '/admin/categories',
       '/admin/edit-profile',
+      '/admin/shipping',
       '/auth/forgot-password',
       '/auth/reset-password',
       '/admin/profile',

@@ -43,7 +43,7 @@ const ShipmentPaymentPage: React.FC = () => {
       },
       body: JSON.stringify({
         guestId: 1, // This should be dynamically set
-        items: cartItems.map(item => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price })),
+        items: cartItems.map(item => ({ productId: item.productId, quantity: item.quantity, unitPrice: item.price })),
         shippingName: fullName,
         shippingEmail: email,
         shippingPhone: phone,

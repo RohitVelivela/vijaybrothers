@@ -100,8 +100,6 @@ const AddressPage: React.FC = () => {
     setIsSubmitting(true);
 
     // Skip backend call for now and just navigate with data
-    console.log('Skipping guest creation, navigating directly with form data');
-    
     toast({
       title: "✅ Address Ready",
       description: "Proceeding to payment with your address details.",

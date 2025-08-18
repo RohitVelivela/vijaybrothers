@@ -243,7 +243,11 @@ function processProductDetailData(data: any): Product {
         youtubeLink: data.youtubeLink || '',
         color: data.color,
         fabric: data.fabric,
-        deleted: false
+        deleted: false,
+        createdAt: data.createdAt || new Date().toISOString(),
+        createdBy: data.createdBy || 'system',
+        updatedAt: data.updatedAt || new Date().toISOString(),
+        updatedBy: data.updatedBy || 'system'
     };
 }
 
@@ -554,6 +558,7 @@ function convertBackendCartView(backendCart: BackendCartView): CartView {
     lines: backendCart.lines.map((line): CartItem => ({
       cartItemId: line.cartItemId,
       productId: line.productId,
+      productCode: `PRD-${line.productId}`, // Generate productCode from productId
       name: line.name,
       mainImageUrl: line.mainImageUrl,
       price: typeof line.price === 'string' ? parseFloat(line.price) : line.price,

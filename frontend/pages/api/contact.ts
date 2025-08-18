@@ -20,7 +20,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (backendResponse.status === 200 || backendResponse.status === 201) {
         res.status(200).json({ success: true, message: 'Message sent to Vijay Brothers successfully!' });
       } else {
-        res.status(backendResponse.status).json({ success: false, message: backendResponse.data?.message || 'Failed to send message to backend.' });
+        const errorMessage = (backendResponse.data as any)?.message || 'Failed to send message to backend.';
+        res.status(backendResponse.status).json({ success: false, message: errorMessage });
       }
     } catch (error: any) {
       console.error('Error forwarding contact message:', error);

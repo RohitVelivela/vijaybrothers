@@ -48,28 +48,32 @@ const EditProfile: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      // Here you would handle the image upload first, get a URL, and then save the profile data
-      const updatedProfileData = { ...profileData };
-      if (imagePreview && imagePreview !== profileData.user_image) {
-        // Example: await uploadImage(file); -> returns a URL
-        // updatedProfileData.user_image = returned_url_from_server;
-      }
+      // Map frontend field names to backend field names
+      const updateRequest = {
+        userName: profileData.user_name,
+        email: profileData.user_email,
+        oldPassword: profileData.is_password_changed ? profileData.old_password : undefined,
+        newPassword: profileData.is_password_changed ? profileData.new_password : undefined
+      };
 
       const response = await fetch('/api/admin/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(updatedProfileData)
+        body: JSON.stringify(updateRequest)
       });
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
-      const data = await response.json();
       
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update profile: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      alert('Profile updated successfully!');
       setIsEditing(false);
     } catch (error) {
-      
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
     }
   };
 
@@ -185,6 +189,7 @@ const EditProfile: React.FC = () => {
                           value={profileData.user_email}
                           onChange={(e) => handleInputChange('user_email', e.target.value)}
                           disabled={!isEditing}
+                          placeholder="Enter your email address"
                           className="w-full pl-10 pr-4 py-2 border rounded-lg transition-colors text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                       </div>

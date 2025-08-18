@@ -155,7 +155,7 @@ const Orders = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <AdminHeader adminEmail="admin@vijaybrothers.com" />
+      <AdminHeader />
       <Sidebar isOpen={isSidebarOpen} isCollapsed={isSidebarCollapsed} activeLink="Orders" toggleCollapse={handleMenuToggle} />
       
       

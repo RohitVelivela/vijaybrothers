@@ -10,6 +10,17 @@ interface PromotionalSectionProps {
 }
 
 const PromotionalSection: React.FC<PromotionalSectionProps> = ({ title, products, categorySlug }) => {
+  // Helper function to check if a product is new (created within last 90 days)
+  const isProductNew = (product: Product): boolean => {
+    if (!product.createdAt) return false;
+    
+    const createdDate = new Date(product.createdAt);
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    
+    return createdDate > ninetyDaysAgo;
+  };
+
   // Don't render the section if there are no products
   if (!products || products.length === 0) {
     return null;
@@ -44,6 +55,7 @@ const PromotionalSection: React.FC<PromotionalSectionProps> = ({ title, products
               price={product.price.toString()}
               image={product.images && product.images.length > 0 ? product.images[0].imageUrl : '/images/default-avatar.png'}
               inStock={product.inStock}
+              isNew={isProductNew(product)}
             />
           ))}
         </div>

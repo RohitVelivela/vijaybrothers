@@ -17,7 +17,7 @@ const HeroBanner: React.FC = () => {
           setError('No banners available.');
         }
       } catch (err) {
-        console.error('Error fetching banners:', err);
+
         setError('Failed to load banners.');
       } finally {
         setLoading(false);

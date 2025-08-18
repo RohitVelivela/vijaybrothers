@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchUserProfile = async (token: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/profile`, {
+      const response = await fetch(`http://localhost:8080/api/admin/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -80,14 +80,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           profileImageUrl: userData.profileImageUrl, // Include profileImageUrl
         });
         setIsAuthenticated(true);
-      } else {
+      } else if (response.status === 401) {
+        // Only reset auth state for unauthorized errors
         setIsAuthenticated(false);
         setUser(null);
       }
+      // For other errors (500, etc.), keep existing auth state
     } catch (error) {
-      
-      setIsAuthenticated(false);
-      setUser(null);
+      console.error('Profile fetch error:', error);
+      // Don't reset auth state for network errors - keep existing state
     } finally {
       setLoading(false);
     }

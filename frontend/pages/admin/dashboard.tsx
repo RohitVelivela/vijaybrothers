@@ -52,7 +52,7 @@ const DashboardOverview = () => {
     return {
       id: item.orderId, // Using orderId from OrderListItem as id for Order
       orderId: item.orderNumber,
-      customerName: item.shippingName,
+      customerName: item.customerName,
       totalAmount: item.totalAmount,
       status: item.orderStatus as 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled', // Assuming direct mapping of status strings
       orderDate: new Date(item.createdAt),
@@ -213,7 +213,7 @@ const DashboardOverview = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminHeader adminEmail="admin@vijaybrothers.com" />
+      <AdminHeader />
       
       
       
