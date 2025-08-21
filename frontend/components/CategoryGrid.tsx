@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import BanarasiCategoryCard from './BanarasiCategoryCard';
-import { Category } from '../lib/api'; // Changed import path for Category
+import { Category, BASE_URL } from '../lib/api'; // Changed import path for Category
 
 interface CategoryGridProps {
   categories: Category[];
@@ -60,7 +60,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ categories, title, showAll 
               <BanarasiCategoryCard
                 key={category.categoryId}
                 title={category.name}
-                image={category.categoryImage ? `http://localhost:8080${category.categoryImage}` : '/images/placeholder.jpg'} // Use actual image or placeholder
+                image={category.categoryImage ? `${BASE_URL}${category.categoryImage}` : '/images/placeholder.jpg'} // Use actual image or placeholder
                 slug={category.slug}
                 className={`h-full min-h-[250px] transform hover:scale-105 transition-all duration-500 ${spanClass}`}
               />

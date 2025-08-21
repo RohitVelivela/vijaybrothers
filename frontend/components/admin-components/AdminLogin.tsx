@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 
+import { API_BASE_URL } from '../../lib/api';
+
 interface LoginResponse {
   message: string;
   token: string;
@@ -31,7 +33,7 @@ const AdminLogin: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await axios.post<LoginResponse>('http://localhost:8080/api/admin/login', {
+      const response = await axios.post<LoginResponse>(`${API_BASE_URL}/admin/login`, {
         username: username,
         password: password,
       });

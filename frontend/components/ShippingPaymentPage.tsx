@@ -51,7 +51,7 @@ const ShippingPaymentPage: React.FC<ShippingPaymentPageProps> = ({ onBack, onNex
         const productIds = cartView.lines.map(item => item.productId);
         const orderTotal = cartView.subtotal;
 
-        const response = await fetch('http://localhost:8080/api/shipping/calculate', {
+        const response = await fetch('/api/shipping/calculate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

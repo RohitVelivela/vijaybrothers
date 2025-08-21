@@ -100,7 +100,7 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
         }
         
         // Fallback to old key endpoint
-        const keyResponse = await fetch('http://localhost:8080/api/payments/key');
+        const keyResponse = await fetch('/api/payments/key');
         if (keyResponse.ok) {
           const key = await keyResponse.text();
           setRazorpayKey(key);
@@ -139,7 +139,7 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
       }
 
       // Create SINGLE Razorpay payment order
-      const paymentResponse = await fetch('http://localhost:8080/api/payments/create', {
+      const paymentResponse = await fetch('/api/payments/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -210,6 +210,8 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
       
       const options: RazorpayOptions = {
         key: razorpayKey,
+        amount: amount * 100, // Razorpay expects amount in paise
+        currency: 'INR',
         order_id: orderData.razorpayOrderId,
         name: 'Vijay Brothers',
         description: 'Purchase from Vijay Brothers Store',
@@ -217,7 +219,7 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
           console.log('Payment success response:', response);
           try {
             // Verify payment with backend
-            const verificationResponse = await fetch('http://localhost:8080/api/payments/verify', {
+            const verificationResponse = await fetch('/api/payments/verify', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -263,7 +265,7 @@ const RazorpayPayment: React.FC<PaymentComponentProps> = ({
           wallet: true
         },
         notes: {
-          merchant_order_id: orderData.orderNumber || `ORDER_${Date.now()}`,
+          merchant_order_id: `ORDER_${Date.now()}`,
           merchant_name: 'Vijay Brothers'
         }
       };

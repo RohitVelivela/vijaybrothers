@@ -3,23 +3,42 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token');
+  const adminToken = request.cookies.get('adminToken');
   const { pathname } = request.nextUrl;
 
   // Define public paths that do not require authentication
-  const publicAdminPaths = ['/admin', '/admin/login', '/admin/signup'];
+  const publicAdminPaths = ['/admin/login', '/admin/signup'];
 
   // Check if the path starts with /admin
   if (pathname.startsWith('/admin')) {
-    // If there is no token and the path is not a public admin path, redirect to login
-    if (!token && !publicAdminPaths.includes(pathname)) {
+    // Block access if no admin token exists
+    if (!adminToken && !publicAdminPaths.includes(pathname)) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
 
-    // If there is a token and the user tries to access login or signup, redirect to dashboard
-    // This prevents logged-in users from seeing the login/signup pages
-    if (token && (pathname === '/admin/login' || pathname === '/admin/signup')) {
+    // If admin is logged in and tries to access login/signup, redirect to dashboard
+    if (adminToken && publicAdminPaths.includes(pathname)) {
       return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
+
+    // Additional security: Verify token is valid (optional - can add JWT verification here)
+    if (adminToken && !publicAdminPaths.includes(pathname)) {
+      try {
+        // Add JWT verification logic here if needed
+        // For now, just check if token exists
+        return NextResponse.next();
+      } catch (error) {
+        // Invalid token, clear it and redirect to login
+        const response = NextResponse.redirect(new URL('/admin/login', request.url));
+        response.cookies.delete('adminToken');
+        return response;
+      }
+    }
+  }
+
+  // Block regular users from accessing admin paths even if they manually type the URL
+  if (pathname === '/admin' && !adminToken) {
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   return NextResponse.next();

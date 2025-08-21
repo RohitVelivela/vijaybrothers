@@ -17,7 +17,7 @@ const SimpleRazorpayPayment: React.FC = () => {
     document.body.appendChild(script);
 
     // Fetch Razorpay key from backend
-    fetch('http://localhost:8080/api/payments/key')
+    fetch('/api/payments/key')
       .then(response => response.text())
       .then(key => setRazorpayKey(key))
       .catch(error => console.error('Failed to fetch Razorpay key:', error));
@@ -42,7 +42,7 @@ const SimpleRazorpayPayment: React.FC = () => {
     }
     
     // Create order on backend
-    fetch('http://localhost:8080/api/payments/create', {
+    fetch('/api/payments/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ const SimpleRazorpayPayment: React.FC = () => {
             console.log('Payment response:', response);
             
             // Verify payment on backend
-            fetch('http://localhost:8080/api/payments/verify', {
+            fetch('/api/payments/verify', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

@@ -1,7 +1,7 @@
 import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router';
 import { AnimatePresence } from 'framer-motion';
-import './admin/globals.css';
+import '../styles/globals.css';
 import '../styles/scrollbar.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';

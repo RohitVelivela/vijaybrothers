@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 
+import { API_BASE_URL } from '../../lib/api';
+
 interface AdminSignupResponse {
   token: string | null;
   message: string;
@@ -24,7 +26,7 @@ const Signup: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await axios.post<AdminSignupResponse>('http://localhost:8080/api/admin/signup', {
+      const response = await axios.post<AdminSignupResponse>(`${API_BASE_URL}/admin/signup`, {
         username: username,
         email: email,
         password: password,

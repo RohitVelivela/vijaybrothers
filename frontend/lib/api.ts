@@ -1,6 +1,8 @@
 import { getCookie } from '../context/AuthContext';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://vijaybrothers.in/api';
+export { API_BASE_URL };
+export const BASE_URL = API_BASE_URL.replace('/api', '');
 
 function getAuthHeaders(): Record<string, string> {
   const token = getCookie('token');
