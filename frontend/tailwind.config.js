@@ -2,9 +2,10 @@
 
 export default {
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx}',
-    './src/components/**/*.{js,ts,jsx,tsx}',
-    './src/app/**/*.{js,ts,jsx,tsx}',
+   "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",   // harmless if not using app/
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
@@ -93,5 +94,10 @@ export default {
       }
     }
   },
+  safelist: [
+    { pattern: /bg-(red|green|blue|amber|emerald)-(100|200|300|400|500|600|700)/ },
+    { pattern: /text-(xs|sm|base|lg|xl|2xl|3xl|4xl)/ },
+    { pattern: /grid-cols-(1|2|3|4|5|6|12)/ },
+  ],
   plugins: [],
 };

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/router';
+import { API_BASE_URL } from '../lib/api';
 
 // Helper function to get a cookie by name
 export const getCookie = (name: string) => {
@@ -104,7 +105,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const token = getCookie('token');
     if (token) {
       try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/logout`, {
+        await fetch(`${API_BASE_URL}/admin/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

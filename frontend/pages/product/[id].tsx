@@ -1,8 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { fetchProductById, Product } from '../../lib/api'; // Adjust path as needed
-import ProductDetailPage from '../../components/ProductDetailPage'; // Adjust path as needed
+import dynamic from 'next/dynamic';
 import { useCart } from '../../context/CartContext';
+
+const ProductDetailPage = dynamic(
+  () => import('../../components/ProductDetailPage'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+);
 
 const ProductPage: React.FC = () => {
   const router = useRouter();

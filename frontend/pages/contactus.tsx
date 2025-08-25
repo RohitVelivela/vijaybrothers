@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import 'sweetalert2/src/sweetalert2.scss';
+import { API_BASE_URL } from '../lib/api';
 
 // Define interface for form data
 interface ContactFormData {
@@ -72,7 +73,7 @@ const ContactUs: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/contact`, {
+      const response = await fetch(`${API_BASE_URL}/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
