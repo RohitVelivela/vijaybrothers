@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: vijaybrothers-db
+    environment:
+      POSTGRES_DB: vijaybrothers
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-vijaya}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - vijaybrothers-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Application
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vijaybrothers-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Server configuration
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-default}
+      
+      # Database configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vijaybrothers
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-vijaya}
+      
+      # JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: ${SHOW_SQL:-false}
+      
+      # JWT Configuration (IMPORTANT: Change these in production!)
+      APPLICATION_SECURITY_JWT_SECRET_KEY: ${JWT_SECRET:-bf8f72619944c99d0f79b72f7d6e7cd2a6f3272beaa6dc9e04e26d29a5b5c2dbbf8f72619944c99d0f79b72f7d6e7cd2a6f3272beaa6dc9e04e26d29a5b5c2db}
+      APPLICATION_SECURITY_JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      
+      # Email Configuration
+      APP_EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      SPRING_MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      SPRING_MAIL_PORT: ${MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME:-vijaybrotherspage@gmail.com}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-your-app-password}
+      
+      # Razorpay Configuration
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-rzp_live_gCXtwzkwD0VCKS}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-your-secret}
+      RAZORPAY_MERCHANT_ID: ${RAZORPAY_MERCHANT_ID:-GQgwRxu2Pup0PY}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-vijaybrothers}
+      RAZORPAY_UPI_ID: ${RAZORPAY_UPI_ID:-vijaybrotherssaree-1@okhdfcbank}
+      RAZORPAY_UPI_ENABLED: ${RAZORPAY_UPI_ENABLED:-true}
+      
+      # Frontend URL and CORS
+      APP_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      APP_CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      
+      # Java Options
+      JAVA_OPTS: ${JAVA_OPTS:--Xms512m -Xmx1024m}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - vijaybrothers-network
+    restart: unless-stopped
+
+networks:
+  vijaybrothers-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
